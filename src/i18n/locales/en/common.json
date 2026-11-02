@@ -1,0 +1,45 @@
+{
+  "appName": "Ton Up",
+  "wordmark": "TON UP",
+  "tabs": {
+    "practice": "Practice",
+    "history": "History",
+    "play": "Play",
+    "rules": "Rules",
+    "settings": "Settings"
+  },
+  "play": {
+    "buttonLabel": "PLAY",
+    "a11yLabel": "Play"
+  },
+  "placeholder": {
+    "comingIn": "Built in {milestone}.",
+    "spec": "Spec: {spec}"
+  },
+  "screens": {
+    "play": "Play",
+    "practice": "Practice",
+    "history": "History",
+    "rules": "Rules",
+    "settings": "Settings"
+  },
+  "dev": {
+    "title": "Developer",
+    "appearance": "Appearance",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "haptics": "Haptics",
+    "on": "On",
+    "off": "Off"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "This screen hit a problem. Try again, or go back to Play.",
+    "tryAgain": "Try again"
+  },
+  "notFound": {
+    "title": "Nothing here",
+    "goHome": "Go to Play"
+  }
+}

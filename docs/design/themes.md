@@ -6,33 +6,33 @@ Five themes, each with a light and a dark variant, chosen in Settings › Appear
 
 Components use only tokens, never literal colours, so a new theme is data only.
 
-| Token | Used for |
-| --- | --- |
-| `bg` | Screen background |
-| `surface` | Cards, rows, buttons, the tab bar |
-| `surface2` | Raised or selected cards (the active player's row, dart slots) |
-| `text` | Primary text and icons |
-| `muted` | Labels and secondary text |
-| `accent` | Primary buttons, selected items, active tab, the active player's bar |
-| `onAccent` | Text and icons on `accent` |
-| `danger` | Bust and checkout strip |
-| `board.*` | Board segments (light and dark), treble/double ring colours, bull, numbers |
-| `dart` | Dart markers; must stand out against every segment in both modes |
+| Token      | Used for                                                                   |
+| ---------- | -------------------------------------------------------------------------- |
+| `bg`       | Screen background                                                          |
+| `surface`  | Cards, rows, buttons, the tab bar                                          |
+| `surface2` | Raised or selected cards (the active player's row, dart slots)             |
+| `text`     | Primary text and icons                                                     |
+| `muted`    | Labels and secondary text                                                  |
+| `accent`   | Primary buttons, selected items, active tab, the active player's bar       |
+| `onAccent` | Text and icons on `accent`                                                 |
+| `danger`   | Bust and checkout strip                                                    |
+| `board.*`  | Board segments (light and dark), treble/double ring colours, bull, numbers |
+| `dart`     | Dart markers; must stand out against every segment in both modes           |
 
 ## Palettes (from the mockups)
 
-| Theme | Mode | `bg` | `surface` | `text` | `muted` | `accent` | `onAccent` |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Chalkboard | Dark | `#1f2a24` | `#2a3730` | `#efe9dc` | `#c9d1cb` | `#f2c14e` | `#1f2a24` |
-| Chalkboard | Light | `#fbfaf6` | `#ffffff` | `#1d2b4a` | `#4a5672` | `#c0392b` | `#ffffff` |
-| Pro | Dark | `#07090e` | `#151a24` | `#f4f6fa` | `#9aa4b6` | `#e8b931` | `#07090e` |
-| Pro | Light | `#eef1f6` | `#ffffff` | `#0b1320` | `#4f5b6e` | `#0b1320` | `#e8b931` |
-| Arcade | Dark | `#0b0517` | `#150b2a` | `#f3ecff` | `#b9a8dc` | `#ff3ea5` | `#0b0517` |
-| Arcade | Light | `#fbf3ff` | `#ffffff` | `#24103d` | `#5e4a7d` | `#c4106f` | `#ffffff` |
-| Heritage | Dark | `#14231b` | `#1d3126` | `#f1e2bf` | `#b8ab8c` | `#d9a441` | `#14231b` |
-| Heritage | Light | `#f4ecdb` | `#fbf6ea` | `#1f1a14` | `#5c5243` | `#1d4a34` | `#f4ecdb` |
-| Training | Dark | `#0e1217` | `#151b22` | `#e6edf3` | `#8b98a5` | `#2dd4bf` | `#0e1217` |
-| Training | Light | `#f6f8fa` | `#ffffff` | `#1f2328` | `#59636e` | `#0f766e` | `#ffffff` |
+| Theme      | Mode  | `bg`      | `surface` | `text`    | `muted`   | `accent`  | `onAccent` |
+| ---------- | ----- | --------- | --------- | --------- | --------- | --------- | ---------- |
+| Chalkboard | Dark  | `#1f2a24` | `#2a3730` | `#efe9dc` | `#c9d1cb` | `#f2c14e` | `#1f2a24`  |
+| Chalkboard | Light | `#fbfaf6` | `#ffffff` | `#1d2b4a` | `#4a5672` | `#c0392b` | `#ffffff`  |
+| Pro        | Dark  | `#07090e` | `#151a24` | `#f4f6fa` | `#9aa4b6` | `#e8b931` | `#07090e`  |
+| Pro        | Light | `#eef1f6` | `#ffffff` | `#0b1320` | `#4f5b6e` | `#0b1320` | `#e8b931`  |
+| Arcade     | Dark  | `#0b0517` | `#150b2a` | `#f3ecff` | `#b9a8dc` | `#ff3ea5` | `#0b0517`  |
+| Arcade     | Light | `#fbf3ff` | `#ffffff` | `#24103d` | `#5e4a7d` | `#c4106f` | `#ffffff`  |
+| Heritage   | Dark  | `#14231b` | `#1d3126` | `#f1e2bf` | `#b8ab8c` | `#d9a441` | `#14231b`  |
+| Heritage   | Light | `#f4ecdb` | `#fbf6ea` | `#1f1a14` | `#5c5243` | `#1d4a34` | `#f4ecdb`  |
+| Training   | Dark  | `#0e1217` | `#151b22` | `#e6edf3` | `#8b98a5` | `#2dd4bf` | `#0e1217`  |
+| Training   | Light | `#f6f8fa` | `#ffffff` | `#1f2328` | `#59636e` | `#0f766e` | `#ffffff`  |
 
 Theme character:
 

@@ -26,14 +26,14 @@ Every photo calibrates itself: the board points found in that image give its ang
 
 **Problems and mitigations**
 
-| Problem | Mitigation |
-| --- | --- |
-| Flights hide the tip from straight in front | Coach "step a little to the side" on the capture screen; the model can also infer the tip from the shaft's direction |
-| Tight groups hide each other | Show confidence per dart; one-tap retake or fix |
-| Bounce-outs and darts off the board aren't in the photo | If fewer than three are found, ask "One dart missed the board?" before scoring |
-| Timing: the photo must come before the pull | The scoring screen prompts "Snap, then pull" until it's habit |
-| Low light and blur | Burst and keep the sharpest; warn about glare instead of using the flash, which washes out the board |
-| The board is small from the oche | Use the 2× or 3× lens; walking up is better |
+| Problem                                                 | Mitigation                                                                                                           |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Flights hide the tip from straight in front             | Coach "step a little to the side" on the capture screen; the model can also infer the tip from the shaft's direction |
+| Tight groups hide each other                            | Show confidence per dart; one-tap retake or fix                                                                      |
+| Bounce-outs and darts off the board aren't in the photo | If fewer than three are found, ask "One dart missed the board?" before scoring                                       |
+| Timing: the photo must come before the pull             | The scoring screen prompts "Snap, then pull" until it's habit                                                        |
+| Low light and blur                                      | Burst and keep the sharpest; warn about glare instead of using the flash, which washes out the board                 |
+| The board is small from the oche                        | Use the 2× or 3× lens; walking up is better                                                                          |
 
 Handheld photos come from many angles and distances, exactly the variety the dataset needs, so this step also builds the training data for the fixed camera.
 
@@ -45,11 +45,11 @@ We can't assume every player uses the same camera placement, so the app measures
 
 **Placement guide** (a starting hypothesis to validate with accuracy data per pose bin):
 
-| Zone | Typical position | What to expect |
-| --- | --- | --- |
+| Zone        | Typical position                                                           | What to expect                                       |
+| ----------- | -------------------------------------------------------------------------- | ---------------------------------------------------- |
 | Recommended | Beside the board, 0.6–1.2 m out, 30–50° to the side, lens near bull height | Best view of tips entering the board; few occlusions |
-| Acceptable | Low and in front (floor stand at the oche), or a high side mount | Works; tighter groups occlude more |
-| Poor | Straight on from the throwing position, or nearly flat to the board | Darts hide each other or the tip is out of view |
+| Acceptable  | Low and in front (floor stand at the oche), or a high side mount           | Works; tighter groups occlude more                   |
+| Poor        | Straight on from the throwing position, or nearly flat to the board        | Darts hide each other or the tip is out of view      |
 
 The live view overlays the detected board outline and scores: whole board in frame, viewing angle, how many pixels the double ring spans, glare, and steadiness.
 

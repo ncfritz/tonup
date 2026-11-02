@@ -6,22 +6,22 @@ These docs start high level and get more specific as decisions are made. Each de
 
 ## Contents
 
-| Doc | What it covers |
-| --- | --- |
-| [features.md](features.md) | What the app does: v1 scope, Pro, later releases and ideas |
-| [plan/v1-implementation.md](plan/v1-implementation.md) | v1 stack, code layout, domain design, milestones, testing and risks |
-| [research/competitors.md](research/competitors.md) | Existing apps and hardware, pricing, gaps to exploit |
+| Doc                                                      | What it covers                                                                        |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [features.md](features.md)                               | What the app does: v1 scope, Pro, later releases and ideas                            |
+| [plan/v1-implementation.md](plan/v1-implementation.md)   | v1 stack, code layout, domain design, milestones, testing and risks                   |
+| [research/competitors.md](research/competitors.md)       | Existing apps and hardware, pricing, gaps to exploit                                  |
 | [research/camera-scoring.md](research/camera-scoring.md) | Handheld snap-to-score, the fixed camera, calibration, and the training-data pipeline |
-| [research/multi-device.md](research/multi-device.md) | Camera and display roles, linking options, joining by QR code |
-| [research/training.md](research/training.md) | Practice drills, benchmarks and the coaching ideas built on them |
-| [research/naming.md](research/naming.md) | How the name Ton Up and tonup.app were chosen |
-| [data/game-rules.md](data/game-rules.md) | Rules for 26 games in five families, with variants and the stats each needs |
-| [architecture/data-model.md](architecture/data-model.md) | The dart event log and what is derived from it |
-| [architecture/decisions/](architecture/decisions/) | Architecture decision records (ADRs) |
-| [design/README.md](design/README.md) | Design principles and index of the design docs |
-| [design/themes.md](design/themes.md) | The five themes, light and dark, and their tokens |
-| [design/screens.md](design/screens.md) | Navigation and screen-by-screen notes for v1 |
-| [design/mockups/](design/mockups/README.md) | Reference copy of the design canvas source |
+| [research/multi-device.md](research/multi-device.md)     | Camera and display roles, linking options, joining by QR code                         |
+| [research/training.md](research/training.md)             | Practice drills, benchmarks and the coaching ideas built on them                      |
+| [research/naming.md](research/naming.md)                 | How the name Ton Up and tonup.app were chosen                                         |
+| [data/game-rules.md](data/game-rules.md)                 | Rules for 26 games in five families, with variants and the stats each needs           |
+| [architecture/data-model.md](architecture/data-model.md) | The dart event log and what is derived from it                                        |
+| [architecture/decisions/](architecture/decisions/)       | Architecture decision records (ADRs)                                                  |
+| [design/README.md](design/README.md)                     | Design principles and index of the design docs                                        |
+| [design/themes.md](design/themes.md)                     | The five themes, light and dark, and their tokens                                     |
+| [design/screens.md](design/screens.md)                   | Navigation and screen-by-screen notes for v1                                          |
+| [design/mockups/](design/mockups/README.md)              | Reference copy of the design canvas source                                            |
 
 ## Research and mockups
 

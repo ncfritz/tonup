@@ -11,12 +11,12 @@ Steel-tip (bristle board) and soft-tip (electronic board) darts differ in board 
 
 v1 and the first camera releases support steel tip only. The board type is part of the game engine and data model from day one, so soft tip is new data, rules options and a new model rather than a rewrite.
 
-| Area | Steel tip (v1) | Soft tip (later) |
-| --- | --- | --- |
-| Board | Bristle, thin wires; bull at 1.73 m, throw line 2.37 m | Plastic segments with holes, wider spider; throw line 2.44 m |
-| Camera detection | Tip sits in fibre; wires are thin | Hole texture and backlit segments; needs its own training data |
-| Rules | Bull 25/50 | Many leagues play a "fat bull" (50 everywhere); an engine option |
-| Other input | Camera | Many electronic boards report hits over Bluetooth LE, which may beat the camera; investigate before building camera support |
+| Area             | Steel tip (v1)                                         | Soft tip (later)                                                                                                            |
+| ---------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Board            | Bristle, thin wires; bull at 1.73 m, throw line 2.37 m | Plastic segments with holes, wider spider; throw line 2.44 m                                                                |
+| Camera detection | Tip sits in fibre; wires are thin                      | Hole texture and backlit segments; needs its own training data                                                              |
+| Rules            | Bull 25/50                                             | Many leagues play a "fat bull" (50 everywhere); an engine option                                                            |
+| Other input      | Camera                                                 | Many electronic boards report hits over Bluetooth LE, which may beat the camera; investigate before building camera support |
 
 ## Consequences
 

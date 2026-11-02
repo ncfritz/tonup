@@ -12,14 +12,14 @@ Competitors with camera scoring sell subscriptions (Dartsmind $14.99/year, Autod
 1. **Price:** $9.99 to buy, plus **Ton Up Pro**, a $9.99 one-time non-consumable in-app purchase. No subscription, no ads, no account.
 2. **Split** (original proposal; superseded by ADR 0009, which also puts themes and camera scoring in Pro): anything you need to play a normal game is in the base app; anything that analyses or coaches is Pro.
 
-| Area | Base | Pro |
-| --- | --- | --- |
-| Games | X01, Cricket (Standard, Cut-Throat), Around the Clock, Shanghai, Killer | Remaining cricket variants, party and sports games as they ship |
-| Opponents | Pass-and-play up to 6 players; Gaussian bot, 5 levels | Ghost bot fitted to your own throws |
-| Input | Tap-on-board and keypad | Same |
-| Training | Bob's 27, Count Up, Around the Clock | Full drill library, assessment, adaptive plan |
-| Stats | Averages, checkout %, history, replay, board heatmap | Aim-relative heatmap, drift and grouping, personal aim map, trends |
-| Knowledge | Rules for every included game, checkout routes | Checkout trainer |
+| Area      | Base                                                                    | Pro                                                                |
+| --------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Games     | X01, Cricket (Standard, Cut-Throat), Around the Clock, Shanghai, Killer | Remaining cricket variants, party and sports games as they ship    |
+| Opponents | Pass-and-play up to 6 players; Gaussian bot, 5 levels                   | Ghost bot fitted to your own throws                                |
+| Input     | Tap-on-board and keypad                                                 | Same                                                               |
+| Training  | Bob's 27, Count Up, Around the Clock                                    | Full drill library, assessment, adaptive plan                      |
+| Stats     | Averages, checkout %, history, replay, board heatmap                    | Aim-relative heatmap, drift and grouping, personal aim map, trends |
+| Knowledge | Rules for every included game, checkout routes                          | Checkout trainer                                                   |
 
 3. StoreKit 2 behind a purchases service, as in Tippytoe's ADR 0021: ownership is StoreKit's verified entitlements on the device; no receipt server or third-party purchase service. Restore Purchases on the Pro screen and in Settings. Family Sharing on Pro (optional). Pro features are gated in one place so locked items are visible and lead to the Pro screen.
 

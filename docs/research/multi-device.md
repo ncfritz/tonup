@@ -6,23 +6,23 @@ Use Apple's Network framework with Bonjour discovery on the local network, joine
 
 ## Device roles
 
-| Mode | Camera | Display | Notes |
-| --- | --- | --- | --- |
-| Solo device | iPhone on a stand | Same iPhone | Large type and spoken scores, since the phone is away from the player |
-| Camera + display | iPhone on a stand | iPad or second iPhone at the oche | Display shows the scoreboard and handles corrections |
-| Camera + TV | iPhone on a stand | TV via AirPlay as an external screen | No second device needed; a later quick win |
-| Two cameras | Two iPhones at different angles | Either, or a third device | Fuses both views to beat occlusion |
-| Remote match | One camera at each board | Each player's own screen | Needs internet; Game Center or SharePlay can relay without our own server |
+| Mode             | Camera                          | Display                              | Notes                                                                     |
+| ---------------- | ------------------------------- | ------------------------------------ | ------------------------------------------------------------------------- |
+| Solo device      | iPhone on a stand               | Same iPhone                          | Large type and spoken scores, since the phone is away from the player     |
+| Camera + display | iPhone on a stand               | iPad or second iPhone at the oche    | Display shows the scoreboard and handles corrections                      |
+| Camera + TV      | iPhone on a stand               | TV via AirPlay as an external screen | No second device needed; a later quick win                                |
+| Two cameras      | Two iPhones at different angles | Either, or a third device            | Fuses both views to beat occlusion                                        |
+| Remote match     | One camera at each board        | Each player's own screen             | Needs internet; Game Center or SharePlay can relay without our own server |
 
 ## Linking options
 
-| Option | Needs | Fit |
-| --- | --- | --- |
-| Network framework + Bonjour (recommended) | Both devices on the same Wi-Fi, or Apple peer-to-peer Wi-Fi when opted in | Mature and fast enough for preview frames; QUIC with TLS gives encrypted streams |
+| Option                                                                                        | Needs                                                                        | Fit                                                                                                                                      |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Network framework + Bonjour (recommended)                                                     | Both devices on the same Wi-Fi, or Apple peer-to-peer Wi-Fi when opted in    | Mature and fast enough for preview frames; QUIC with TLS gives encrypted streams                                                         |
 | [Wi-Fi Aware](https://developer.apple.com/documentation/wifiaware/building-peer-to-peer-apps) | iOS 26+, a one-time pairing through the system device picker, an entitlement | Works with no router at all (a garage with no Wi-Fi); add as a fallback. Apple notes Wi-Fi Aware with QUIC isn't supported before iOS 27 |
-| Multipeer Connectivity | — | Deprecated in Xcode 27; avoid |
-| Bluetooth LE | Bluetooth on | Discovery and tiny score messages only; too slow for images. Useful for soft-tip electronic boards |
-| Game Center / SharePlay | Internet, Apple Account | Remote matches later, not same-room play |
+| Multipeer Connectivity                                                                        | —                                                                            | Deprecated in Xcode 27; avoid                                                                                                            |
+| Bluetooth LE                                                                                  | Bluetooth on                                                                 | Discovery and tiny score messages only; too slow for images. Useful for soft-tip electronic boards                                       |
+| Game Center / SharePlay                                                                       | Internet, Apple Account                                                      | Remote matches later, not same-room play                                                                                                 |
 
 ## Joining a game
 

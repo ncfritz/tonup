@@ -19,12 +19,12 @@ Ton Up should feel like a serious darts tool that's still fun to pick up: the sc
 
 ## Typography (from the mockups)
 
-| Theme | Display | Body |
-| --- | --- | --- |
-| Chalkboard | Permanent Marker | Kalam |
-| Pro | Barlow Condensed (600–800) | Barlow |
-| Arcade | Orbitron | Rajdhani |
-| Heritage | Playfair Display | Libre Franklin |
-| Training | JetBrains Mono | Inter |
+| Theme      | Display                    | Body           |
+| ---------- | -------------------------- | -------------- |
+| Chalkboard | Permanent Marker           | Kalam          |
+| Pro        | Barlow Condensed (600–800) | Barlow         |
+| Arcade     | Orbitron                   | Rajdhani       |
+| Heritage   | Playfair Display           | Libre Franklin |
+| Training   | JetBrains Mono             | Inter          |
 
 All are Google Fonts under the SIL Open Font License, bundled with the app.

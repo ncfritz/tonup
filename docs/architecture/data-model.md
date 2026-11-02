@@ -4,15 +4,15 @@ Draft from research; the v1 implementation plan turns this into tables. The core
 
 ## Dart event
 
-| Field | Purpose |
-| --- | --- |
-| Session (game or drill), leg, visit, dart number, player | Ordering and the replay timeline |
-| Board position (x, y in mm from the bull) | Heatmaps, grouping, replay placement |
-| Segment, multiplier, score | Scoring without re-deriving geometry |
-| Intended target | Known from game state (Around the Clock's current number, a Killer's target double, a Bob's 27 double, an X01 checkout route); optional tap for X01 scoring visits |
-| Input source and precision | Tap-on-board, keypad (segment centre, low precision), bot, and later camera (with confidence) |
-| Corrected flag, timestamp | Audit trail; camera training data later |
-| Optional photo or frame reference | Camera modes only, opt-in |
+| Field                                                    | Purpose                                                                                                                                                            |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Session (game or drill), leg, visit, dart number, player | Ordering and the replay timeline                                                                                                                                   |
+| Board position (x, y in mm from the bull)                | Heatmaps, grouping, replay placement                                                                                                                               |
+| Segment, multiplier, score                               | Scoring without re-deriving geometry                                                                                                                               |
+| Intended target                                          | Known from game state (Around the Clock's current number, a Killer's target double, a Bob's 27 double, an X01 checkout route); optional tap for X01 scoring visits |
+| Input source and precision                               | Tap-on-board, keypad (segment centre, low precision), bot, and later camera (with confidence)                                                                      |
+| Corrected flag, timestamp                                | Audit trail; camera training data later                                                                                                                            |
+| Optional photo or frame reference                        | Camera modes only, opt-in                                                                                                                                          |
 
 ## Other records
 

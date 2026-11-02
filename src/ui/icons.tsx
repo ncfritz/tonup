@@ -1,0 +1,51 @@
+import Svg, { Circle, Path } from 'react-native-svg';
+
+// Tab icons from the design canvas (24 pt grid, 2 pt round strokes). More are added as screens
+// need them.
+const paths = {
+  practice: ['M4 20l7-7M14 4l6 6-6 2-2 6-6-6 6-2z', []],
+  history: ['M4 20V10M10 20V4M16 20v-7M22 20H2', []],
+  rules: ['M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5', []],
+  settings: [
+    'M4 7h10M18 7h2M4 17h4M12 17h8',
+    [
+      [16, 7, 2],
+      [10, 17, 2],
+    ],
+  ],
+} as const satisfies Record<string, readonly [string, readonly (readonly number[])[]]>;
+
+export type IconName = keyof typeof paths;
+
+export function Icon({
+  name,
+  color,
+  size = 22,
+  strokeWidth = 2,
+}: {
+  name: IconName;
+  color: string;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const [d, circles] = paths[name];
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      accessibilityElementsHidden
+      importantForAccessibility="no"
+    >
+      <Path d={d} />
+      {circles.map(([cx, cy, r]) => (
+        <Circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} />
+      ))}
+    </Svg>
+  );
+}

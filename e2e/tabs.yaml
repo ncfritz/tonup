@@ -1,0 +1,21 @@
+# Maestro flow: the app opens on Play and every tab switches.
+appId: app.tonup.ios
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'PLAY'
+- tapOn:
+    id: 'tab-practice'
+- assertVisible: 'Built in M6.'
+- tapOn:
+    id: 'tab-history'
+- assertVisible: 'Built in M7.'
+- tapOn:
+    id: 'tab-rules'
+- assertVisible: 'Built in M8.'
+- tapOn:
+    id: 'tab-settings'
+- assertVisible: 'Built in M9.'
+- tapOn:
+    id: 'tab-play'
+- assertVisible: 'Built in M4.'

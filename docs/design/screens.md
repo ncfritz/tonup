@@ -2,21 +2,21 @@
 
 Navigation is option E from the canvas's Home navigation page: a floating tab bar with **Practice · History · Play · Rules · Settings**. Play is a raised round button in the middle, drawn as a small dartboard in shades of the theme's gold with a "PLAY" label, and the Play tab is the home screen. During a game or drill the tab bar is hidden and a pause button returns home.
 
-| Screen | Status | Canvas artboard (page) |
-| --- | --- | --- |
-| Play (home) | Spec v1 | E · Combined (Home navigation) |
-| New game | Spec v1 | 2 · New game (MVP flow) |
-| Scoring: tap the board or keypad | Spec v1, playable mock | Scoring · tap the board (v1 screens) |
-| Leg and match summary | Spec v1 | 9 · Leg summary (MVP flow) |
-| Replay | Spec v1, playable mock | 10 · Replay (MVP flow) |
-| Practice tab | Spec v1 | Practice tab (v1 screens) |
-| Drill in progress (Bob's 27) | Spec v1, playable mock | Practice · Bob's 27 in progress (v1 screens) |
-| History tab | Spec v1 | History tab (v1 screens) |
-| Rules tab and a rules page | Spec v1 | Rules tab (v1 screens); 12 · Rules (MVP flow) |
-| Settings › Appearance | Spec v1 | Settings · Theme picker (Themes) |
-| Pro upgrade | Spec v1 | 13 · Pro upgrade (MVP flow) |
-| Devices, Link a display, Camera placement, Calibration, iPad scoring, Correct a dart | Parked for the camera releases (ADR 0005) | 3–8 (MVP flow) |
-| Snap to score (capture, result, missed-dart prompt) | Later; not mocked yet | — |
+| Screen                                                                               | Status                                    | Canvas artboard (page)                        |
+| ------------------------------------------------------------------------------------ | ----------------------------------------- | --------------------------------------------- |
+| Play (home)                                                                          | Spec v1                                   | E · Combined (Home navigation)                |
+| New game                                                                             | Spec v1                                   | 2 · New game (MVP flow)                       |
+| Scoring: tap the board or keypad                                                     | Spec v1, playable mock                    | Scoring · tap the board (v1 screens)          |
+| Leg and match summary                                                                | Spec v1                                   | 9 · Leg summary (MVP flow)                    |
+| Replay                                                                               | Spec v1, playable mock                    | 10 · Replay (MVP flow)                        |
+| Practice tab                                                                         | Spec v1                                   | Practice tab (v1 screens)                     |
+| Drill in progress (Bob's 27)                                                         | Spec v1, playable mock                    | Practice · Bob's 27 in progress (v1 screens)  |
+| History tab                                                                          | Spec v1                                   | History tab (v1 screens)                      |
+| Rules tab and a rules page                                                           | Spec v1                                   | Rules tab (v1 screens); 12 · Rules (MVP flow) |
+| Settings › Appearance                                                                | Spec v1                                   | Settings · Theme picker (Themes)              |
+| Pro upgrade                                                                          | Spec v1                                   | 13 · Pro upgrade (MVP flow)                   |
+| Devices, Link a display, Camera placement, Calibration, iPad scoring, Correct a dart | Parked for the camera releases (ADR 0005) | 3–8 (MVP flow)                                |
+| Snap to score (capture, result, missed-dart prompt)                                  | Later; not mocked yet                     | —                                             |
 
 ## Tab bar
 
