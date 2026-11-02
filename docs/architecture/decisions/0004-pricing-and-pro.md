@@ -1,6 +1,6 @@
 # 0004: $9.99 app with a one-time Ton Up Pro upgrade
 
-- Status: Accepted (price); the paid-download vs free-with-unlock question is open
+- Status: Accepted, amended by [0009](0009-pro-contents.md) (paid download; Pro contents and price)
 - Date: 2026-10-29
 
 ## Context
@@ -10,7 +10,7 @@ Competitors with camera scoring sell subscriptions (Dartsmind $14.99/year, Autod
 ## Decision
 
 1. **Price:** $9.99 to buy, plus **Ton Up Pro**, a $9.99 one-time non-consumable in-app purchase. No subscription, no ads, no account.
-2. **Split** (a proposal, to confirm in the implementation plan): anything you need to play a normal game is in the base app; anything that analyses or coaches is Pro.
+2. **Split** (original proposal; superseded by ADR 0009, which also puts themes and camera scoring in Pro): anything you need to play a normal game is in the base app; anything that analyses or coaches is Pro.
 
 | Area | Base | Pro |
 | --- | --- | --- |

@@ -1,6 +1,8 @@
 # Features
 
-Status key: **v1** = planned for the first release · **Pro** = v1, behind the one-time Ton Up Pro upgrade (ADR 0004) · **Later** = agreed direction, not scheduled · **Idea** = worth exploring.
+Status key: **v1** = planned for the first release · **Pro** = v1, behind the one-time Ton Up Pro upgrade (ADR 0009) · **Pro, later** = part of Pro, shipping in an update after v1 · **Later** = agreed direction, not scheduled · **Idea** = worth exploring.
+
+The app is a $9.99 paid download; Ton Up Pro is a one-time $9.99 or $19.99 upgrade (price to decide). Pro unlocks the other games, practice modes and themes, the analysis features, and camera scoring when it ships.
 
 The bet: the best darts coach on iPhone, built on per-dart positions, offline-first, with a one-time price. Camera scoring is the input that will make coaching effortless, not the headline (see [research/competitors.md](research/competitors.md)).
 
@@ -29,11 +31,11 @@ The bet: the best darts coach on iPhone, built on per-dart positions, offline-fi
 | --- | --- | --- |
 | Tap-on-board | v1 | Records roughly where each dart landed, so heatmaps and replay work from day one |
 | Keypad | v1 | Single/double/treble plus number; dart placed at the segment's centre with a low-precision flag |
-| Snap to score (handheld photo after each visit) | Later | "Camera lite" release; see [research/camera-scoring.md](research/camera-scoring.md) |
-| Live-view auto-capture | Later | Same model on the preview; snaps when steady and confident |
-| Fixed camera on a stand, with placement guide and calibration | Later | Camera release after snap-to-score |
-| Linked display (iPad or second iPhone) | Later | Local network, joined by QR code ([research/multi-device.md](research/multi-device.md)) |
-| Second camera to beat occlusion | Later | |
+| Snap to score (handheld photo after each visit) | Pro, later | "Camera lite" release; see [research/camera-scoring.md](research/camera-scoring.md) |
+| Live-view auto-capture | Pro, later | Same model on the preview; snaps when steady and confident |
+| Fixed camera on a stand, with placement guide and calibration | Pro, later | Camera release after snap-to-score |
+| Linked display (iPad or second iPhone) | Pro, later | Local network, joined by QR code ([research/multi-device.md](research/multi-device.md)) |
+| Second camera to beat occlusion | Pro, later | |
 | Soft-tip boards | Later | Board type is in the data model from day one (ADR 0003) |
 
 ## Practice and training
@@ -48,7 +50,7 @@ The bet: the best darts coach on iPhone, built on per-dart positions, offline-fi
 | Skill assessment (JDC-style, monthly) | Pro | Sets starting levels for scoring, doubles, checkouts |
 | Adaptive plan from your weakest area | Pro | |
 | Suggested drill on the Practice tab | v1 | Simple rule in v1; adaptive in Pro |
-| Pressure mode (bot sitting on a finish) | Idea | |
+| Pressure mode (bot sitting on a finish) | Pro | Practice mode |
 
 ## Stats, history and replay
 
@@ -75,13 +77,13 @@ The bet: the best darts coach on iPhone, built on per-dart positions, offline-fi
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Five themes, each light and dark; System / Light / Dark | v1 | [design/themes.md](design/themes.md) |
-| Ton Up Pro one-time upgrade with Restore | v1 | ADR 0004 |
+| Pro theme, light and dark; System / Light / Dark | v1 | [design/themes.md](design/themes.md) |
+| Chalkboard, Arcade, Heritage and Training themes, light and dark | Pro | Locked themes show a preview |
+| Ton Up Pro one-time upgrade with Restore | v1 | ADR 0004, 0009 |
 | Export and import of your data | v1 | JSON; follows Tippytoe's approach |
 | iCloud sync | Idea | Needs a decision against ADR 0001 |
 
 ## Open questions
 
-- Paid download or free download with a $9.99 unlock (ADR 0004)?
-- Does camera scoring arrive as a free update for existing buyers or as part of Pro?
-- Which theme is the default on first launch?
+- Pro price: $9.99 or $19.99?
+- Default theme on first launch: Pro is the only base theme, so Pro dark (or following the system) is assumed.

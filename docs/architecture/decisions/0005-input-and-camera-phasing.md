@@ -13,7 +13,7 @@ Camera scoring is the headline feature of competitors but needs a trained model,
 2. **Camera lite (next):** snap to score, a handheld photo after each visit, then live-view auto-capture; a third input option beside Board and Keypad. Each photo calibrates itself from board keypoints.
 3. **Fixed camera (after):** a phone on a stand scoring each dart as it lands, with a placement guide, calibration rounds and setup profiles, plus an optional linked display (ADR 0008).
 
-All three input methods produce the same dart events (ADR 0006), so stats, heatmaps and replay don't care where a dart came from. The training-data baseline (DeepDarts plus our own captures) can start in parallel with v1.
+Camera scoring is part of Ton Up Pro (ADR 0009). All three input methods produce the same dart events (ADR 0006), so stats, heatmaps and replay don't care where a dart came from. The training-data baseline (DeepDarts plus our own captures) can start in parallel with v1.
 
 ## Consequences
 

@@ -1,6 +1,6 @@
 # Themes
 
-Five themes, each with a light and a dark variant, chosen in Settings › Appearance. Mode is System, Light or Dark, independent of the theme. (A sixth, Minimal, was explored and dropped.) The mockups are on the design canvas's Themes page; the interactive picker is the "Settings · Theme picker" artboard.
+Five themes, each with a light and a dark variant, chosen in Settings › Appearance. **Pro** (light and dark) is in the base app; Chalkboard, Arcade, Heritage and Training are part of Ton Up Pro (ADR 0009) and show a preview with a lock until it is bought. Mode is System, Light or Dark, independent of the theme. (A sixth, Minimal, was explored and dropped.) The mockups are on the design canvas's Themes page; the interactive picker is the "Settings · Theme picker" artboard.
 
 ## Tokens
 
@@ -50,5 +50,5 @@ Theme character:
 
 ## Open questions
 
-- Which theme is the default on first launch (the v1 mockups use Pro dark).
+- Default on first launch: Pro, following the system appearance (assumed, since it is the only base theme).
 - Final `danger`, `surface2` and `board.*` values per theme (taken from the mockups when the theme code is written).
