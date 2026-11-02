@@ -2,17 +2,20 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import Svg, { Circle, Polyline, Rect } from 'react-native-svg';
 
 import { drawPoint } from '@/domain/board';
-import type { PlayerRef } from '@/domain/darts';
+import { beats, drills } from '@/domain/drills';
+import { label, type PlayerRef } from '@/domain/darts';
 import { gameFor, type GameId } from '@/domain/games';
 import { X01_DEFAULTS, type X01Settings } from '@/domain/games/x01';
 import { formatStat, gameName, rowFormat } from '@/features/game/format';
 import { drawNumbers } from '@/domain/games/killer';
 import { bestOf, botId, YOU_ID } from '@/features/game/lineup';
 import { lastMatch, resumable, type MatchCard, type ResumeCard } from '@/features/game/recent';
-import { startGame } from '@/features/game/session';
+import { startDrill, startGame } from '@/features/game/session';
+import { lastPractice, type PracticeCard } from '@/features/practice/bests';
 import { dayLabel } from '@/features/game/when';
 import { useSettings } from '@/features/settings/store';
 import { Board, Button, Pressable, Screen, Text } from '@/ui';
@@ -24,10 +27,12 @@ export default function Play() {
   const [resume, setResume] = useState<ResumeCard | null>(null);
   const [match, setMatch] = useState<MatchCard | null>(null);
   const [now, setNow] = useState(0);
+  const [practice, setPractice] = useState<PracticeCard | null>(null);
   useFocusEffect(
     useCallback(() => {
       setResume(resumable());
       setMatch(lastMatch());
+      setPractice(lastPractice());
       setNow(Date.now());
     }, []),
   );
@@ -58,7 +63,7 @@ export default function Play() {
         {tg('home.pickUp')}
       </Text>
       <LastMatchView card={match} now={now} />
-      <LastPractice />
+      <LastPractice card={practice} now={now} />
     </Screen>
   );
 }
@@ -258,19 +263,111 @@ function rematch(card: MatchCard): string {
   return startGame(typeId as GameId, play, players);
 }
 
-function LastPractice() {
+function LastPractice({ card, now }: { card: PracticeCard | null; now: number }) {
   const { t } = useTranslation('game');
-  // Drills arrive in M6; until then the card explains what it will show.
+  const { t: tp } = useTranslation('practice');
+  const { theme } = useUnistyles();
+  if (!card) {
+    return (
+      <View style={styles.card}>
+        <Text variant="overline" tone="muted">
+          {t('home.lastPractice')}
+        </Text>
+        <Text tone="muted">{t('home.noPractice')}</Text>
+        <View style={styles.actions}>
+          <SmallLink label={t('home.allDrills')} onPress={() => router.navigate('/practice')} />
+        </View>
+      </View>
+    );
+  }
+  const drill = drills[card.drillId];
+  const when = dayLabel(card.endedAt, now, {
+    today: t('home.today'),
+    yesterday: t('home.yesterday'),
+  });
+  const b = card.best;
+  const versus = !b
+    ? tp('home.first')
+    : beats(drill.better, card.score, b.score)
+      ? tp('home.best')
+      : card.score === b.score
+        ? tp('home.level')
+        : tp('home.short', { gap: Math.abs(card.score - b.score), best: b.score });
+  const again = () => {
+    const id = startDrill(card.drillId, card.game.session.settings, {
+      id: YOU_ID,
+      name: t('players.you'),
+    });
+    router.push({ pathname: '/drill/[sessionId]', params: { sessionId: id } });
+  };
   return (
-    <View style={styles.card}>
-      <Text variant="overline" tone="muted">
-        {t('home.lastPractice')}
-      </Text>
-      <Text tone="muted">{t('home.noPractice')}</Text>
-      <View style={styles.actions}>
-        <SmallLink label={t('home.allDrills')} onPress={() => router.navigate('/practice')} />
+    <View style={[styles.card, styles.row]}>
+      <Trend
+        values={card.trend}
+        color={theme.colors.accent}
+        line={theme.colors.line}
+        label={tp('home.trendA11y', { drill: tp(`drills.${card.drillId}.name`) })}
+      />
+      <View style={styles.flex}>
+        <Text variant="overline" tone="muted">
+          {tp('home.lastPractice', { when })}
+        </Text>
+        <Text variant="title">
+          {tp('home.title', { drill: tp(`drills.${card.drillId}.name`), score: card.score })}
+        </Text>
+        <Text variant="caption" tone="muted">
+          {card.costliest !== null
+            ? `${versus} · ${tp('home.costliest', { double: label({ segment: card.costliest, multiplier: 2 }) })}`
+            : versus}
+        </Text>
+        <View style={styles.actions}>
+          <SmallLink label={tp('home.tryAgain')} onPress={again} />
+          <SmallLink label={t('home.allDrills')} onPress={() => router.navigate('/practice')} />
+        </View>
       </View>
     </View>
+  );
+}
+
+/** A tiny line of recent scores. */
+function Trend({
+  values,
+  color,
+  line,
+  label: a11y,
+}: {
+  values: number[];
+  color: string;
+  line: string;
+  label: string;
+}) {
+  const W = 84;
+  const H = 84;
+  const pad = 10;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = values.length === 1 ? W / 2 : pad + (i * (W - pad * 2)) / (values.length - 1);
+    const y = H - pad - ((v - min) / span) * (H - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return (
+    <Svg width={W} height={H} accessible accessibilityLabel={a11y}>
+      <Rect x={0} y={0} width={W} height={H} rx={10} fill={line} opacity={0.25} />
+      {pts.length > 1 ? (
+        <Polyline
+          points={pts.join(' ')}
+          fill="none"
+          stroke={color}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <Circle cx={W / 2} cy={H / 2} r={4} fill={color} />
+      )}
+    </Svg>
   );
 }
 

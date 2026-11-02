@@ -1,0 +1,93 @@
+{
+  "title": "Practice",
+  "drills": {
+    "bobs27": {
+      "name": "Bob's 27",
+      "short": "Three darts at every double, then the bull"
+    },
+    "countUp": {
+      "name": "Count Up",
+      "short": "Eight visits, as many points as you can"
+    },
+    "clock": {
+      "name": "Around the Clock",
+      "short": "1 to 20, then the bull, in as few darts as you can"
+    }
+  },
+  "pro": {
+    "t20": "100 darts at T20",
+    "halveIt": "Halve-It Sprint",
+    "shanghai": "Shanghai drill",
+    "bullseye": "Bullseye",
+    "checkouts": "Checkouts Practice",
+    "doublesLock": "Doubles Lock",
+    "catch40": "Catch 40",
+    "121": "121",
+    "hubbe": "Hubbe",
+    "randomCheckout": "Random Checkout",
+    "170": "170 Practice",
+    "jdc": "JDC Challenge",
+    "locked": "Ton Up Pro",
+    "lockedA11y": "{name}, part of Ton Up Pro"
+  },
+  "skills": {
+    "scoring": "Scoring",
+    "accuracy": "Accuracy",
+    "doubles": "Doubles and checkouts"
+  },
+  "suggested": {
+    "title": "Suggested for you",
+    "checkout": "Your checkout rate has been low in recent matches.",
+    "scoring": "Your scoring has been low in recent matches.",
+    "accuracy": "Keep your accuracy sharp.",
+    "start": "A good first drill: it shows where your doubles stand.",
+    "start_button": "Start"
+  },
+  "best": "Best {score}",
+  "noBest": "No score yet",
+  "lowerBetter": "{score} darts",
+  "drill": {
+    "pause": "Pause and go to Practice",
+    "round": "Round {n} of {of}",
+    "visit": "Visit {n} of {of}",
+    "score": "Score",
+    "best": "Best {score}",
+    "toBeat": "{gap} to beat your best",
+    "aheadOfBest": "{gap} ahead of your best",
+    "firstGo": "Your first go: this sets your best",
+    "darts": "Darts",
+    "target": "Target {target}",
+    "hit": "HIT",
+    "miss": "MISS",
+    "undo": "UNDO",
+    "next": "NEXT",
+    "stepsA11y": "Progress",
+    "stepA11y": "{label}: {state, select, done {hit} missed {missed} current {now} other {to come}}",
+    "boardA11y": "Dartboard with {target} outlined",
+    "hitA11y": "Hit {target}",
+    "missA11y": "Missed",
+    "buttonsMode": "Hit / Miss",
+    "scoreA11y": "{what} {score}"
+  },
+  "result": {
+    "done": "Drill complete",
+    "failed": "Out at {target}",
+    "newBest": "New personal best!",
+    "missedBest": "{gap} short of your best ({best})",
+    "matchedBest": "Level with your best",
+    "first": "Your first score: {score}",
+    "tryAgain": "Try again",
+    "close": "Done"
+  },
+  "home": {
+    "lastPractice": "Last practice · {when}",
+    "title": "{drill} · {score}",
+    "short": "{gap} short of your best ({best})",
+    "best": "New personal best",
+    "level": "Level with your best",
+    "first": "Your first score",
+    "costliest": "{double} missed with all three darts",
+    "tryAgain": "Try again",
+    "trendA11y": "Your recent {drill} scores"
+  }
+}

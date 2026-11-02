@@ -12,6 +12,7 @@ import {
   type GameResult,
   type StatLine,
 } from '@/domain/games';
+import { drillFor, type DrillId } from '@/domain/drills';
 import type { X01Settings, X01State } from '@/domain/games/x01';
 import { x01Stats, type X01Stats } from '@/domain/stats';
 import {
@@ -55,6 +56,14 @@ export function startGame(typeId: GameId, settings: unknown, players: PlayerRef[
   return id;
 }
 
+/** Starts a drill for one player (you). */
+export function startDrill(typeId: DrillId, settings: unknown, player: PlayerRef): string {
+  drillFor(typeId).init(settings, [player]);
+  const id = randomUUID();
+  createSession({ id, kind: 'drill', typeId, settings, players: [player], startedAt: now() });
+  return id;
+}
+
 export const startX01 = (settings: X01Settings, players: PlayerRef[]) =>
   startGame('x01', settings, players);
 
@@ -66,7 +75,11 @@ const refold = (
 export function loadGame(sessionId: string): LoadedGame {
   const session = getSession(sessionId);
   if (!session) throw new Error(`No session ${sessionId}`);
-  const def = gameFor(session.typeId);
+  // Drills are game definitions too (src/domain/drills/types.ts).
+  const def =
+    session.kind === 'drill'
+      ? (drillFor(session.typeId) as unknown as GameDefinition<unknown, unknown>)
+      : gameFor(session.typeId);
   const darts = loadDarts(sessionId);
   return { session, def, darts, state: refold({ session, def }, darts) };
 }

@@ -38,7 +38,7 @@ Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (
 
 ## Drill in progress (Bob's 27)
 
-Round x/21, the score and personal best with the gap to beat it, the target double highlighted on a muted board, three dart slots, a strip of 21 rounds coloured by hits, and large Hit and Miss buttons with Undo. A result card at the end with Try again.
+Round x/21, the score and personal best with the gap to beat it, the target double highlighted on a muted board, three dart slots, a strip of 21 rounds coloured by hits, and large Hit and Miss buttons with Undo (Board and Keypad input are a switch away). A result card at the end with the score against your best, the drill's stats (for Bob's 27, the costliest double) and Try again. Count Up uses the board or keypad with Next; the Around the Clock drill has Hit and Miss like Bob's 27.
 
 ## Practice tab
 

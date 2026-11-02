@@ -17,7 +17,7 @@ export const dartFor = (playerId: string, seq: number, hit: Hit): DartEvent => (
 });
 
 export function playHits<S, St>(
-  def: GameDefinition<S, St>,
+  def: Pick<GameDefinition<S, St>, 'init' | 'applyDart' | 'currentPlayer'>,
   settings: S,
   players: PlayerRef[],
   hits: Hit[],

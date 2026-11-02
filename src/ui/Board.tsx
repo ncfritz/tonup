@@ -10,9 +10,9 @@ import {
   segmentCentreDegrees,
   STEEL_TIP_RADII_MM as R,
 } from '@/domain/board';
-import { label, type Point } from '@/domain/darts';
+import { BULL, label, type Point, type Target } from '@/domain/darts';
 
-import { ringWedges } from './boardPaths';
+import { ringWedges, wedgePath } from './boardPaths';
 import { Text } from './Text';
 
 /** Board space in the drawing: ±200 mm around the bull, the number ring at 185 mm. */
@@ -129,6 +129,25 @@ function Markers({
   );
 }
 
+/** An outline around a target's area: the drill's double, the next number. */
+function Highlight({ target, scale }: { target: Target; scale: number }) {
+  const { theme } = useUnistyles();
+  const stroke = { stroke: theme.colors.accent, strokeWidth: 3 / scale, fill: 'none' } as const;
+  if (target.segment === BULL) {
+    return (
+      <Circle cx={0} cy={0} r={target.multiplier === 2 ? R.innerBull : R.outerBull} {...stroke} />
+    );
+  }
+  const deg = segmentCentreDegrees(target.segment);
+  const [r1, r2] =
+    target.multiplier === 3
+      ? [R.trebleInner, R.trebleOuter]
+      : target.multiplier === 2
+        ? [R.doubleInner, R.doubleOuter]
+        : [R.outerBull, R.doubleInner];
+  return <Path d={wedgePath(0, 0, r1, r2, deg - 9, deg + 9)} {...stroke} />;
+}
+
 /**
  * The dartboard, drawn in board millimetres. With `onDart`, tap where a dart landed; hold and
  * drag to place it precisely with the loupe, then let go (docs/design/screens.md → Scoring).
@@ -139,6 +158,7 @@ export function Board({
   onDart,
   muted = false,
   markerRadius,
+  highlight,
   accessibilityLabel,
   accessibilityHint,
 }: {
@@ -149,6 +169,8 @@ export function Board({
   muted?: boolean;
   /** Marker radius in points (default 10). */
   markerRadius?: number;
+  /** Outline this target (drills). */
+  highlight?: Target | null;
   accessibilityLabel: string;
   accessibilityHint?: string;
 }) {
@@ -218,6 +240,7 @@ export function Board({
       >
         <BoardArt />
         {muted ? <Circle cx={0} cy={0} r={HALF} fill={theme.colors.bg} opacity={0.55} /> : null}
+        {highlight ? <Highlight target={highlight} scale={scale} /> : null}
         <Markers markers={markers} scale={scale} radius={markerRadius} />
       </Svg>
       {loupe && touch && aim ? (

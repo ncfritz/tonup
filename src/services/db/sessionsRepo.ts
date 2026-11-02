@@ -147,6 +147,22 @@ export function latestFinished(kind: 'game' | 'drill'): string | null {
   return row?.id ?? null;
 }
 
+/** Finished sessions of one type, newest first, with their results. */
+export function finishedOfType(
+  kind: 'game' | 'drill',
+  typeId: string,
+  limit = 500,
+): { id: string; endedAt: number; result: unknown }[] {
+  return db
+    .select({ id: sessions.id, endedAt: sessions.endedAt, result: sessions.result })
+    .from(sessions)
+    .where(and(eq(sessions.kind, kind), eq(sessions.typeId, typeId), isNotNull(sessions.endedAt)))
+    .orderBy(desc(sessions.endedAt))
+    .limit(limit)
+    .all()
+    .map((r) => ({ id: r.id, endedAt: r.endedAt!, result: parse(r.result) }));
+}
+
 /** Recent sessions, newest first. */
 export function recentSessions(limit = 20): string[] {
   return db

@@ -7,7 +7,7 @@ import type { GameDefinition } from './types';
  * after that many darts, which is how replay steps through a match.
  */
 export function fold<S, St>(
-  def: GameDefinition<S, St>,
+  def: Pick<GameDefinition<S, St>, 'init' | 'applyDart' | 'currentPlayer'>,
   settings: S,
   players: PlayerRef[],
   darts: readonly DartEvent[],
@@ -27,7 +27,7 @@ export function fold<S, St>(
  * the caller can drop the rest.
  */
 export function foldValid<S, St>(
-  def: GameDefinition<S, St>,
+  def: Pick<GameDefinition<S, St>, 'init' | 'applyDart' | 'currentPlayer'>,
   settings: S,
   players: PlayerRef[],
   darts: readonly DartEvent[],

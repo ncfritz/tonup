@@ -87,7 +87,7 @@ export const useGame = create<GameStore>((set, get) => ({
 }));
 
 /** Games whose visit totals are worth calling out. */
-const CALLS_TOTALS = new Set(['x01', 'shanghai']);
+const CALLS_TOTALS = new Set(['x01', 'shanghai', 'countUp']);
 
 /** Caller, haptics and the leg pause after a dart. */
 function announce(game: LoadedGame) {
@@ -96,6 +96,10 @@ function announce(game: LoadedGame) {
   if (!visit) return;
   const t = i18n.getFixedT('en', 'game');
   const over = game.def.result(game.state) !== null;
+  if (over && game.session.kind === 'drill') {
+    haptics.success();
+    return;
+  }
   if (visit.endsLeg || over) {
     haptics.success();
     call(over && game.session.typeId === 'x01' ? t('caller.gameShotMatch') : t('caller.gameShot'));

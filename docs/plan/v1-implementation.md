@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0–M5 in place (2026-11-02)
+- Status: Accepted; M0–M6 in place (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -100,7 +100,7 @@ There is no separate end-of-visit step: pressing Next with darts left records th
 
 State is rebuilt by folding the session's darts, so undo, editing any dart and replay are the same operation. Folding a whole match is cheap; the active game keeps its current state in Zustand and refolds only on edits.
 
-Drills use the same shape (`DrillDefinition`) with a score and personal-best rule.
+Drills use the same shape (`DrillDefinition`, `src/domain/drills`) plus a score, which way is better (Bob's 27 and Count Up higher, the Around the Clock drill fewer darts), a progress strip and an early-out flag. They are stored as sessions of kind `drill` for one player (you), and a drill's score is its result, so personal bests are a scan of finished sessions. The suggested drill is a rule over your last five X01 matches: checkout rate under 25% suggests Bob's 27, an average under 45 suggests Count Up, otherwise Around the Clock; with no matches yet it suggests Bob's 27.
 
 Every game also reports its visits in one shape (`visits`) and its summary lines (`stats`), so the scoring screen, caller, undo, replay, summary and the Last match card handle any game. A `ScoreboardView` can carry a game-specific `detail` (Cricket's marks grid) and a `round`; rows carry a `note` (Around the Clock's target, a Killer's number). Single-game games (everything but X01) report leg 0 throughout; legs for Cricket can come later.
 
@@ -201,4 +201,4 @@ Still open:
 3. Finish M0: run the scaffold on a phone (`pnpm install`, then `pnpm ios`) and check the tabs.
 4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
 5. Play a best-of-5 against the bot on a phone with a few corrections, then replay it (the M3 and M4 done-whens).
-6. Try Cricket, Around the Clock, Shanghai and Killer on a phone, then start M6 (base practice).
+6. Try the new games and the three drills on a phone, then start M7 (History tab and heatmap).

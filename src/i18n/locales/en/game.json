@@ -249,6 +249,12 @@
     "shanghais": "Shanghais",
     "livesTaken": "Lives taken",
     "livesLeft": "Lives left",
-    "dartsToKiller": "Darts to Killer"
+    "dartsToKiller": "Darts to Killer",
+    "drillScore": "Score",
+    "doublesRate": "Doubles hit",
+    "roundsPlayed": "Rounds played",
+    "costliestDouble": "Costliest double",
+    "bestVisit": "Best visit",
+    "dartsToFinish": "Darts to finish"
   }
 }
