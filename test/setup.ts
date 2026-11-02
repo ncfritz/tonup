@@ -28,3 +28,7 @@ jest.mock('expo-crypto', () => ({
 
 // No native SQLite in tests. Tests that need a database mock this with test/sqlite.ts.
 jest.mock('@/services/db/client', () => ({ db: {}, sqlite: {}, DATABASE_NAME: 'test.db' }));
+
+// Native modules with nothing to do in tests.
+jest.mock('expo-speech', () => ({ speak: jest.fn(), stop: jest.fn() }));
+jest.mock('expo-keep-awake', () => ({ useKeepAwake: () => {} }));

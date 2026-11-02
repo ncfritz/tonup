@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import type { PlayerRef } from '@/domain/darts';
+import type { X01Settings } from '@/domain/games/x01';
 import type { ThemeId } from '@/theme/themes';
 
 export type AppearanceSetting = 'system' | 'light' | 'dark';
@@ -9,12 +11,20 @@ export interface Settings {
   theme: ThemeId;
   appearance: AppearanceSetting;
   haptics: boolean;
+  /** The caller reads out each visit (expo-speech, on the phone). */
+  caller: boolean;
+  /** The last X01 settings and line-up, for New game and Quick start. */
+  lastX01: X01Settings | null;
+  lastLineup: PlayerRef[] | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'pro',
   appearance: 'system',
   haptics: true,
+  caller: true,
+  lastX01: null,
+  lastLineup: null,
 };
 
 type Persist = (key: string, value: unknown) => void;
@@ -29,6 +39,18 @@ const valid: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   theme: (v): v is ThemeId => v === 'pro',
   appearance: (v): v is AppearanceSetting => v === 'system' || v === 'light' || v === 'dark',
   haptics: (v): v is boolean => typeof v === 'boolean',
+  caller: (v): v is boolean => typeof v === 'boolean',
+  lastX01: (v): v is X01Settings | null =>
+    v === null ||
+    (typeof v === 'object' &&
+      typeof (v as X01Settings).startScore === 'number' &&
+      typeof (v as X01Settings).legs === 'number' &&
+      typeof (v as X01Settings).sets === 'number'),
+  lastLineup: (v): v is PlayerRef[] | null =>
+    v === null ||
+    (Array.isArray(v) &&
+      v.length > 0 &&
+      v.every((p) => typeof p?.id === 'string' && typeof p?.name === 'string')),
 };
 
 interface SettingsStore extends Settings {

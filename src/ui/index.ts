@@ -7,3 +7,8 @@ export { Screen } from './Screen';
 export { SegmentedControl, type Segment } from './SegmentedControl';
 export { TAB_BAR_HEIGHT, TAB_BAR_SPACE, TabBar } from './TabBar';
 export { Text } from './Text';
+export { Board, type BoardMarker } from './Board';
+export { Header } from './Header';
+export { Keypad } from './Keypad';
+export { DartSlots, Scoreboard } from './Scoreboard';
+export { Section } from './Section';

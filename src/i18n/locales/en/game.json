@@ -1,0 +1,125 @@
+{
+  "players": {
+    "you": "You",
+    "bot": "DartBot {level}",
+    "botLevel": "Level {level} · averages about {average}",
+    "guest": "Player {n}"
+  },
+  "newGame": {
+    "title": "New game",
+    "game": "Game",
+    "start": "Start score",
+    "players": "Players",
+    "throwsFirst": "throws first",
+    "addPlayer": "Add player",
+    "addBot": "Add bot",
+    "remove": "Remove {name}",
+    "nameLabel": "Name for player {n}",
+    "easier": "Easier",
+    "harder": "Harder",
+    "format": "Match",
+    "legs": "Best of {count, plural, one {# leg} other {# legs}}",
+    "sets": "Sets",
+    "setsOff": "No sets",
+    "setsOf": "Best of {count}",
+    "in": "Start",
+    "out": "Finish",
+    "straightIn": "Straight in",
+    "doubleIn": "Double in",
+    "masterIn": "Master in",
+    "doubleOut": "Double out",
+    "masterOut": "Master out",
+    "straightOut": "Straight out",
+    "continue": "Start game",
+    "maxPlayers": "Up to {max} players"
+  },
+  "header": {
+    "pause": "Pause and go to Play",
+    "title": "{start} · {format} · Leg {leg}",
+    "titleSets": "{start} · Set {set} · Leg {leg}",
+    "input": "Input method",
+    "board": "Board",
+    "keypad": "Keypad",
+    "visits": "Visits"
+  },
+  "board": {
+    "a11y": "Dartboard",
+    "hint": "Tap where your dart landed, or hold and drag to place it precisely. Switch to Keypad to enter scores without the board."
+  },
+  "keypad": {
+    "ring": "Ring",
+    "single": "Single",
+    "double": "Double",
+    "treble": "Treble",
+    "outerBull": "Outer bull 25",
+    "bull": "Bull 50"
+  },
+  "scoreboard": {
+    "rowA11y": "{name}, {score} left, {legs, plural, one {# leg} other {# legs}}{showSets, select, yes {, {sets, plural, one {# set} other {# sets}}} other {}}"
+  },
+  "strip": {
+    "require": "You require {score}",
+    "bust": "Bust",
+    "gameShot": "Game shot",
+    "doubleToStart": "Hit a double to start",
+    "noFinish": "{score} · no finish yet"
+  },
+  "slots": {
+    "dartA11y": "Dart {n}: {dart}",
+    "emptyA11y": "Dart {n}: not thrown",
+    "editHint": "Double tap to change this dart",
+    "bust": "BUST"
+  },
+  "actions": {
+    "undo": "UNDO",
+    "miss": "MISS",
+    "next": "NEXT",
+    "nextLeg": "Next leg",
+    "summary": "Match summary"
+  },
+  "botLine": "{name}: {darts} · {total}",
+  "botThinking": "{name} is throwing…",
+  "legSummary": {
+    "title": "Leg {leg} to {name}",
+    "body": "{darts} darts · checked out {checkout}",
+    "average": "Leg average {average}"
+  },
+  "edit": {
+    "title": "Change dart {n}",
+    "current": "Was {dart}",
+    "dropWarning": "{count, plural, one {This changes whose turn it is, so the dart after it will be removed.} other {This changes whose turn it is, so the # darts after it will be removed.}}",
+    "confirm": "Change it",
+    "cancel": "Cancel",
+    "missKey": "Miss",
+    "visitsTitle": "This leg's visits",
+    "visitRow": "{name}: {darts} · {total}",
+    "close": "Close"
+  },
+  "caller": {
+    "noScore": "No score",
+    "gameShot": "Game shot",
+    "gameShotMatch": "Game shot, and the match",
+    "total": "{total}",
+    "oneEighty": "One hundred and eighty!"
+  },
+  "summary": {
+    "title": "Match summary",
+    "winner": "{name} wins",
+    "score": "{score}",
+    "average": "3-dart average",
+    "first9": "First 9 average",
+    "checkout": "Checkout",
+    "checkoutValue": "{rate}% ({hits}/{attempts})",
+    "none": "—",
+    "highest": "Highest checkout",
+    "tons": "100+ / 140+ / 180",
+    "bestLeg": "Best leg",
+    "bestLegValue": "{darts} darts",
+    "rematch": "Rematch",
+    "done": "Done"
+  },
+  "home": {
+    "newGame": "New game",
+    "resume": "Resume game"
+  }
+}

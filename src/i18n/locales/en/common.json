@@ -31,7 +31,8 @@
     "dark": "Dark",
     "haptics": "Haptics",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "caller": "Caller"
   },
   "error": {
     "title": "Something went wrong",

@@ -48,6 +48,9 @@ export default function RootLayout() {
           <ThemedStatusBar />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="new-game" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="game/[sessionId]" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="summary/[sessionId]" options={{ gestureEnabled: false }} />
           </Stack>
         </Bootstrap>
       </DatabaseProvider>
