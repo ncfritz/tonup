@@ -6,7 +6,8 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { drawPoint } from '@/domain/board';
 import { label } from '@/domain/darts';
-import { x01Legs } from '@/domain/games/x01';
+import { replayLegs } from '@/domain/games';
+import { rowFormat } from '@/features/game/format';
 import { loadGame } from '@/features/game/session';
 import { Board, Header, Pressable, Screen, Text, type BoardMarker } from '@/ui';
 
@@ -19,8 +20,12 @@ export default function Replay() {
   const { t } = useTranslation('game');
   const { theme } = useUnistyles();
   const game = useMemo(() => loadGame(sessionId), [sessionId]);
-  const players = game.state.players;
-  const legs = useMemo(() => x01Legs(game.state), [game]);
+  const players = game.session.players;
+  const legs = useMemo(
+    () => replayLegs(game.def, game.session.settings, players, game.darts),
+    [game, players],
+  );
+  const format = rowFormat(t, game.session.typeId);
   const [legIndex, setLegIndex] = useState(() =>
     Math.min(Math.max(0, Number(legParam ?? legs.length - 1) || 0), Math.max(0, legs.length - 1)),
   );
@@ -36,6 +41,7 @@ export default function Replay() {
   };
   const step = (d: number) => setAt((a) => Math.min(frames.length - 1, Math.max(0, a + d)));
   const frame = frames[at];
+  const maxTotal = Math.max(1, ...frames.map((f) => f.total));
 
   // Darts up to the chosen visit: earlier visits faded, the chosen one numbered.
   const markers: BoardMarker[] = frames
@@ -55,7 +61,7 @@ export default function Replay() {
     frames.slice(0, index + 1).filter((f) => f.player === frames[index]!.player).length;
 
   const title = leg
-    ? game.state.settings.sets > 1
+    ? legs.some((l) => l.set > 0)
       ? t('replay.titleSets', { set: leg.set + 1, leg: legIndex + 1 })
       : t('replay.title', { leg: legIndex + 1 })
     : t('summary.replay');
@@ -92,22 +98,26 @@ export default function Replay() {
       ) : (
         <>
           <View style={styles.scores}>
-            {players.map((p, i) => (
-              <View
-                key={p.id}
-                style={[styles.score, frame.player === i && styles.scoreActive]}
-                accessible
-                accessibilityLabel={t('replay.scoreA11y', {
-                  name: p.name,
-                  score: frame.remaining[i],
-                })}
-              >
-                <Text variant="overline" tone="muted" numberOfLines={1}>
-                  {p.name}
-                </Text>
-                <Text variant="heading">{frame.remaining[i]}</Text>
-              </View>
-            ))}
+            {frame.rows.map((r, i) => {
+              const f = format?.(r);
+              return (
+                <View
+                  key={r.playerId}
+                  style={[styles.score, frame.player === i && styles.scoreActive]}
+                  accessible
+                  accessibilityLabel={
+                    f?.a11y ?? t('replay.scoreA11y', { name: r.name, score: r.score })
+                  }
+                >
+                  <Text variant="overline" tone="muted" numberOfLines={1}>
+                    {r.name}
+                  </Text>
+                  <Text variant="heading" numberOfLines={1} adjustsFontSizeToFit>
+                    {f?.big ?? r.score}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
           <View style={styles.board} onLayout={onLayout}>
             {size > 0 ? (
@@ -133,9 +143,9 @@ export default function Replay() {
             <Text variant="heading" tone={frame.bust ? 'danger' : 'accent'}>
               {frame.bust
                 ? t('slots.bust')
-                : frame.checkout
-                  ? t('replay.checkout', { score: frame.scored })
-                  : frame.scored}
+                : frame.endsLeg
+                  ? t('replay.checkout', { score: frame.total })
+                  : frame.total}
             </Text>
           </View>
           <ScrollView
@@ -152,7 +162,7 @@ export default function Replay() {
                 accessibilityLabel={t('replay.chipA11y', {
                   n: i + 1,
                   name: players[f.player]!.name,
-                  total: f.bust ? t('slots.bust') : f.scored,
+                  total: f.bust ? t('slots.bust') : f.total,
                 })}
                 style={[styles.chip, i === at && styles.chipOn]}
                 onPress={() => setAt(i)}
@@ -162,7 +172,7 @@ export default function Replay() {
                   style={[
                     styles.chipBar,
                     {
-                      height: 6 + Math.min(1, f.scored / 180) * 30,
+                      height: 6 + Math.min(1, f.total / maxTotal) * 30,
                       backgroundColor: f.bust
                         ? theme.colors.danger
                         : f.player === 0

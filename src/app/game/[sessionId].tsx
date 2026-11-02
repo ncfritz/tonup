@@ -7,11 +7,12 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import { hitAt } from '@/domain/board';
 import { label, miss, type DartEvent, type Point } from '@/domain/darts';
-import { games } from '@/domain/games';
 import { EditDartSheet } from '@/features/game/components/EditDartSheet';
 import { LegSummary } from '@/features/game/components/LegSummary';
 import { VisitsSheet } from '@/features/game/components/VisitsSheet';
+import { headerTitle, rowFormat } from '@/features/game/format';
 import { bestOf } from '@/features/game/lineup';
+import { x01State } from '@/features/game/session';
 import { botUp, dartsText, useGame } from '@/features/game/store';
 import { useBotTurns } from '@/features/game/useBotTurns';
 import { haptics } from '@/services/haptics';
@@ -47,7 +48,7 @@ export default function GameScreen() {
     return () => useGame.getState().close();
   }, [sessionId]);
 
-  const finished = !!game && games.x01.result(game.state) !== null;
+  const finished = !!game && game.def.result(game.state) !== null;
   useEffect(() => {
     if (finished) {
       router.replace({ pathname: '/summary/[sessionId]', params: { sessionId } });
@@ -59,17 +60,21 @@ export default function GameScreen() {
   if (!game || game.session.id !== sessionId)
     return <Screen edges={['top', 'bottom']}>{null}</Screen>;
 
-  const state = game.state;
-  const s = state.settings;
-  const view = games.x01.view(state);
-  const last = state.visits[state.visits.length - 1];
-  const current = state.visits.length && last && !last.done ? last : null;
-  const shown = current ?? (last && last.player !== state.current ? last : null);
+  const { def, state } = game;
+  const isX01 = game.session.typeId === 'x01';
+  const players = game.session.players;
+  const view = def.view(state);
+  const visits = def.visits(state);
+  const last = visits[visits.length - 1];
+  const up = def.currentPlayer(state);
+  const upIndex = up ? players.findIndex((p) => p.id === up.id) : -1;
+  const current = last && !last.done ? last : null;
+  const shown = current ?? (last && last.player !== upIndex ? last : null);
   const botLevel = botUp(game);
-  const humanTurn = botLevel === null && !legPause;
-  const lastBotVisit = [...state.visits]
+  const humanTurn = botLevel === null && !legPause && !!up;
+  const lastBotVisit = [...visits]
     .reverse()
-    .find((v) => state.players[v.player]?.botLevel !== undefined && v.done);
+    .find((v) => players[v.player]?.botLevel !== undefined && v.done);
 
   const throwHit = (
     point: Point | null,
@@ -80,7 +85,7 @@ export default function GameScreen() {
     haptics.light();
     useGame
       .getState()
-      .throwDart({ hit, point, source, intended: games.x01.targetFor(state) ?? undefined });
+      .throwDart({ hit, point, source, intended: def.targetFor(state) ?? undefined });
   };
 
   const markers: BoardMarker[] = (shown?.darts ?? [])
@@ -91,14 +96,23 @@ export default function GameScreen() {
     setArea({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
   const boardSize = Math.max(0, Math.min(area.w, area.h));
 
-  const title =
-    s.sets > 1
-      ? t('header.titleSets', { start: s.startScore, set: state.set + 1, leg: state.legInSet + 1 })
-      : t('header.title', {
-          start: s.startScore,
-          format: t('newGame.legs', { count: bestOf(s.legs) }),
-          leg: state.leg + 1,
-        });
+  let title = headerTitle(t, game, view);
+  if (isX01) {
+    const s = x01State(game);
+    title =
+      s.settings.sets > 1
+        ? t('header.titleSets', {
+            start: s.settings.startScore,
+            set: s.set + 1,
+            leg: s.legInSet + 1,
+          })
+        : t('header.title', {
+            start: s.settings.startScore,
+            format: t('newGame.legs', { count: bestOf(s.settings.legs) }),
+            leg: s.leg + 1,
+          });
+  }
+  const showSets = isX01 && x01State(game).settings.sets > 1;
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -119,10 +133,15 @@ export default function GameScreen() {
           </Pressable>
         }
       />
-      <Scoreboard view={view} showSets={s.sets > 1} />
+      <Scoreboard
+        view={view}
+        showLegs={isX01}
+        showSets={showSets}
+        format={rowFormat(t, game.session.typeId)}
+      />
       <DartSlots
         darts={(shown?.darts ?? []).map((d) => label(d.hit))}
-        total={shown && !shown.bust ? shown.scored : 0}
+        total={shown && !shown.bust ? shown.total : 0}
         bust={!!shown?.bust}
         onPressDart={(i) => {
           const d = shown?.darts[i];
@@ -139,9 +158,9 @@ export default function GameScreen() {
         ]}
       />
       <View style={styles.input} onLayout={onLayout}>
-        {legPause ? (
+        {legPause && isX01 ? (
           <LegSummary
-            state={state}
+            state={x01State(game)}
             onNext={() => useGame.getState().continueAfterLeg()}
             onUndo={() => useGame.getState().undo()}
           />
@@ -162,13 +181,13 @@ export default function GameScreen() {
         )}
       </View>
       <Text variant="caption" tone="muted" style={styles.botLine} accessibilityLiveRegion="polite">
-        {botLevel !== null
-          ? t('botThinking', { name: state.players[state.current]!.name })
+        {botLevel !== null && up
+          ? t('botThinking', { name: up.name })
           : lastBotVisit
             ? t('botLine', {
-                name: state.players[lastBotVisit.player]!.name,
+                name: players[lastBotVisit.player]!.name,
                 darts: dartsText(lastBotVisit.darts.map((d) => d.hit)),
-                total: lastBotVisit.bust ? t('slots.bust') : lastBotVisit.scored,
+                total: lastBotVisit.bust ? t('slots.bust') : lastBotVisit.total,
               })
             : ' '}
       </Text>

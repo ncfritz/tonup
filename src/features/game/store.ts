@@ -3,7 +3,6 @@
 import { create } from 'zustand';
 
 import { label, miss, type Hit, type Point } from '@/domain/darts';
-import { games } from '@/domain/games';
 import i18n from '@/i18n';
 import { call } from '@/services/caller';
 import { haptics } from '@/services/haptics';
@@ -43,23 +42,24 @@ export const useGame = create<GameStore>((set, get) => ({
   legPause: false,
   open: (sessionId) => {
     const game = loadGame(sessionId);
-    const last = game.state.visits[game.state.visits.length - 1];
+    const visits = game.def.visits(game.state);
+    const last = visits[visits.length - 1];
     // Reopened right after a checkout: show that leg's summary again.
-    set({ game, legPause: !!last?.checkout && game.state.winner === null });
+    set({ game, legPause: !!last?.endsLeg && game.def.result(game.state) === null });
   },
   close: () => set({ game: null, legPause: false }),
   throwDart: (input) => {
     const { game, legPause } = get();
     if (!game || legPause) return;
-    const before = game.state;
     const next = recordDart(game, input);
     set({ game: next });
-    announce(before, next);
+    announce(next);
   },
   finishVisit: () => {
     const { game } = get();
     if (!game) return;
-    const visit = game.state.visits[game.state.visits.length - 1];
+    const visits = game.def.visits(game.state);
+    const visit = visits[visits.length - 1];
     const thrown = visit && !visit.done ? visit.darts.length : 0;
     if (thrown === 0) return;
     for (let i = thrown; i < 3; i++)
@@ -86,16 +86,20 @@ export const useGame = create<GameStore>((set, get) => ({
   continueAfterLeg: () => set({ legPause: false }),
 }));
 
+/** Games whose visit totals are worth calling out. */
+const CALLS_TOTALS = new Set(['x01', 'shanghai']);
+
 /** Caller, haptics and the leg pause after a dart. */
-function announce(_before: LoadedGame['state'], after: LoadedGame) {
-  const state = after.state;
-  const visit = state.visits[state.visits.length - 1];
+function announce(game: LoadedGame) {
+  const visits = game.def.visits(game.state);
+  const visit = visits[visits.length - 1];
   if (!visit) return;
   const t = i18n.getFixedT('en', 'game');
-  if (visit.checkout) {
+  const over = game.def.result(game.state) !== null;
+  if (visit.endsLeg || over) {
     haptics.success();
-    call(state.winner !== null ? t('caller.gameShotMatch') : t('caller.gameShot'));
-    if (state.winner === null) useGame.setState({ legPause: true });
+    call(over && game.session.typeId === 'x01' ? t('caller.gameShotMatch') : t('caller.gameShot'));
+    if (!over) useGame.setState({ legPause: true });
     return;
   }
   if (!visit.done) return;
@@ -104,7 +108,8 @@ function announce(_before: LoadedGame['state'], after: LoadedGame) {
     call(t('caller.noScore'));
     return;
   }
-  call(visit.scored === 180 ? t('caller.oneEighty') : t('caller.total', { total: visit.scored }));
+  if (!CALLS_TOTALS.has(game.session.typeId)) return;
+  call(visit.total === 180 ? t('caller.oneEighty') : t('caller.total', { total: visit.total }));
 }
 
 /** "T20 5 1" for a visit's darts. */
@@ -113,6 +118,6 @@ export const dartsText = (hits: Hit[]) => hits.map(label).join(' ');
 /** Whether the player at the oche is a bot. */
 export function botUp(game: LoadedGame | null): number | null {
   if (!game) return null;
-  const p = games.x01.currentPlayer(game.state);
+  const p = game.def.currentPlayer(game.state);
   return p?.botLevel ?? null;
 }

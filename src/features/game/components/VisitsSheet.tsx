@@ -20,9 +20,10 @@ export function VisitsSheet({
 }) {
   const { t } = useTranslation('game');
   const game = useGame((s) => s.game);
-  const state = game?.state;
-  const leg = state ? (state.visits[state.visits.length - 1]?.leg ?? state.leg) : 0;
-  const visits = state ? state.visits.filter((v) => v.leg === leg) : [];
+  const all = game ? game.def.visits(game.state) : [];
+  const leg = all[all.length - 1]?.leg ?? 0;
+  const visits = all.filter((v) => v.leg === leg);
+  const players = game?.session.players ?? [];
   return (
     <Modal
       visible={visible}
@@ -36,7 +37,7 @@ export function VisitsSheet({
         </Text>
         <ScrollView contentContainerStyle={styles.list}>
           {[...visits].reverse().map((v) => {
-            const player = state!.players[v.player]!;
+            const player = players[v.player]!;
             return (
               <View key={v.darts[0]!.id} style={styles.visit}>
                 <Text variant="bodyStrong" style={styles.name} numberOfLines={1}>
@@ -55,7 +56,7 @@ export function VisitsSheet({
                   </Pressable>
                 ))}
                 <Text variant="value" tone={v.bust ? 'danger' : 'accent'} style={styles.total}>
-                  {v.bust ? t('slots.bust') : v.scored}
+                  {v.bust ? t('slots.bust') : v.total}
                 </Text>
               </View>
             );

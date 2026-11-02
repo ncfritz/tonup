@@ -8,7 +8,7 @@ import { X01_DEFAULTS, x01Legs } from '@/domain/games/x01';
 import { resetTestDb } from '../../../test/sqlite';
 import Replay from '../../app/replay/[sessionId]';
 
-import { loadGame, recordDart, startX01 } from './session';
+import { loadGame, recordDart, startX01, x01State } from './session';
 
 jest.mock('@/services/db/client', () => jest.requireActual('../../../test/sqlite').testClient());
 let mockParams: Record<string, string> = {};
@@ -25,9 +25,9 @@ function playMatch(): string {
   const id = startX01({ ...X01_DEFAULTS, legs: 2 }, [YOU, BOT]);
   let game = loadGame(id);
   const rng = seeded(21);
-  while (games.x01.currentPlayer(game.state)) {
-    const up = games.x01.currentPlayer(game.state)!;
-    const t = botThrow(games.x01, game.state, up.botLevel ?? 5, rng)!;
+  while (games.x01.currentPlayer(x01State(game))) {
+    const up = games.x01.currentPlayer(x01State(game))!;
+    const t = botThrow(games.x01, x01State(game), up.botLevel ?? 5, rng)!;
     // "You" use the keypad (no position), the bot lands at a point.
     game = recordDart(
       game,
@@ -48,7 +48,7 @@ describe('Replay', () => {
     const id = playMatch();
     mockParams = { sessionId: id };
     await render(<Replay />);
-    const legs = x01Legs(loadGame(id).state);
+    const legs = x01Legs(x01State(loadGame(id)));
     expect(screen.getByText(`Replay · Leg ${legs.length}`)).toBeOnTheScreen();
     const last = legs[legs.length - 1]!.frames.at(-1)!;
     expect(screen.getByText(`Checkout ${last.scored}`)).toBeOnTheScreen();
@@ -59,12 +59,18 @@ describe('Replay', () => {
     const game = loadGame(id);
     mockParams = { sessionId: id, leg: '0' };
     await render(<Replay />);
-    const frames = x01Legs(game.state)[0]!.frames;
+    const frames = x01Legs(x01State(game))[0]!.frames;
     // Step back to the third visit of leg 1.
     for (let i = frames.length - 1; i > 2; i--)
       await fireEvent.press(screen.getByTestId('replay-prev'));
     const thrown = frames.slice(0, 3).reduce((n, f) => n + f.darts.length, 0);
-    const then = fold(games.x01, game.state.settings, game.state.players, game.darts, thrown);
+    const then = fold(
+      games.x01,
+      x01State(game).settings,
+      x01State(game).players,
+      game.darts,
+      thrown,
+    );
     expect(screen.getByLabelText(`You, ${then.remaining[0]} left`)).toBeOnTheScreen();
     expect(screen.getByLabelText(`DartBot 4, ${then.remaining[1]} left`)).toBeOnTheScreen();
   });

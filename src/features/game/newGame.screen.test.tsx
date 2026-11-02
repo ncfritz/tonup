@@ -9,13 +9,14 @@ import { useSettings } from '../settings/store';
 jest.mock('@/services/db/client', () => jest.requireActual('../../../test/sqlite').testClient());
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), navigate: jest.fn(), back: jest.fn(), push: jest.fn() },
+  useLocalSearchParams: () => ({}),
 }));
 const router = jest.requireMock<{ router: { replace: jest.Mock } }>('expo-router').router;
 
 beforeEach(async () => {
   await resetTestDb();
   router.replace.mockClear();
-  useSettings.setState({ lastX01: null, lastLineup: null });
+  useSettings.setState({ lastGameId: 'x01', gameSettings: {}, lastLineup: null });
 });
 
 describe('New game', () => {
@@ -34,7 +35,7 @@ describe('New game', () => {
       ],
     });
     // Remembered for next time.
-    expect(useSettings.getState().lastX01).toMatchObject({ legs: 3 });
+    expect(useSettings.getState().gameSettings.x01).toMatchObject({ legs: 3 });
   });
 
   it('changes the bot level and adds a guest, up to six players', async () => {

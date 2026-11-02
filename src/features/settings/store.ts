@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import type { PlayerRef } from '@/domain/darts';
-import type { X01Settings } from '@/domain/games/x01';
+import type { GameId } from '@/domain/games';
 import type { ThemeId } from '@/theme/themes';
 
 export type AppearanceSetting = 'system' | 'light' | 'dark';
@@ -13,8 +13,9 @@ export interface Settings {
   haptics: boolean;
   /** The caller reads out each visit (expo-speech, on the phone). */
   caller: boolean;
-  /** The last X01 settings and line-up, for New game and Quick start. */
-  lastX01: X01Settings | null;
+  /** The last game played, its settings per game, and the line-up, for New game and Quick start. */
+  lastGameId: GameId;
+  gameSettings: Partial<Record<GameId, unknown>>;
   lastLineup: PlayerRef[] | null;
 }
 
@@ -23,7 +24,8 @@ export const DEFAULT_SETTINGS: Settings = {
   appearance: 'system',
   haptics: true,
   caller: true,
-  lastX01: null,
+  lastGameId: 'x01',
+  gameSettings: {},
   lastLineup: null,
 };
 
@@ -40,12 +42,10 @@ const valid: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   appearance: (v): v is AppearanceSetting => v === 'system' || v === 'light' || v === 'dark',
   haptics: (v): v is boolean => typeof v === 'boolean',
   caller: (v): v is boolean => typeof v === 'boolean',
-  lastX01: (v): v is X01Settings | null =>
-    v === null ||
-    (typeof v === 'object' &&
-      typeof (v as X01Settings).startScore === 'number' &&
-      typeof (v as X01Settings).legs === 'number' &&
-      typeof (v as X01Settings).sets === 'number'),
+  lastGameId: (v): v is GameId =>
+    v === 'x01' || v === 'cricket' || v === 'clock' || v === 'shanghai' || v === 'killer',
+  gameSettings: (v): v is Partial<Record<GameId, unknown>> =>
+    typeof v === 'object' && v !== null && !Array.isArray(v),
   lastLineup: (v): v is PlayerRef[] | null =>
     v === null ||
     (Array.isArray(v) &&

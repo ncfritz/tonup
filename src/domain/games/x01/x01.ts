@@ -3,7 +3,15 @@
 // darts left in a visit records misses for them; a bust ends the visit on its own.
 import { checkoutRoute, setupTarget, type OutRule } from '../../checkout';
 import type { DartEvent, Hit, PlayerRef, Target } from '../../darts';
-import type { GameDefinition, GameResult, ScoreboardStatus, ScoreboardView } from '../types';
+import { x01Stats } from '../../stats/x01';
+import type {
+  GameDefinition,
+  GameResult,
+  GameVisit,
+  ScoreboardStatus,
+  ScoreboardView,
+  StatLine,
+} from '../types';
 
 export type InRule = 'straight' | 'double' | 'master';
 
@@ -247,7 +255,34 @@ function view(state: X01State): ScoreboardView {
     status,
     set: state.set,
     leg: state.legInSet,
+    round: null,
   };
+}
+
+function visits(state: X01State): GameVisit[] {
+  return state.visits.map((v) => ({
+    player: v.player,
+    darts: v.darts,
+    total: v.bust ? 0 : v.scored,
+    bust: v.bust,
+    done: v.done,
+    leg: v.leg,
+    endsLeg: v.checkout,
+  }));
+}
+
+function stats(state: X01State, playerId: string): StatLine[] {
+  const s = x01Stats(state, playerId);
+  return [
+    { key: 'average', value: s.average, format: 'one' },
+    { key: 'first9', value: s.first9Average, format: 'one' },
+    { key: 'checkoutRate', value: s.checkoutRate, format: 'pct' },
+    { key: 'highestCheckout', value: s.highestCheckout || null, format: 'int' },
+    { key: 'tons', value: s.tons, format: 'int' },
+    { key: 'ton40s', value: s.ton40s, format: 'int' },
+    { key: 'oneEighties', value: s.oneEighties, format: 'int' },
+    { key: 'bestLeg', value: s.bestLeg, format: 'int' },
+  ];
 }
 
 function result(state: X01State): GameResult | null {
@@ -269,4 +304,6 @@ export const x01: GameDefinition<X01Settings, X01State> = {
   view,
   targetFor,
   result,
+  visits,
+  stats,
 };

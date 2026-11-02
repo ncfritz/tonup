@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0–M4 in place (2026-11-02)
+- Status: Accepted; M0–M5 in place (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -102,6 +102,10 @@ State is rebuilt by folding the session's darts, so undo, editing any dart and r
 
 Drills use the same shape (`DrillDefinition`) with a score and personal-best rule.
 
+Every game also reports its visits in one shape (`visits`) and its summary lines (`stats`), so the scoring screen, caller, undo, replay, summary and the Last match card handle any game. A `ScoreboardView` can carry a game-specific `detail` (Cricket's marks grid) and a `round`; rows carry a `note` (Around the Clock's target, a Killer's number). Single-game games (everything but X01) report leg 0 throughout; legs for Cricket can come later.
+
+M5 defaults, from the rules doc: Cricket Standard with a 20-round limit (best points, then marks, at the limit); Around the Clock any ring, no skipping, finishing on the bull; Shanghai 7 rounds with the instant win; Killer 3 lives, numbers drawn at random when the game starts, and a Killer hitting their own double loses a life. A Shanghai can end level, so a game result's winner can be null (a draw).
+
 ### Checkouts
 
 Routes for 2–170 (best route for 1, 2 and 3 darts left, and for master and straight out) are worked out in `src/domain/checkout` by a cost model that follows the standard charts: fewest darts, T20 and T19 setups, D20/D16 over small and odd doubles, and a setup that still leaves a finish if the treble drops into its single. Where a chart prefers another route, a hand-written override wins; the table is reviewed against a published chart before M3. A preferred-double setting breaks ties. The mockups' search-based routes are not used.
@@ -197,4 +201,4 @@ Still open:
 3. Finish M0: run the scaffold on a phone (`pnpm install`, then `pnpm ios`) and check the tabs.
 4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
 5. Play a best-of-5 against the bot on a phone with a few corrections, then replay it (the M3 and M4 done-whens).
-6. Start M5 (Cricket, Around the Clock, Shanghai and Killer).
+6. Try Cricket, Around the Clock, Shanghai and Killer on a phone, then start M6 (base practice).

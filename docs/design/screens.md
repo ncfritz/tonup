@@ -26,7 +26,7 @@ On the Play tab, tapping Play again does nothing; Quick start's Start button pla
 
 ## Play (home)
 
-Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (once the camera exists); a **Game in progress** card with Resume when a game is unfinished; **Quick start** with your usual game ("501 vs DartBot 4 · Best of 5 legs · double out") and a Start button; game shortcuts (X01, Cricket, Killer, All games; Cricket and Killer join with M5); **Pick up where you left off**: Last match (mini heatmap, result, averages, Replay and Rematch) and Last practice (score trend, gap to your best, the double that cost you most, Try again and All drills).
+Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (once the camera exists); a **Game in progress** card with Resume when a game is unfinished; **Quick start** with your usual game ("501 vs DartBot 4 · Best of 5 legs · double out") and a Start button; game shortcuts (X01, Cricket, Killer, each opening New game on that game, and All games); **Pick up where you left off**: Last match (mini heatmap, result, averages, Replay and Rematch) and Last practice (score trend, gap to your best, the double that cost you most, Try again and All drills).
 
 ## Scoring (phone)
 

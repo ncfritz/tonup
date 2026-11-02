@@ -3,7 +3,15 @@
 import { randomUUID } from 'expo-crypto';
 
 import type { DartEvent, DartSource, Hit, PlayerRef, Point, Target } from '@/domain/darts';
-import { fold, foldValid, games, type GameResult } from '@/domain/games';
+import {
+  fold,
+  foldValid,
+  gameFor,
+  type GameDefinition,
+  type GameId,
+  type GameResult,
+  type StatLine,
+} from '@/domain/games';
 import type { X01Settings, X01State } from '@/domain/games/x01';
 import { x01Stats, type X01Stats } from '@/domain/stats';
 import {
@@ -20,9 +28,14 @@ import {
 
 export interface LoadedGame {
   session: SessionRecord;
+  def: GameDefinition<unknown, unknown>;
   darts: DartEvent[];
-  state: X01State;
+  /** The game's own state; X01 screens read it as X01State. */
+  state: unknown;
 }
+
+/** The state of an X01 game (only call for `typeId === 'x01'`). */
+export const x01State = (game: LoadedGame) => game.state as X01State;
 
 /** What the scoring screen knows about a dart; the session fills in the rest. */
 export interface DartInput {
@@ -34,24 +47,33 @@ export interface DartInput {
 
 const now = () => Date.now();
 
-export function startX01(settings: X01Settings, players: PlayerRef[]): string {
+export function startGame(typeId: GameId, settings: unknown, players: PlayerRef[]): string {
+  // Check the settings and line-up before anything is stored.
+  gameFor(typeId).init(settings, players);
   const id = randomUUID();
-  createSession({ id, kind: 'game', typeId: 'x01', settings, players, startedAt: now() });
+  createSession({ id, kind: 'game', typeId, settings, players, startedAt: now() });
   return id;
 }
+
+export const startX01 = (settings: X01Settings, players: PlayerRef[]) =>
+  startGame('x01', settings, players);
+
+const refold = (
+  game: { session: SessionRecord; def: GameDefinition<unknown, unknown> },
+  darts: DartEvent[],
+) => fold(game.def, game.session.settings, game.session.players, darts);
 
 export function loadGame(sessionId: string): LoadedGame {
   const session = getSession(sessionId);
   if (!session) throw new Error(`No session ${sessionId}`);
-  if (session.typeId !== 'x01') throw new Error(`Unsupported game ${session.typeId}`);
+  const def = gameFor(session.typeId);
   const darts = loadDarts(sessionId);
-  const state = fold(games.x01, session.settings as X01Settings, session.players, darts);
-  return { session, darts, state };
+  return { session, def, darts, state: refold({ session, def }, darts) };
 }
 
 /** Records the next dart for whoever is up and returns the new state. */
 export function recordDart(game: LoadedGame, input: DartInput): LoadedGame {
-  const player = games.x01.currentPlayer(game.state);
+  const player = game.def.currentPlayer(game.state);
   if (!player) throw new Error('The game is over');
   const dart: DartEvent = {
     id: randomUUID(),
@@ -67,7 +89,7 @@ export function recordDart(game: LoadedGame, input: DartInput): LoadedGame {
     at: now(),
   };
   // Apply first, so a dart the rules reject is never stored.
-  const state = games.x01.applyDart(game.state, dart);
+  const state = game.def.applyDart(game.state, dart);
   appendDart(dart);
   const next = { ...game, darts: [...game.darts, dart], state };
   return syncResult(next);
@@ -79,8 +101,7 @@ export function undoLastDart(game: LoadedGame): LoadedGame {
   if (!last) return game;
   replaceDartsFrom(game.session.id, last.seq);
   const darts = game.darts.slice(0, -1);
-  const state = fold(games.x01, game.session.settings as X01Settings, game.session.players, darts);
-  return syncResult({ ...game, darts, state });
+  return syncResult({ ...game, darts, state: refold(game, darts) });
 }
 
 /**
@@ -103,8 +124,7 @@ export function editDart(
     ),
   );
   const valid = darts.slice(0, kept);
-  const state = fold(games.x01, game.session.settings as X01Settings, game.session.players, valid);
-  return { game: syncResult({ ...game, darts: valid, state }), dropped };
+  return { game: syncResult({ ...game, darts: valid, state: refold(game, valid) }), dropped };
 }
 
 /** How many later darts an edit would remove, without changing anything. */
@@ -134,18 +154,13 @@ function edited(
       : d,
   );
   if (!darts.some((d) => d.seq === seq)) throw new Error(`No dart ${seq}`);
-  const { applied } = foldValid(
-    games.x01,
-    game.session.settings as X01Settings,
-    game.session.players,
-    darts,
-  );
+  const { applied } = foldValid(game.def, game.session.settings, game.session.players, darts);
   return { darts, kept: applied, dropped: darts.length - applied };
 }
 
 /** Keeps the session's stored result in step with the folded state (undo can reopen a game). */
 function syncResult(game: LoadedGame): LoadedGame {
-  const result: GameResult | null = games.x01.result(game.state);
+  const result: GameResult | null = game.def.result(game.state);
   const was = game.session.result as GameResult | null;
   if (JSON.stringify(result) === JSON.stringify(was)) return game;
   const endedAt = result ? (game.darts[game.darts.length - 1]?.at ?? now()) : null;
@@ -153,14 +168,23 @@ function syncResult(game: LoadedGame): LoadedGame {
   return { ...game, session: { ...game.session, result, endedAt } };
 }
 
-/** Bump when x01Stats changes, so cached values are recomputed. */
-const X01_STATS_VERSION = 1;
+/** Bump when a game's stats change, so cached values are recomputed. */
+const STATS_VERSION = 1;
 
-/** A player's stats for a session, from the cache when it's current. */
+/** A player's X01 stats for a session, from the cache when it's current. */
 export function sessionX01Stats(game: LoadedGame, playerId: string): X01Stats {
-  const cached = readCachedStat(game.session.id, playerId, 'x01', X01_STATS_VERSION);
+  const cached = readCachedStat(game.session.id, playerId, 'x01', STATS_VERSION);
   if (cached) return cached as X01Stats;
-  const stats = x01Stats(game.state, playerId);
-  writeCachedStat(game.session.id, playerId, 'x01', X01_STATS_VERSION, stats);
+  const stats = x01Stats(x01State(game), playerId);
+  writeCachedStat(game.session.id, playerId, 'x01', STATS_VERSION, stats);
   return stats;
+}
+
+/** A player's summary lines for any game, from the cache when it's current. */
+export function sessionStats(game: LoadedGame, playerId: string): StatLine[] {
+  const cached = readCachedStat(game.session.id, playerId, 'lines', STATS_VERSION);
+  if (cached) return cached as StatLine[];
+  const lines = game.def.stats(game.state, playerId);
+  writeCachedStat(game.session.id, playerId, 'lines', STATS_VERSION, lines);
+  return lines;
 }

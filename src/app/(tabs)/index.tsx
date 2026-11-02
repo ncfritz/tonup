@@ -6,10 +6,13 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import { drawPoint } from '@/domain/board';
 import type { PlayerRef } from '@/domain/darts';
+import { gameFor, type GameId } from '@/domain/games';
 import { X01_DEFAULTS, type X01Settings } from '@/domain/games/x01';
+import { formatStat, gameName, rowFormat } from '@/features/game/format';
+import { drawNumbers } from '@/domain/games/killer';
 import { bestOf, botId, YOU_ID } from '@/features/game/lineup';
 import { lastMatch, resumable, type MatchCard, type ResumeCard } from '@/features/game/recent';
-import { startX01 } from '@/features/game/session';
+import { startGame } from '@/features/game/session';
 import { dayLabel } from '@/features/game/when';
 import { useSettings } from '@/features/settings/store';
 import { Board, Button, Pressable, Screen, Text } from '@/ui';
@@ -42,7 +45,13 @@ export default function Play() {
       {resume ? <ResumeCardView card={resume} /> : null}
       <QuickStart />
       <View style={styles.shortcuts}>
-        <Shortcut label={tg('home.x01')} onPress={() => router.push('/new-game')} />
+        {(['x01', 'cricket', 'killer'] as const).map((g) => (
+          <Shortcut
+            key={g}
+            label={tg(`newGame.gameShort.${g}`)}
+            onPress={() => router.push({ pathname: '/new-game', params: { game: g } })}
+          />
+        ))}
         <Shortcut label={tg('home.allGames')} onPress={() => router.push('/new-game')} />
       </View>
       <Text variant="overline" tone="muted">
@@ -66,8 +75,10 @@ function ResumeCardView({ card }: { card: ResumeCard }) {
       </Text>
       <Text variant="bodyStrong">
         {t('home.resumeBody', {
-          game: card.startScore,
-          players: card.players.map((p, i) => `${p.name} ${card.remaining[i]}`).join(' · '),
+          game: gameName(t, card.typeId, card.settings),
+          players: card.rows
+            .map((r) => `${r.name} ${rowFormat(t, card.typeId)?.(r).big ?? r.score}`)
+            .join(' · '),
         })}
       </Text>
       <Button label={t('home.resume')} onPress={() => go(card.sessionId)} testID="resume-game" />
@@ -77,9 +88,10 @@ function ResumeCardView({ card }: { card: ResumeCard }) {
 
 function QuickStart() {
   const { t } = useTranslation('game');
-  const last = useSettings((s) => s.lastX01);
+  const gameId = useSettings((s) => s.lastGameId);
+  const saved = useSettings((s) => s.gameSettings);
   const lineup = useSettings((s) => s.lastLineup);
-  const settings: X01Settings = last ?? X01_DEFAULTS;
+  const settings = saved[gameId] ?? (gameId === 'x01' ? X01_DEFAULTS : gameFor(gameId).defaults);
   const players: PlayerRef[] = lineup ?? [
     { id: YOU_ID, name: t('players.you') },
     { id: botId(3), name: t('players.bot', { level: 3 }), botLevel: 3 },
@@ -88,12 +100,27 @@ function QuickStart() {
     .slice(1)
     .map((p) => p.name)
     .join(', ');
-  const out =
-    settings.out === 'double'
-      ? t('newGame.doubleOut')
-      : settings.out === 'master'
-        ? t('newGame.masterOut')
-        : t('newGame.straightOut');
+  const name = gameName(t, gameId, settings);
+  let body = '';
+  if (gameId === 'x01') {
+    const x = settings as X01Settings;
+    const out =
+      x.out === 'double'
+        ? t('newGame.doubleOut')
+        : x.out === 'master'
+          ? t('newGame.masterOut')
+          : t('newGame.straightOut');
+    body = t('home.quickBody', { format: t('newGame.legs', { count: bestOf(x.legs) }), out });
+  }
+  const start = () => {
+    // Killer numbers are drawn fresh for each game.
+    const play =
+      gameId === 'killer'
+        ? { ...(settings as object), numbers: drawNumbers(players.length, Math.random) }
+        : settings;
+    go(startGame(gameId as GameId, play, players));
+  };
+  const blocked = gameId === 'killer' && players.length < 2;
   return (
     <View style={styles.card}>
       <Text variant="overline" tone="muted">
@@ -103,20 +130,20 @@ function QuickStart() {
         <View style={styles.flex}>
           <Text variant="title" style={styles.quickTitle}>
             {opponents
-              ? t('home.quickTitle', { start: settings.startScore, opponents })
-              : t('home.quickSolo', { start: settings.startScore })}
+              ? t('home.quickTitle', { start: name, opponents })
+              : t('home.quickSolo', { start: name })}
           </Text>
-          <Text variant="caption" tone="muted">
-            {t('home.quickBody', {
-              format: t('newGame.legs', { count: bestOf(settings.legs) }),
-              out,
-            })}
-          </Text>
+          {body ? (
+            <Text variant="caption" tone="muted">
+              {body}
+            </Text>
+          ) : null}
         </View>
         <Pressable
           accessibilityRole="button"
+          disabled={blocked}
           style={({ pressed }) => [styles.start, pressed && styles.pressed]}
-          onPress={() => go(startX01(settings, players))}
+          onPress={start}
           testID="quick-start"
         >
           <Text variant="title" tone="onAccent">
@@ -164,6 +191,7 @@ function LastMatchView({ card, now }: { card: MatchCard | null; now: number }) {
   });
   const names = card.opponents.map((p) => p.name).join(', ');
   const s = card.stats;
+  const name = gameName(t, card.typeId, card.settings);
   return (
     <View style={[styles.card, styles.row]}>
       <Board
@@ -178,17 +206,30 @@ function LastMatchView({ card, now }: { card: MatchCard | null; now: number }) {
           {t('home.lastMatch', { when })}
         </Text>
         <Text variant="title">
-          {card.opponents.length
-            ? t(card.won ? 'home.won' : 'home.lost', { score: card.score, opponents: names })
-            : t('home.soloResult', { start: card.startScore, darts: s.darts })}
+          {card.opponents.length === 0
+            ? s
+              ? t('home.soloResult', { start: name, darts: s.darts })
+              : name
+            : card.draw
+              ? t('home.drew', { game: name, opponents: names })
+              : card.score
+                ? t(card.won ? 'home.won' : 'home.lost', { score: card.score, opponents: names })
+                : t(card.won ? 'home.wonGame' : 'home.lostGame', { game: name, opponents: names })}
         </Text>
         <Text variant="caption" tone="muted">
-          {t('home.matchLine', {
-            start: card.startScore,
-            average: s.average.toFixed(1),
-            hits: s.checkouts,
-            attempts: s.checkoutAttempts,
-          })}
+          {s
+            ? t('home.matchLine', {
+                start: name,
+                average: s.average.toFixed(1),
+                hits: s.checkouts,
+                attempts: s.checkoutAttempts,
+              })
+            : card.line
+              ? t('home.otherLine', {
+                  game: name,
+                  stat: `${t(`stats.${card.line.key}` as 'stats.mpr')} ${formatStat(card.line)}`,
+                })
+              : name}
         </Text>
         <View style={styles.actions}>
           <SmallLink
@@ -200,16 +241,21 @@ function LastMatchView({ card, now }: { card: MatchCard | null; now: number }) {
               })
             }
           />
-          <SmallLink
-            label={t('home.rematch')}
-            onPress={() =>
-              go(startX01(card.game.session.settings as X01Settings, card.game.session.players))
-            }
-          />
+          <SmallLink label={t('home.rematch')} onPress={() => go(rematch(card))} />
         </View>
       </View>
     </View>
   );
+}
+
+/** The same game again; Killer draws new numbers. */
+function rematch(card: MatchCard): string {
+  const { typeId, settings, players } = card.game.session;
+  const play =
+    typeId === 'killer'
+      ? { ...(settings as object), numbers: drawNumbers(players.length, Math.random) }
+      : settings;
+  return startGame(typeId as GameId, play, players);
 }
 
 function LastPractice() {

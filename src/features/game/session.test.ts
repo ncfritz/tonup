@@ -15,6 +15,7 @@ import {
   startX01,
   undoLastDart,
   type LoadedGame,
+  x01State,
 } from './session';
 
 jest.mock('@/services/db/client', () => jest.requireActual('../../../test/sqlite').testClient());
@@ -34,18 +35,18 @@ describe('a stored X01 game', () => {
     let game = loadGame(id);
     const rng = seeded(11);
     let guard = 0;
-    while (games.x01.currentPlayer(game.state) && guard++ < 2000) {
-      const up = games.x01.currentPlayer(game.state)!;
+    while (games.x01.currentPlayer(x01State(game)) && guard++ < 2000) {
+      const up = games.x01.currentPlayer(x01State(game))!;
       // Both players are bots here, so the test is a full, realistic match.
-      const t = botThrow(games.x01, game.state, up.id === 'bot' ? 3 : 4, rng)!;
+      const t = botThrow(games.x01, x01State(game), up.id === 'bot' ? 3 : 4, rng)!;
       game = recordDart(game, { hit: t.hit, point: t.point, source: 'bot', intended: t.intended });
     }
-    expect(games.x01.result(game.state)).not.toBeNull();
+    expect(games.x01.result(x01State(game))).not.toBeNull();
     const reloaded = loadGame(id);
-    expect(reloaded.state).toEqual(game.state);
+    expect(x01State(reloaded)).toEqual(x01State(game));
     expect(reloaded.darts).toEqual(game.darts);
     // The stored session is finished, so Home won't offer to resume it.
-    expect(getSession(id)?.result).toEqual(games.x01.result(game.state));
+    expect(getSession(id)?.result).toEqual(games.x01.result(x01State(game)));
     expect(getSession(id)?.endedAt).toBe(game.darts[game.darts.length - 1]!.at);
     expect(latestUnfinished()).toBeNull();
   });
@@ -55,7 +56,7 @@ describe('a stored X01 game', () => {
     recordDart(loadGame(first), keypad());
     expect(latestUnfinished()).toBe(first);
     const resumed = loadGame(first);
-    expect(resumed.state.remaining).toEqual([441]);
+    expect(x01State(resumed).remaining).toEqual([441]);
   });
 
   it('undoes darts, including the one that won, which reopens the game', () => {
@@ -63,7 +64,7 @@ describe('a stored X01 game', () => {
     let game = recordDart(loadGame(id), keypad(hitOf(20, 2)));
     expect(getSession(id)?.endedAt).not.toBeNull();
     game = undoLastDart(game);
-    expect(game.state.remaining).toEqual([40]);
+    expect(x01State(game).remaining).toEqual([40]);
     expect(getSession(id)).toMatchObject({ endedAt: null, result: null });
     expect(loadDarts(id)).toEqual([]);
     expect(undoLastDart(game)).toBe(game);
@@ -83,11 +84,11 @@ describe('a stored X01 game', () => {
     for (const h of [hitOf(20, 3), hitOf(20, 1), hitOf(1, 1), miss(), miss(), miss()]) {
       game = recordDart(game, keypad(h));
     }
-    expect(game.state.remaining).toEqual([20, 101]);
+    expect(x01State(game).remaining).toEqual([20, 101]);
     // A harmless edit keeps everything: your third dart was a 5, not a 1.
     const same = editDart(game, 2, { hit: hitOf(5, 1), point: null, source: 'keypad' });
     expect(same.dropped).toBe(0);
-    expect(same.game.state.remaining).toEqual([16, 101]);
+    expect(x01State(same.game).remaining).toEqual([16, 101]);
     game = same.game;
     // Change your second dart to T20: 120 > 101 is a bust on dart 2, so your third dart and
     // the bot's three darts now belong to the wrong turn.
@@ -95,10 +96,10 @@ describe('a stored X01 game', () => {
     expect(previewEdit(game, 1, change)).toBe(4);
     const { game: after, dropped } = editDart(game, 1, change);
     expect(dropped).toBe(4);
-    expect(after.state.remaining).toEqual([101, 101]);
+    expect(x01State(after).remaining).toEqual([101, 101]);
     expect(label(after.darts[1]!.hit)).toBe('T20');
     expect(after.darts[1]!.corrected).toBe(true);
-    expect(loadGame(id).state).toEqual(after.state);
+    expect(x01State(loadGame(id))).toEqual(x01State(after));
     expect(loadDarts(id)).toEqual(after.darts);
   });
 

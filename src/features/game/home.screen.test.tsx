@@ -26,7 +26,7 @@ const BOT = { id: 'bot-2', name: 'DartBot 2', botLevel: 2 };
 beforeEach(async () => {
   await resetTestDb();
   router.push.mockClear();
-  useSettings.setState({ lastX01: null, lastLineup: null });
+  useSettings.setState({ lastGameId: 'x01', gameSettings: {}, lastLineup: null });
 });
 
 const keypad = (h = hitOf(20, 2)) => ({ hit: h, point: null, source: 'keypad' as const });

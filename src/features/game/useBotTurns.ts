@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
 import { botThrow, type Rng } from '@/domain/bot';
-import { games } from '@/domain/games';
 
 import { botUp, useGame } from './store';
 
@@ -18,13 +17,14 @@ export function useBotTurns(paused: boolean) {
   const level = botUp(game);
   useEffect(() => {
     if (!game || level === null || legPause || paused) return;
-    const visit = game.state.visits[game.state.visits.length - 1];
+    const visits = game.def.visits(game.state);
+    const visit = visits[visits.length - 1];
     const midVisit = visit && !visit.done && visit.darts.length > 0;
     const timer = setTimeout(
       () => {
         const current = useGame.getState().game;
         if (!current || botUp(current) === null) return;
-        const t = botThrow(games.x01, current.state, level, random);
+        const t = botThrow(current.def, current.state, level, random);
         if (t)
           useGame
             .getState()

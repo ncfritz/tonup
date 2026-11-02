@@ -31,7 +31,35 @@
     "masterOut": "Master out",
     "straightOut": "Straight out",
     "continue": "Start game",
-    "maxPlayers": "Up to {max} players"
+    "maxPlayers": "Up to {max} players",
+    "cricketVariant": "Scoring",
+    "standard": "Standard",
+    "cutThroatShort": "Cut-Throat",
+    "roundLimit": "Round limit",
+    "noLimit": "None",
+    "clockRing": "What counts",
+    "anyRing": "Any",
+    "doublesOnly": "Doubles",
+    "treblesOnly": "Trebles",
+    "clockSkip": "Doubles and trebles skip ahead",
+    "clockBull": "Finish on the bull",
+    "yes": "Yes",
+    "no": "No",
+    "rounds": "Rounds",
+    "instantWin": "Shanghai wins at once",
+    "lives": "Lives",
+    "ownDouble": "Killer hits own double",
+    "loseLife": "Loses a life",
+    "nothing": "Nothing",
+    "killerNumbers": "Everyone gets a number when the game starts.",
+    "killerNeedsTwo": "Killer needs at least two players.",
+    "gameShort": {
+      "x01": "X01",
+      "cricket": "Cricket",
+      "clock": "Clock",
+      "shanghai": "Shanghai",
+      "killer": "Killer"
+    }
   },
   "header": {
     "pause": "Pause and go to Play",
@@ -40,7 +68,9 @@
     "input": "Input method",
     "board": "Board",
     "keypad": "Keypad",
-    "visits": "Visits"
+    "visits": "Visits",
+    "titleGame": "{game}",
+    "titleRound": "{game} · Round {n} of {of}"
   },
   "board": {
     "a11y": "Dartboard",
@@ -62,7 +92,13 @@
     "bust": "Bust",
     "gameShot": "Game shot",
     "doubleToStart": "Hit a double to start",
-    "noFinish": "{score} · no finish yet"
+    "noFinish": "{score} · no finish yet",
+    "aim": {
+      "clock": "Aim for",
+      "shanghai": "This round",
+      "killerQualify": "Hit your double to become a Killer",
+      "killerAttack": "Killer: take a life"
+    }
   },
   "slots": {
     "dartA11y": "Dart {n}: {dart}",
@@ -117,7 +153,8 @@
     "bestLegValue": "{darts} darts",
     "rematch": "Rematch",
     "done": "Done",
-    "replay": "Replay"
+    "replay": "Replay",
+    "draw": "It's a draw"
   },
   "home": {
     "newGame": "New game",
@@ -146,7 +183,11 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "heatmapA11y": "Where your darts landed in your last match",
-    "lastMatchEmpty": "Last match"
+    "lastMatchEmpty": "Last match",
+    "otherLine": "{game} · {stat}",
+    "drew": "Drew {game} vs {opponents}",
+    "wonGame": "Won {game} vs {opponents}",
+    "lostGame": "Lost {game} vs {opponents}"
   },
   "replay": {
     "title": "Replay · Leg {leg}",
@@ -165,5 +206,49 @@
     "checkout": "Checkout {score}",
     "empty": "No darts thrown yet.",
     "scoreA11y": "{name}, {score} left"
+  },
+  "cricket": {
+    "bull": "Bull",
+    "points": "Points",
+    "marksA11y": "{name}, {number}: {marks, plural, =0 {no marks} one {# mark} =3 {closed} other {# marks}}"
+  },
+  "games": {
+    "x01": "X01",
+    "cricket": "Cricket",
+    "cutThroat": "Cut-Throat Cricket",
+    "clock": "Around the Clock",
+    "shanghai": "Shanghai",
+    "killer": "Killer"
+  },
+  "rows": {
+    "clockOn": "On {target}",
+    "clockDone": "Finished",
+    "bull": "Bull",
+    "clockA11y": "{name}, on {target}",
+    "clockDoneA11y": "{name}, finished",
+    "points": "{name}, {score} points",
+    "killerNote": "Number {number}{killer, select, yes { · Killer} other {}}",
+    "killerOut": "Out",
+    "livesA11y": "{name}, number {number}, {lives, plural, =0 {out} one {# life} other {# lives}}{killer, select, yes {, Killer} other {}}"
+  },
+  "stats": {
+    "average": "3-dart average",
+    "first9": "First 9 average",
+    "checkoutRate": "Checkout",
+    "highestCheckout": "Highest checkout",
+    "tons": "100+",
+    "ton40s": "140+",
+    "oneEighties": "180s",
+    "bestLeg": "Best leg (darts)",
+    "mpr": "Marks per round",
+    "points": "Points",
+    "marks": "Marks",
+    "darts": "Darts",
+    "hitRate": "Hit rate",
+    "reached": "Numbers done",
+    "shanghais": "Shanghais",
+    "livesTaken": "Lives taken",
+    "livesLeft": "Lives left",
+    "dartsToKiller": "Darts to Killer"
   }
 }

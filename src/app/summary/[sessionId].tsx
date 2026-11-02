@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { games } from '@/domain/games';
-import type { X01Settings } from '@/domain/games/x01';
-import { loadGame, sessionX01Stats, startX01 } from '@/features/game/session';
+import type { GameId } from '@/domain/games';
+import { drawNumbers } from '@/domain/games/killer';
+import { formatStat, gameName } from '@/features/game/format';
+import { loadGame, sessionStats, sessionX01Stats, startGame } from '@/features/game/session';
 import { Button, Header, Screen, Text } from '@/ui';
 
 /** The match summary: result and each player's stats (docs/design/screens.md). */
@@ -14,48 +15,65 @@ export default function Summary() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const { t } = useTranslation('game');
   const game = useMemo(() => loadGame(sessionId), [sessionId]);
-  const result = games.x01.result(game.state);
+  const result = game.def.result(game.state);
   const players = game.session.players;
-  const stats = players.map((p) => sessionX01Stats(game, p.id));
+  const isX01 = game.session.typeId === 'x01';
   const winner = players.find((p) => p.id === result?.winnerId);
-  const score = result ? players.map((p) => result.score[p.id] ?? 0).join('–') : '';
+  const score = result && isX01 ? players.map((p) => result.score[p.id] ?? 0).join('–') : '';
+  const rows = isX01 ? x01Rows() : genericRows();
 
-  const rows: { label: string; value: (i: number) => string }[] = [
-    { label: t('summary.average'), value: (i) => stats[i]!.average.toFixed(1) },
-    { label: t('summary.first9'), value: (i) => stats[i]!.first9Average.toFixed(1) },
-    {
-      label: t('summary.checkout'),
-      value: (i) => {
-        const s = stats[i]!;
-        return s.checkoutRate === null
-          ? t('summary.none')
-          : t('summary.checkoutValue', {
-              rate: Math.round(s.checkoutRate * 100),
-              hits: s.checkouts,
-              attempts: s.checkoutAttempts,
-            });
+  function genericRows(): { label: string; value: (i: number) => string }[] {
+    const lines = players.map((p) => sessionStats(game, p.id));
+    return (lines[0] ?? []).map((line, k) => ({
+      label: t(`stats.${line.key}` as 'stats.mpr'),
+      value: (i: number) => formatStat(lines[i]![k]!),
+    }));
+  }
+
+  function x01Rows(): { label: string; value: (i: number) => string }[] {
+    const stats = players.map((p) => sessionX01Stats(game, p.id));
+    return [
+      { label: t('summary.average'), value: (i) => stats[i]!.average.toFixed(1) },
+      { label: t('summary.first9'), value: (i) => stats[i]!.first9Average.toFixed(1) },
+      {
+        label: t('summary.checkout'),
+        value: (i) => {
+          const s = stats[i]!;
+          return s.checkoutRate === null
+            ? t('summary.none')
+            : t('summary.checkoutValue', {
+                rate: Math.round(s.checkoutRate * 100),
+                hits: s.checkouts,
+                attempts: s.checkoutAttempts,
+              });
+        },
       },
-    },
-    {
-      label: t('summary.highest'),
-      value: (i) =>
-        stats[i]!.highestCheckout ? String(stats[i]!.highestCheckout) : t('summary.none'),
-    },
-    {
-      label: t('summary.tons'),
-      value: (i) => `${stats[i]!.tons} / ${stats[i]!.ton40s} / ${stats[i]!.oneEighties}`,
-    },
-    {
-      label: t('summary.bestLeg'),
-      value: (i) =>
-        stats[i]!.bestLeg === null
-          ? t('summary.none')
-          : t('summary.bestLegValue', { darts: stats[i]!.bestLeg }),
-    },
-  ];
+      {
+        label: t('summary.highest'),
+        value: (i) =>
+          stats[i]!.highestCheckout ? String(stats[i]!.highestCheckout) : t('summary.none'),
+      },
+      {
+        label: t('summary.tons'),
+        value: (i) => `${stats[i]!.tons} / ${stats[i]!.ton40s} / ${stats[i]!.oneEighties}`,
+      },
+      {
+        label: t('summary.bestLeg'),
+        value: (i) =>
+          stats[i]!.bestLeg === null
+            ? t('summary.none')
+            : t('summary.bestLegValue', { darts: stats[i]!.bestLeg }),
+      },
+    ];
+  }
 
   const rematch = () => {
-    const id = startX01(game.session.settings as X01Settings, players);
+    const { typeId, settings } = game.session;
+    const play =
+      typeId === 'killer'
+        ? { ...(settings as object), numbers: drawNumbers(players.length, Math.random) }
+        : settings;
+    const id = startGame(typeId as GameId, play, players);
     router.replace({ pathname: '/game/[sessionId]', params: { sessionId: id } });
   };
 
@@ -68,11 +86,19 @@ export default function Summary() {
       />
       <View>
         <Text variant="heading" accessibilityRole="header">
-          {winner ? t('summary.winner', { name: winner.name }) : t('summary.title')}
+          {winner
+            ? t('summary.winner', { name: winner.name })
+            : result
+              ? t('summary.draw')
+              : t('summary.title')}
         </Text>
-        <Text variant="score" tone="accent">
-          {score}
-        </Text>
+        {score ? (
+          <Text variant="score" tone="accent">
+            {score}
+          </Text>
+        ) : (
+          <Text tone="muted">{gameName(t, game.session.typeId, game.session.settings)}</Text>
+        )}
       </View>
       <View style={styles.table}>
         <View style={styles.row}>
