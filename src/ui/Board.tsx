@@ -10,7 +10,8 @@ import {
   segmentCentreDegrees,
   STEEL_TIP_RADII_MM as R,
 } from '@/domain/board';
-import { BULL, label, type Point, type Target } from '@/domain/darts';
+import { BULL, label, type Point, type Ring, type Target } from '@/domain/darts';
+import { parseRegion, type Heat } from '@/domain/stats';
 
 import { ringWedges, wedgePath } from './boardPaths';
 import { Text } from './Text';
@@ -148,6 +149,50 @@ function Highlight({ target, scale }: { target: Target; scale: number }) {
   return <Path d={wedgePath(0, 0, r1, r2, deg - 9, deg + 9)} {...stroke} />;
 }
 
+const RING_RADII: Partial<Record<Ring, [number, number]>> = {
+  innerSingle: [R.outerBull, R.trebleInner],
+  treble: [R.trebleInner, R.trebleOuter],
+  outerSingle: [R.trebleOuter, R.doubleInner],
+  double: [R.doubleInner, R.doubleOuter],
+  outerBull: [R.innerBull, R.outerBull],
+};
+
+/** Regions shaded by how many darts landed there. */
+function HeatLayer({ heat }: { heat: Heat[] }) {
+  const { theme } = useUnistyles();
+  return (
+    <G>
+      {heat.map((h) => {
+        const r = parseRegion(h.region);
+        if (!r) return null;
+        const opacity = 0.18 + 0.72 * h.intensity;
+        if (r.ring === 'innerBull') {
+          return (
+            <Circle
+              key={h.region}
+              cx={0}
+              cy={0}
+              r={R.innerBull}
+              fill={theme.colors.accent}
+              opacity={opacity}
+            />
+          );
+        }
+        const radii = RING_RADII[r.ring];
+        if (!radii) return null;
+        const d =
+          r.ring === 'outerBull'
+            ? `${wedgePath(0, 0, radii[0], radii[1], 0, 180)} ${wedgePath(0, 0, radii[0], radii[1], 180, 360)}`
+            : (() => {
+                const deg = segmentCentreDegrees(r.segment);
+                return wedgePath(0, 0, radii[0], radii[1], deg - 9, deg + 9);
+              })();
+        return <Path key={h.region} d={d} fill={theme.colors.accent} opacity={opacity} />;
+      })}
+    </G>
+  );
+}
+
 /**
  * The dartboard, drawn in board millimetres. With `onDart`, tap where a dart landed; hold and
  * drag to place it precisely with the loupe, then let go (docs/design/screens.md → Scoring).
@@ -159,6 +204,7 @@ export function Board({
   muted = false,
   markerRadius,
   highlight,
+  heat,
   accessibilityLabel,
   accessibilityHint,
 }: {
@@ -171,6 +217,8 @@ export function Board({
   markerRadius?: number;
   /** Outline this target (drills). */
   highlight?: Target | null;
+  /** Shade regions by dart count (the History heatmap). */
+  heat?: Heat[];
   accessibilityLabel: string;
   accessibilityHint?: string;
 }) {
@@ -240,6 +288,7 @@ export function Board({
       >
         <BoardArt />
         {muted ? <Circle cx={0} cy={0} r={HALF} fill={theme.colors.bg} opacity={0.55} /> : null}
+        {heat ? <HeatLayer heat={heat} /> : null}
         {highlight ? <Highlight target={highlight} scale={scale} /> : null}
         <Markers markers={markers} scale={scale} radius={markerRadius} />
       </Svg>

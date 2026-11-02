@@ -12,3 +12,4 @@ export { Header } from './Header';
 export { Keypad } from './Keypad';
 export { DartSlots, Scoreboard } from './Scoreboard';
 export { Section } from './Section';
+export { LineChart } from './LineChart';

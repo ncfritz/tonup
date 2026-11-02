@@ -1,0 +1,51 @@
+{
+  "title": "History",
+  "filter": {
+    "label": "Show",
+    "all": "All",
+    "matches": "Matches",
+    "practice": "Practice"
+  },
+  "trend": {
+    "x01": "3-dart average · last {count} X01 matches",
+    "drill": "{drill} · last {count, plural, one {go} other {# goes}}",
+    "empty": "Play a few X01 matches to see your average here.",
+    "emptyDrill": "Finish a drill to see your scores here.",
+    "delta": "{sign}{delta} on the last",
+    "a11y": "{title}. Latest {latest}; lowest {min}, highest {max}."
+  },
+  "bests": {
+    "title": "Personal bests",
+    "bestAverage": "Best average",
+    "highCheckout": "High checkout",
+    "none": "—",
+    "a11y": "{label}: {value}"
+  },
+  "heat": {
+    "title": "Where your darts land",
+    "caption": "Your last {sessions, plural, one {session} other {# sessions}}: {darts} darts, most in {region} ({pct}%). {misses}% off the board.",
+    "empty": "Your darts will build a heatmap here.",
+    "a11y": "Heatmap of your darts; most in {region}"
+  },
+  "list": {
+    "title": "Recent",
+    "empty": "Nothing played yet. Start a game from Play or a drill from Practice.",
+    "won": "W",
+    "lost": "L",
+    "drew": "D",
+    "inProgress": "In progress",
+    "vs": "vs {names}",
+    "solo": "Solo",
+    "a11y": "{title}, {sub}, {day}",
+    "drillBadge": "◎",
+    "soloBadge": "·"
+  },
+  "rings": {
+    "innerSingle": "single {n}",
+    "outerSingle": "single {n}",
+    "treble": "T{n}",
+    "double": "D{n}",
+    "outerBull": "the outer bull",
+    "innerBull": "the bull"
+  }
+}

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull } from 'drizzle-orm';
 
 import type { DartEvent, PlayerRef } from '@/domain/darts';
 
@@ -163,15 +163,29 @@ export function finishedOfType(
     .map((r) => ({ id: r.id, endedAt: r.endedAt!, result: parse(r.result) }));
 }
 
-/** Recent sessions, newest first. */
-export function recentSessions(limit = 20): string[] {
+/** Recent sessions, newest first, optionally of one kind (abandoned ones left out). */
+export function recentSessions(limit = 20, kind?: 'game' | 'drill'): string[] {
+  const live = isNull(sessions.abandonedAt);
   return db
     .select({ id: sessions.id })
     .from(sessions)
+    .where(kind ? and(live, eq(sessions.kind, kind)) : live)
     .orderBy(desc(sessions.startedAt))
     .limit(limit)
     .all()
     .map((r) => r.id);
+}
+
+/** One player's darts from a set of sessions, for heatmaps. */
+export function dartsOf(playerId: string, sessionIds: string[]): DartEvent[] {
+  if (sessionIds.length === 0) return [];
+  return db
+    .select()
+    .from(darts)
+    .where(and(eq(darts.playerId, playerId), inArray(darts.sessionId, sessionIds)))
+    .orderBy(asc(darts.at))
+    .all()
+    .map(dartFromRow);
 }
 
 export function deleteSession(sessionId: string): void {

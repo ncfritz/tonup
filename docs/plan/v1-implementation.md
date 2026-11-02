@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0–M6 in place (2026-11-02)
+- Status: Accepted; M0–M7 in place (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -116,7 +116,7 @@ The bot aims at `targetFor(state)` (or the checkout route's next dart), adds 2D 
 
 ### Stats
 
-Pure functions over events: 3-dart and first-9 averages, checkout %, 100+/140+/180, marks per round, per-target hit rates, heatmap bins, personal bests. Cached in a table and rebuilt from events when a session changes.
+Pure functions over events: 3-dart and first-9 averages, checkout %, 100+/140+/180, marks per round, per-target hit rates, heatmap bins, personal bests. Cached in a table and rebuilt from events when a session changes. The base heatmap counts darts per board region (each segment's four rings and the bulls), so keypad darts count too; the aim-relative heatmap and grouping in M13 use exact positions.
 
 ## 4. Data
 
@@ -201,4 +201,4 @@ Still open:
 3. Finish M0: run the scaffold on a phone (`pnpm install`, then `pnpm ios`) and check the tabs.
 4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
 5. Play a best-of-5 against the bot on a phone with a few corrections, then replay it (the M3 and M4 done-whens).
-6. Try the new games and the three drills on a phone, then start M7 (History tab and heatmap).
+6. Try the games, drills and History on a phone, then start M8 (Rules and knowledge).

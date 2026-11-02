@@ -46,7 +46,7 @@ A suggested drill (with the reason, for example low checkout % this week), then 
 
 ## History tab
 
-All / Matches / Practice filter; a trend chart (3-dart average over recent X01 matches, or the drill score for Practice); personal bests (best average, high checkout, Bob's 27); and a list of recent sessions linking to Replay or the drill.
+All / Matches / Practice filter; a trend chart (3-dart average over your last 20 X01 matches, or a drill's scores for Practice, with a chip per drill); personal bests (best average, high checkout, Bob's 27, plus Count Up and Around the Clock under Practice); a board heatmap of where your darts landed over the last 30 sessions shown, with the busiest region and the share off the board; and a list of recent sessions. A finished session opens its replay; an unfinished one goes back into the game or drill.
 
 ## Rules tab
 
