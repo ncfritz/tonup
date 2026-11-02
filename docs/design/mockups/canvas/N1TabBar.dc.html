@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home with tab bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; display: flex; flex-direction: column">
+<div style="flex: 1; padding: 24px 16px 16px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; text-transform: uppercase">Play</h1>
+<div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 20px; background: #151a24; font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #4ade80"></span>Camera ready</div>
+</div>
+<a href="M02NewGame.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 16px; background: #1b2436; color: #f4f6fa">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">QUICK START · YOUR USUAL</div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; line-height: 1">501 vs DartBot 4</div>
+<div style="font-size: 14px; color: #c8cfdb">Best of 5 legs · double out · Garage board</div>
+<div style="height: 52px; border-radius: 12px; background: #e8b931; color: #07090e; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 1px">START</div>
+</a>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">ALL GAMES</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<a href="M02NewGame.dc.html" style="height: 64px; border-radius: 12px; background: #151a24; color: #f4f6fa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px">X01<span style="font-family: 'Barlow', sans-serif; font-weight: 400; font-size: 12px; color: #9aa4b6">301 · 501 · 701</span></a>
+<a href="M02NewGame.dc.html" style="height: 64px; border-radius: 12px; background: #151a24; color: #f4f6fa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px">Cricket<span style="font-family: 'Barlow', sans-serif; font-weight: 400; font-size: 12px; color: #9aa4b6">2 variants</span></a>
+<a href="M02NewGame.dc.html" style="height: 64px; border-radius: 12px; background: #151a24; color: #f4f6fa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px">Clock</a>
+<a href="M02NewGame.dc.html" style="height: 64px; border-radius: 12px; background: #151a24; color: #f4f6fa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px">Shanghai</a>
+<a href="M02NewGame.dc.html" style="height: 64px; border-radius: 12px; background: #151a24; color: #f4f6fa; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px">Killer</a>
+<a href="M02NewGame.dc.html" style="height: 64px; border-radius: 12px; border: 1px dashed #4a5568; color: #9aa4b6; display: flex; align-items: center; justify-content: center; font-size: 14px">More with Pro</a>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">RECENT</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #151a24">
+<div style="flex: 1"><div style="font-size: 15px; font-weight: 600">501 · won 3–1 vs DartBot 4</div><div style="font-size: 13px; color: #9aa4b6">Tonight · avg 72.2 · checkout 2 of 6</div></div>
+<a href="M10Replay.dc.html" style="padding: 10px 12px; border-radius: 8px; background: #1b2436; font-size: 14px; font-weight: 600">Replay</a>
+</div>
+</div>
+</div>
+<nav aria-label="Main" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: 82px; padding-bottom: 14px; box-sizing: border-box; background: #0e121a; border-top: 1px solid #1f2633">
+<a href="N1TabBar.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #e8b931; font-size: 11px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>Play</a>
+<a href="M11Practice.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #9aa4b6; font-size: 11px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20l7-7M14 4l6 6-6 2-2 6-6-6 6-2z"/></svg>Practice</a>
+<a href="M10Replay.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #9aa4b6; font-size: 11px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>History</a>
+<a href="M12Rules.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #9aa4b6; font-size: 11px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>Rules</a>
+<a href="Settings.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #9aa4b6; font-size: 11px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Settings</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

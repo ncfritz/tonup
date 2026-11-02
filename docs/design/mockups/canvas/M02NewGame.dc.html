@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New game</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; padding: 18px 16px 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 8px">
+<a href="N5Combined.dc.html" aria-label="Back" style="width: 44px; height: 44px; border-radius: 10px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px; text-transform: uppercase">New game</h1>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">GAME</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px">
+<button aria-pressed="true" style="height: 52px; border: 2px solid #e8b931; border-radius: 10px; background: #1b2436; color: #f4f6fa; font-size: 20px; font-weight: 700">501</button>
+<button aria-pressed="false" style="height: 52px; border: 2px solid transparent; border-radius: 10px; background: #151a24; color: #f4f6fa; font-size: 20px; font-weight: 700">301</button>
+<button aria-pressed="false" style="height: 52px; border: 2px solid transparent; border-radius: 10px; background: #151a24; color: #f4f6fa; font-size: 20px; font-weight: 700">Cricket</button>
+<button aria-pressed="false" style="height: 52px; border: 2px solid transparent; border-radius: 10px; background: #151a24; color: #f4f6fa; font-size: 20px; font-weight: 700">Clock</button>
+<button aria-pressed="false" style="height: 52px; border: 2px solid transparent; border-radius: 10px; background: #151a24; color: #f4f6fa; font-size: 20px; font-weight: 700">Shanghai</button>
+<button aria-pressed="false" style="height: 52px; border: 2px solid transparent; border-radius: 10px; background: #151a24; color: #f4f6fa; font-size: 20px; font-weight: 700">Killer</button>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">PLAYERS</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #151a24">
+<div style="width: 36px; height: 36px; border-radius: 18px; background: #e8b931; color: #07090e; display: flex; align-items: center; justify-content: center; font-weight: 700">Y</div>
+<div style="flex: 1; font-size: 16px; font-weight: 600">You</div>
+<div style="font-size: 13px; color: #9aa4b6">throws first</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #151a24">
+<div style="width: 36px; height: 36px; border-radius: 18px; background: #1b2436; color: #e8b931; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 4v4M9 13h.01M15 13h.01"/></svg></div>
+<div style="flex: 1">
+<div style="font-size: 16px; font-weight: 600">DartBot</div>
+<div style="font-size: 13px; color: #9aa4b6">Level 4 · averages about 75</div>
+</div>
+<div style="display: flex; gap: 4px" role="group" aria-label="Bot level">
+<button aria-label="Easier" style="width: 44px; height: 44px; border: 0; border-radius: 8px; background: #1b2436; color: #f4f6fa; font-size: 20px">−</button>
+<button aria-label="Harder" style="width: 44px; height: 44px; border: 0; border-radius: 8px; background: #1b2436; color: #f4f6fa; font-size: 20px">+</button>
+</div>
+</div>
+<button style="height: 48px; border: 1px dashed #4a5568; border-radius: 12px; background: transparent; color: #9aa4b6; font-size: 15px">Add player or bot</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">FORMAT</div>
+<div style="display: flex; flex-direction: column; border-radius: 12px; background: #151a24">
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 14px; border-bottom: 1px solid #07090e"><span style="font-size: 15px">Match</span><span style="font-size: 15px; color: #e8b931; font-weight: 600">Best of 5 legs</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 14px; border-bottom: 1px solid #07090e"><span style="font-size: 15px">Finish</span><span style="font-size: 15px; color: #e8b931; font-weight: 600">Double out</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 14px"><span style="font-size: 15px">Start</span><span style="font-size: 15px; color: #e8b931; font-weight: 600">Straight in</span></div>
+</div>
+</div>
+<div style="flex: 1"></div>
+<a href="V1Scoring.dc.html" style="height: 56px; border-radius: 12px; background: #e8b931; color: #07090e; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 1px">CONTINUE</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

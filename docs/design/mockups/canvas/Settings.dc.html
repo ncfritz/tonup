@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Theme picker</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&amp;family=Kalam:wght@400;700&amp;family=Barlow+Condensed:wght@700;800&amp;family=Orbitron:wght@800&amp;family=Playfair+Display:wght@800&amp;family=JetBrains+Mono:wght@700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3b82f6}a:hover{color:#1d4ed8}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{p.bg}}; color: {{p.text}}; font-family: 'Inter', sans-serif; padding: 18px 16px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 8px">
+<button aria-label="Back" style="width: 44px; height: 44px; border: 0; border-radius: 10px; background: {{p.surface}}; color: {{p.text}}; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+<h1 style="margin: 0; font-size: 22px; font-weight: 600">Appearance</h1>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.5px; color: {{p.muted}}">MODE</div>
+<div role="group" aria-label="Light or dark mode" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: {{p.surface}}">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+<button onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="height: 44px; border: 0; border-radius: 9px; background: {{m.bg}}; color: {{m.fg}}; font-size: 15px; font-weight: 600">{{m.label}}</button>
+</sc-for>
+</div>
+<div style="font-size: 13px; color: {{p.muted}}">{{modeNote}}</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.5px; color: {{p.muted}}">THEME</div>
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="5">
+<button onClick="{{t.pick}}" aria-pressed="{{t.selected}}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-height: 84px; border-radius: 14px; border: {{t.border}}; background: {{p.surface}}; color: {{p.text}}; text-align: left">
+<div style="display: flex; gap: 4px">
+<div aria-hidden="true" style="width: 50px; height: 62px; border-radius: 8px; background: {{t.dark.bg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; box-shadow: inset 0 0 0 1px rgba(127,127,127,0.25)">
+<div style="font-family: {{t.font}}; font-size: 17px; line-height: 1; color: {{t.dark.text}}">140</div>
+<div style="width: 22px; height: 6px; border-radius: 3px; background: {{t.dark.accent}}"></div>
+</div>
+<div aria-hidden="true" style="width: 50px; height: 62px; border-radius: 8px; background: {{t.light.bg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; box-shadow: inset 0 0 0 1px rgba(127,127,127,0.25)">
+<div style="font-family: {{t.font}}; font-size: 17px; line-height: 1; color: {{t.light.text}}">140</div>
+<div style="width: 22px; height: 6px; border-radius: 3px; background: {{t.light.accent}}"></div>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 16px; font-weight: 600">{{t.name}}</div>
+<div style="font-size: 13px; line-height: 1.35; color: {{p.muted}}">{{t.blurb}}</div>
+</div>
+<sc-if value="{{t.selected}}" hint-placeholder-val="{{false}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{p.accent}}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Selected"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
+</sc-if>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: {{p.surface}}">
+<div aria-hidden="true" style="width: 44px; height: 44px; border-radius: 22px; background: {{p.accent}}; color: {{p.onAccent}}; font-family: {{font}}; font-size: 15px; display: flex; align-items: center; justify-content: center">501</div>
+<div style="flex: 1">
+<div style="font-size: 15px; font-weight: 600">Preview: {{previewName}}</div>
+<div style="font-size: 13px; color: {{p.muted}}">Applies to scoring, training and stats screens</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { theme: 'heritage', mode: 'system' };
+  }
+  renderVals() {
+    const T = [
+      { id: 'chalk', name: 'Chalkboard', blurb: 'Pub slate and chalk; a whiteboard by day', font: "'Permanent Marker', cursive",
+        dark: { bg: '#1f2a24', surface: '#2a3730', text: '#efe9dc', muted: '#c9d1cb', accent: '#f2c14e', onAccent: '#1f2a24' },
+        light: { bg: '#fbfaf6', surface: '#ffffff', text: '#1d2b4a', muted: '#4a5672', accent: '#c0392b', onAccent: '#ffffff' } },
+      { id: 'pro', name: 'Pro', blurb: 'TV broadcast scoreboard with match stats', font: "'Barlow Condensed', sans-serif",
+        dark: { bg: '#07090e', surface: '#151a24', text: '#f4f6fa', muted: '#9aa4b6', accent: '#e8b931', onAccent: '#07090e' },
+        light: { bg: '#eef1f6', surface: '#ffffff', text: '#0b1320', muted: '#4f5b6e', accent: '#0b1320', onAccent: '#e8b931' } },
+      { id: 'arcade', name: 'Arcade', blurb: 'Neon pink and cyan with glowing scores', font: "'Orbitron', sans-serif",
+        dark: { bg: '#0b0517', surface: '#150b2a', text: '#f3ecff', muted: '#b9a8dc', accent: '#ff3ea5', onAccent: '#0b0517' },
+        light: { bg: '#fbf3ff', surface: '#ffffff', text: '#24103d', muted: '#5e4a7d', accent: '#c4106f', onAccent: '#ffffff' } },
+      { id: 'heritage', name: 'Heritage', blurb: 'Serif type and a classic scorecard', font: "'Playfair Display', serif",
+        dark: { bg: '#14231b', surface: '#1d3126', text: '#f1e2bf', muted: '#b8ab8c', accent: '#d9a441', onAccent: '#14231b' },
+        light: { bg: '#f4ecdb', surface: '#fbf6ea', text: '#1f1a14', muted: '#5c5243', accent: '#1d4a34', onAccent: '#f4ecdb' } },
+      { id: 'training', name: 'Training', blurb: 'Data-first: grouping, drift and hit rates', font: "'JetBrains Mono', monospace",
+        dark: { bg: '#0e1217', surface: '#151b22', text: '#e6edf3', muted: '#8b98a5', accent: '#2dd4bf', onAccent: '#0e1217' },
+        light: { bg: '#f6f8fa', surface: '#ffffff', text: '#1f2328', muted: '#59636e', accent: '#0f766e', onAccent: '#ffffff' } }
+    ];
+    const cur = T.find((t) => t.id === this.state.theme) || T[0];
+    const resolved = this.state.mode === 'light' ? 'light' : 'dark';
+    const p = cur[resolved];
+    const modes = [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([id, label]) => {
+      const on = this.state.mode === id;
+      return { label, pressed: on ? 'true' : 'false', bg: on ? p.accent : 'transparent', fg: on ? p.onAccent : p.text,
+        pick: () => this.setState({ mode: id }) };
+    });
+    const themes = T.map((t) => {
+      const sel = t.id === cur.id;
+      return { ...t, selected: sel, border: sel ? '2px solid ' + p.accent : '2px solid transparent',
+        pick: () => this.setState({ theme: t.id }) };
+    });
+    const modeNote = this.state.mode === 'system' ? 'Follows your iPhone setting (shown here as Dark)' : 'Always ' + resolved + ', whatever your iPhone is set to';
+    return { p, modes, themes, modeNote, font: cur.font, previewName: cur.name + ' · ' + (resolved === 'light' ? 'Light' : 'Dark') };
+  }
+}
+</script>
+</body>
+</html>

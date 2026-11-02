@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>History tab</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; padding: 24px 16px 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; text-transform: uppercase">History</h1>
+<div role="group" aria-label="Show" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: #151a24">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+<button onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="height: 40px; border: 0; border-radius: 9px; background: {{f.bg}}; color: {{f.fg}}; font-size: 15px; font-weight: 600">{{f.label}}</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 16px; background: #151a24">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1.5px; color: #9aa4b6">{{chartTitle}}</div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px">{{chartValue}} <span style="font-size: 15px; color: #4ade80">{{chartDelta}}</span></div>
+</div>
+<svg width="326" height="104" viewBox="0 0 326 104" role="img" aria-label="{{chartAria}}">
+<g stroke="#2a3344" stroke-width="1"><path d="M28 16H322M28 52H322M28 88H322"/></g>
+<g font-family="Barlow, sans-serif" font-size="11" fill="#9aa4b6" text-anchor="end"><text x="22" y="20">{{yTop}}</text><text x="22" y="56">{{yMid}}</text><text x="22" y="92">{{yBot}}</text></g>
+<path d="{{line}}" fill="none" stroke="#e8b931" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="{{dots}}" fill="#c8a12a" stroke="#151a24" stroke-width="2"/>
+<circle cx="{{lastX}}" cy="{{lastY}}" r="5.5" fill="#e8b931" stroke="#151a24" stroke-width="2"/>
+</svg>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-family: 'Barlow Condensed', sans-serif">
+<div style="background: #151a24; border-radius: 10px; padding: 8px 10px"><div style="font-size: 12px; letter-spacing: 1px; color: #9aa4b6">BEST AVERAGE</div><div style="font-size: 22px; font-weight: 700; color: #e8b931">72.2</div></div>
+<div style="background: #151a24; border-radius: 10px; padding: 8px 10px"><div style="font-size: 12px; letter-spacing: 1px; color: #9aa4b6">HIGH CHECKOUT</div><div style="font-size: 22px; font-weight: 700; color: #e8b931">104</div></div>
+<div style="background: #151a24; border-radius: 10px; padding: 8px 10px"><div style="font-size: 12px; letter-spacing: 1px; color: #9aa4b6">BOB'S 27</div><div style="font-size: 22px; font-weight: 700; color: #e8b931">412</div></div>
+</div>
+<div style="display: flex; flex-direction: column; border-radius: 12px; background: #151a24">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<a href="{{r.href}}" style="display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 0 14px; border-bottom: 1px solid #07090e; color: #f4f6fa">
+<div style="width: 34px; height: 34px; border-radius: 17px; background: {{r.badgeBg}}; color: {{r.badgeFg}}; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 13px">{{r.badge}}</div>
+<div style="flex: 1"><div style="font-size: 15px; font-weight: 600">{{r.title}}</div><div style="font-size: 12px; color: #9aa4b6">{{r.sub}}</div></div>
+<div style="text-align: right; font-size: 12px; color: #9aa4b6">{{r.day}}</div>
+</a>
+</sc-for>
+</div>
+<nav aria-label="Main" style="position: absolute; left: 16px; right: 16px; bottom: 22px; height: 68px; border-radius: 34px; background: #151a24; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: grid; grid-template-columns: 1fr 1fr 96px 1fr 1fr; align-items: center">
+<a href="V1Practice.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; color: #9aa4b6; font-size: 11px; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20l7-7M14 4l6 6-6 2-2 6-6-6 6-2z"/></svg>Practice</a>
+<a href="V1History.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; color: #e8b931; font-size: 11px; font-weight: 700"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>History</a>
+<a href="N5Combined.dc.html" aria-label="Play" style="justify-self: center; width: 84px; height: 84px; margin-top: -34px; border-radius: 42px; background: #3a2c06; position: relative; overflow: hidden; color: #07090e; border: 6px solid #07090e; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 1px"><svg width="72" height="72" viewBox="0 0 400 400" aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%"><circle cx="200" cy="200" r="200" fill="#3a2c06"/><g transform="rotate(-99 200 200)" fill="none"><circle cx="200" cy="200" r="57.45" stroke="#f2c94c" stroke-width="83.1"/><circle cx="200" cy="200" r="57.45" stroke="#b8891a" stroke-width="83.1" pathLength="20" stroke-dasharray="1 1"/><circle cx="200" cy="200" r="103" stroke="#fff0bf" stroke-width="16"/><circle cx="200" cy="200" r="103" stroke="#7a5608" stroke-width="16" pathLength="20" stroke-dasharray="1 1"/><circle cx="200" cy="200" r="134.5" stroke="#f2c94c" stroke-width="47"/><circle cx="200" cy="200" r="134.5" stroke="#b8891a" stroke-width="47" pathLength="20" stroke-dasharray="1 1"/><circle cx="200" cy="200" r="166" stroke="#fff0bf" stroke-width="16"/><circle cx="200" cy="200" r="166" stroke="#7a5608" stroke-width="16" pathLength="20" stroke-dasharray="1 1"/></g><circle cx="200" cy="200" r="24" fill="#b8891a"/><circle cx="200" cy="200" r="11" fill="#3a2c06"/></svg><span style="position: relative; padding: 2px 8px; border-radius: 6px; background: rgba(7,9,14,0.82); color: #e8b931; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 15px; letter-spacing: 1px">PLAY</span></a>
+<a href="V1Rules.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; color: #9aa4b6; font-size: 11px; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>Rules</a>
+<a href="Settings.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; color: #9aa4b6; font-size: 11px; font-weight: 600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Settings</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all' };
+  }
+  renderVals() {
+    const S = [
+      { kind: 'practice', badge: "B27", title: "Bob's 27 · 386", sub: '26 short of your best · 19 hits', day: 'Sat', href: 'V1Drill.dc.html' },
+      { kind: 'match', badge: 'W', title: '501 · Won 3–1 vs DartBot 4', sub: 'Avg 72.2 · checkout 2 of 6 · best this month', day: 'Fri', href: 'M10Replay.dc.html' },
+      { kind: 'practice', badge: 'CU', title: 'Count Up · 612', sub: 'New personal best', day: 'Thu', href: 'V1Practice.dc.html' },
+      { kind: 'match', badge: 'L', title: 'Cricket · Lost 1–2 vs DartBot 5', sub: '2.1 marks per round', day: 'Wed', href: 'M10Replay.dc.html' },
+      { kind: 'match', badge: 'L', title: '501 · Lost 1–3 vs DartBot 5', sub: 'Avg 70.0 · checkout 1 of 9', day: 'Mon', href: 'M10Replay.dc.html' },
+      { kind: 'practice', badge: 'ATC', title: 'Around the Clock · 34 darts', sub: 'Personal best', day: 'Oct 25', href: 'V1Practice.dc.html' },
+      { kind: 'practice', badge: "B27", title: "Bob's 27 · 412", sub: 'Personal best', day: 'Oct 24', href: 'V1Drill.dc.html' },
+      { kind: 'match', badge: 'W', title: '501 · Won 3–2 vs DartBot 4', sub: 'Avg 68.1 · checkout 3 of 11', day: 'Oct 23', href: 'M10Replay.dc.html' }
+    ];
+    const f = this.state.filter;
+    const rows = S.filter((r) => f === 'all' || r.kind === f).slice(0, 6).map((r) => ({
+      ...r,
+      badgeBg: r.kind === 'practice' ? '#1b2436' : r.badge === 'W' ? '#e8b931' : '#3a1f22',
+      badgeFg: r.kind === 'practice' ? '#c8cfdb' : r.badge === 'W' ? '#07090e' : '#f4a5a0'
+    }));
+    const filters = [['all', 'All'], ['match', 'Matches'], ['practice', 'Practice']].map(([id, label]) => ({
+      label, on: f === id ? 'true' : 'false', bg: f === id ? '#e8b931' : 'transparent', fg: f === id ? '#07090e' : '#f4f6fa',
+      pick: () => this.setState({ filter: id })
+    }));
+    const practice = f === 'practice';
+    const data = practice ? [298, 341, 322, 412, 355, 371, 360, 386] : [61.4, 63.0, 64.2, 62.5, 66.8, 68.1, 70.0, 72.2];
+    const lo = practice ? 250 : 60, hi = practice ? 450 : 75;
+    const X = (i) => 34 + i * 40, Y = (v) => 88 - (v - lo) / (hi - lo) * 72;
+    const dots = data.slice(0, -1).map((v, i) => 'M' + (X(i) - 3.5) + ' ' + Y(v).toFixed(1) + ' a3.5 3.5 0 1 0 7 0 a3.5 3.5 0 1 0 -7 0').join(' ');
+    const lastX = X(data.length - 1), lastY = Y(data[data.length - 1]).toFixed(1);
+    const line = data.map((v, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(v).toFixed(1)).join(' ');
+    const last = data[data.length - 1], prev = data[data.length - 2];
+    const d = last - prev;
+    return {
+      filters, rows, dots, lastX, lastY, line,
+      chartTitle: practice ? "BOB'S 27 · LAST 8 ATTEMPTS" : '3-DART AVERAGE · LAST 8 X01 MATCHES',
+      chartValue: practice ? last : last.toFixed(1),
+      chartDelta: (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d).toFixed(practice ? 0 : 1),
+      chartAria: practice ? "Line chart of Bob's 27 scores, from 298 to 386 over 8 attempts, best 412" : '3-dart average rising from 61.4 to 72.2 over 8 matches',
+      yTop: hi, yMid: (lo + hi) / 2, yBot: lo
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home as a dartboard menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; padding: 24px 16px 20px; display: flex; flex-direction: column; gap: 18px">
+<div style="text-align: center">
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; text-transform: uppercase">Ton Up</h1>
+<div style="font-size: 14px; color: #9aa4b6">Tap the bull to play</div>
+</div>
+<nav aria-label="Main" style="position: relative; width: 358px; height: 358px">
+<svg width="358" height="358" viewBox="0 0 358 358" aria-hidden="true">
+<g transform="translate(179 179) scale(0.84) translate(-200 -200)">
+<circle cx="200" cy="200" r="200" fill="#000"/>
+<g transform="rotate(-99 200 200)" fill="none">
+<circle cx="200" cy="200" r="57.45" stroke="#2a2f3a" stroke-width="83.1"/>
+<circle cx="200" cy="200" r="57.45" stroke="#171b22" stroke-width="83.1" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="103" stroke="#24493a" stroke-width="8"/>
+<circle cx="200" cy="200" r="103" stroke="#5a2420" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="134.5" stroke="#2a2f3a" stroke-width="55"/>
+<circle cx="200" cy="200" r="134.5" stroke="#171b22" stroke-width="55" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="166" stroke="#24493a" stroke-width="8"/>
+<circle cx="200" cy="200" r="166" stroke="#5a2420" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+</g>
+</g>
+<g fill="#07090e" fill-opacity="0.55">
+<path d="M 146.5 146.5 L 60.2 60.2 A 168 168 0 0 1 297.8 60.2 L 211.5 146.5 A 46 46 0 0 0 146.5 146.5 Z"/>
+<path d="M 211.5 146.5 L 297.8 60.2 A 168 168 0 0 1 297.8 297.8 L 211.5 211.5 A 46 46 0 0 0 211.5 146.5 Z"/>
+<path d="M 211.5 211.5 L 297.8 297.8 A 168 168 0 0 1 60.2 297.8 L 146.5 211.5 A 46 46 0 0 0 211.5 211.5 Z"/>
+<path d="M 146.5 211.5 L 60.2 297.8 A 168 168 0 0 1 60.2 60.2 L 146.5 146.5 A 46 46 0 0 0 146.5 211.5 Z"/>
+</g>
+<g stroke="#e8b931" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><path d="M146.5 146.5L60.2 60.2M211.5 146.5L297.8 60.2M211.5 211.5L297.8 297.8M146.5 211.5L60.2 297.8"/></g>
+<circle cx="179" cy="179" r="168" fill="none" stroke="#e8b931" stroke-width="2.5" opacity="0.8"/>
+<circle cx="179" cy="179" r="44" fill="#e8b931"/>
+<g font-family="Barlow Condensed, sans-serif" font-weight="800" text-anchor="middle" fill="#f4f6fa" font-size="22" letter-spacing="1">
+<text x="179" y="86">PRACTICE</text>
+<text x="291" y="186">HISTORY</text>
+<text x="179" y="282">RULES</text>
+<text x="67" y="186">SETTINGS</text>
+<text x="179" y="187" fill="#07090e" font-size="24">PLAY</text>
+</g>
+<g font-family="Barlow, sans-serif" font-weight="500" text-anchor="middle" fill="#9aa4b6" font-size="12">
+<text x="179" y="104">Bob's 27 best 412</text>
+<text x="291" y="203">23 legs this week</text>
+<text x="179" y="300">26 games</text>
+<text x="67" y="203">Pro theme</text>
+</g>
+</svg>
+<a href="M11Practice.dc.html" aria-label="Practice" style="position: absolute; left: 109px; top: 40px; width: 140px; height: 86px; border-radius: 12px"></a>
+<a href="M10Replay.dc.html" aria-label="History" style="position: absolute; left: 238px; top: 109px; width: 100px; height: 140px; border-radius: 12px"></a>
+<a href="M12Rules.dc.html" aria-label="Rules" style="position: absolute; left: 109px; top: 232px; width: 140px; height: 86px; border-radius: 12px"></a>
+<a href="Settings.dc.html" aria-label="Settings" style="position: absolute; left: 20px; top: 109px; width: 100px; height: 140px; border-radius: 12px"></a>
+<a href="M02NewGame.dc.html" aria-label="Play" style="position: absolute; left: 135px; top: 135px; width: 88px; height: 88px; border-radius: 44px"></a>
+</nav>
+<a href="M07Scoring.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; background: #1b2436; color: #f4f6fa">
+<div style="flex: 1"><div style="font-size: 12px; color: #e8b931; font-weight: 600; letter-spacing: 1px">UNFINISHED</div><div style="font-size: 16px; font-weight: 600">501 vs DartBot 4 · leg 3, you need 140</div></div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; color: #e8b931">RESUME</div>
+</a>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-family: 'Barlow Condensed', sans-serif">
+<div style="background: #151a24; border-radius: 10px; padding: 10px"><div style="font-size: 12px; letter-spacing: 1px; color: #9aa4b6">3-DART AVG</div><div style="font-size: 26px; font-weight: 700">72.2</div></div>
+<div style="background: #151a24; border-radius: 10px; padding: 10px"><div style="font-size: 12px; letter-spacing: 1px; color: #9aa4b6">CHECKOUT</div><div style="font-size: 26px; font-weight: 700">33%</div></div>
+<div style="background: #151a24; border-radius: 10px; padding: 10px"><div style="font-size: 12px; letter-spacing: 1px; color: #9aa4b6">STREAK</div><div style="font-size: 26px; font-weight: 700">4 days</div></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

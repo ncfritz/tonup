@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scoring, tap the board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; padding: 18px 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 8px">
+<a href="N5Combined.dc.html" aria-label="Pause and go home" style="width: 44px; height: 44px; border-radius: 10px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></a>
+<div style="flex: 1; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 1.5px; color: #9aa4b6">501 · BEST OF 5 · LEG {{legNo}}</div>
+<div role="group" aria-label="Input method" style="display: flex; padding: 3px; border-radius: 10px; background: #151a24">
+<button onClick="{{setBoard}}" aria-pressed="{{boardOn}}" style="height: 38px; padding: 0 12px; border: 0; border-radius: 8px; background: {{boardBg}}; color: {{boardFg}}; font-size: 14px; font-weight: 600">Board</button>
+<button onClick="{{setKeypad}}" aria-pressed="{{keypadOn}}" style="height: 38px; padding: 0 12px; border: 0; border-radius: 8px; background: {{keypadBg}}; color: {{keypadFg}}; font-size: 14px; font-weight: 600">Keypad</button>
+</div>
+</div>
+<div style="border-radius: 10px; overflow: hidden; font-family: 'Barlow Condensed', sans-serif">
+<div style="display: grid; grid-template-columns: 10px 1fr 40px 96px; background: #1b2436; align-items: center; height: 56px">
+<div style="height: 100%; background: #e8b931"></div>
+<div style="padding-left: 10px; font-size: 24px; font-weight: 700; text-transform: uppercase">You</div>
+<div style="text-align: center; font-size: 26px; font-weight: 800; color: #e8b931">{{legsYou}}</div>
+<div style="text-align: right; padding-right: 12px; font-size: 40px; font-weight: 800">{{youLeft}}</div>
+</div>
+<div style="display: grid; grid-template-columns: 10px 1fr 40px 96px; background: #121826; align-items: center; height: 48px; border-top: 1px solid #07090e">
+<div></div>
+<div style="padding-left: 10px; font-size: 22px; font-weight: 700; text-transform: uppercase; color: #c8cfdb">DartBot 4</div>
+<div style="text-align: center; font-size: 24px; font-weight: 800; color: #e8b931">{{legsBot}}</div>
+<div style="text-align: right; padding-right: 12px; font-size: 32px; font-weight: 800; color: #c8cfdb">{{botLeft}}</div>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; background: {{stripBg}}; height: 34px; padding: 0 12px; font-weight: 700; letter-spacing: 1px">
+<span style="font-size: 15px">{{stripLeft}}</span><span style="font-size: 18px; color: #ffe7a3">{{stripRight}}</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 72px; gap: 6px; font-family: 'Barlow Condensed', sans-serif">
+<sc-for list="{{slots}}" as="s" hint-placeholder-count="3">
+<div style="height: 44px; border-radius: 8px; border: {{s.border}}; background: {{s.bg}}; color: {{s.fg}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800">{{s.text}}</div>
+</sc-for>
+<div style="height: 44px; border-radius: 8px; background: {{totalBg}}; color: {{totalFg}}; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800">{{visitTotal}}</div>
+</div>
+<sc-if value="{{boardOn}}" hint-placeholder-val="{{true}}">
+<div style="position: relative; width: 340px; height: 340px; align-self: center">
+<button onClick="{{tapBoard}}" aria-label="Dartboard: tap where your dart landed. Switch to Keypad to enter scores without the board." style="display: block; width: 340px; height: 340px; padding: 0; border: 0; border-radius: 170px; background: transparent; cursor: crosshair">
+<svg width="340" height="340" viewBox="0 0 400 400" aria-hidden="true" style="display: block; pointer-events: none">
+<circle cx="200" cy="200" r="200" fill="#000"/>
+<g transform="rotate(-99 200 200)" fill="none">
+<circle cx="200" cy="200" r="57.45" stroke="#efe6d2" stroke-width="83.1"/>
+<circle cx="200" cy="200" r="57.45" stroke="#14161b" stroke-width="83.1" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="103" stroke="#118a45" stroke-width="8"/>
+<circle cx="200" cy="200" r="103" stroke="#d1261c" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="134.5" stroke="#efe6d2" stroke-width="55"/>
+<circle cx="200" cy="200" r="134.5" stroke="#14161b" stroke-width="55" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="166" stroke="#118a45" stroke-width="8"/>
+<circle cx="200" cy="200" r="166" stroke="#d1261c" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+</g>
+<circle cx="200" cy="200" r="15.9" fill="#118a45"/>
+<circle cx="200" cy="200" r="6.35" fill="#d1261c"/>
+<g font-size="20" text-anchor="middle" fill="#f4f6fa" font-family="Barlow Condensed, sans-serif" font-weight="700"><text x="200.0" y="21.0">20</text><text x="257.2" y="30.1">1</text><text x="308.7" y="56.3">18</text><text x="349.7" y="97.3">4</text><text x="375.9" y="148.8">13</text><text x="385.0" y="206.0">6</text><text x="375.9" y="263.2">10</text><text x="349.7" y="314.7">15</text><text x="308.7" y="355.7">2</text><text x="257.2" y="381.9">17</text><text x="200.0" y="391.0">3</text><text x="142.8" y="381.9">19</text><text x="91.3" y="355.7">7</text><text x="50.3" y="314.7">16</text><text x="24.1" y="263.2">8</text><text x="15.0" y="206.0">11</text><text x="24.1" y="148.8">14</text><text x="50.3" y="97.3">9</text><text x="91.3" y="56.3">12</text><text x="142.8" y="30.1">5</text></g>
+</svg>
+</button>
+<sc-for list="{{marks}}" as="m" hint-placeholder-count="0">
+<div aria-hidden="true" style="position: absolute; left: {{m.left}}; top: {{m.top}}; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 9px; background: #e8b931; box-shadow: 0 0 0 3px #07090e; color: #07090e; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; pointer-events: none">{{m.n}}</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{keypadOn}}" hint-placeholder-val="{{false}}">
+<div style="height: 340px; display: flex; flex-direction: column; gap: 6px">
+<div role="group" aria-label="Ring" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{mults}}" as="k" hint-placeholder-count="3">
+<button onClick="{{k.pick}}" aria-pressed="{{k.on}}" style="height: 44px; border: 0; border-radius: 8px; background: {{k.bg}}; color: {{k.fg}}; font-size: 15px; font-weight: 700">{{k.label}}</button>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; flex: 1">
+<sc-for list="{{nums}}" as="n" hint-placeholder-count="20">
+<button onClick="{{n.pick}}" style="border: 0; border-radius: 8px; background: #151a24; color: #f4f6fa; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700">{{n.label}}</button>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<button onClick="{{keyOuter}}" style="height: 48px; border: 0; border-radius: 8px; background: #151a24; color: #f4f6fa; font-size: 16px; font-weight: 600">Outer bull 25</button>
+<button onClick="{{keyBull}}" style="height: 48px; border: 0; border-radius: 8px; background: #151a24; color: #f4f6fa; font-size: 16px; font-weight: 600">Bull 50</button>
+</div>
+</div>
+</sc-if>
+<div style="font-size: 13px; color: #9aa4b6; min-height: 18px">{{botLine}}</div>
+<sc-if value="{{notWon}}" hint-placeholder-val="{{true}}">
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-family: 'Barlow Condensed', sans-serif">
+<button onClick="{{undo}}" style="height: 54px; border: 0; border-radius: 10px; background: #151a24; color: #f4f6fa; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px">UNDO</button>
+<button onClick="{{miss}}" style="height: 54px; border: 0; border-radius: 10px; background: #151a24; color: #f4f6fa; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px">MISS</button>
+<button onClick="{{next}}" style="height: 54px; border: 0; border-radius: 10px; background: #e8b931; color: #07090e; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 1px">NEXT</button>
+</div>
+</sc-if>
+<sc-if value="{{won}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<button onClick="{{newLeg}}" style="height: 54px; border: 0; border-radius: 10px; background: #151a24; color: #f4f6fa; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 1px">NEXT LEG</button>
+<a href="M09Summary.dc.html" style="height: 54px; border-radius: 10px; background: #e8b931; color: #07090e; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 1px">LEG SUMMARY</a>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+    this.state = { mode: 'board', mult: 'S', left: [140, 201], visitStart: 140, visit: [], ended: false, bust: false, winner: null, legs: [1, 1], leg: 3, botLast: { labels: ['T20', '20', '1'], total: 81, bust: false } };
+  }
+  val(l) { if (l === '50') return 50; if (l === '25') return 25; if (l === 'Miss') return 0; if (l[0] === 'T') return 3 * parseInt(l.slice(1), 10); if (l[0] === 'D') return 2 * parseInt(l.slice(1), 10); return parseInt(l, 10); }
+  isDbl(l) { return l === '50' || l[0] === 'D'; }
+  hit(x, y) {
+    const dx = x - 200, dy = y - 200, r = Math.hypot(dx, dy);
+    if (r <= 6.35) return '50';
+    if (r <= 15.9) return '25';
+    if (r > 170) return 'Miss';
+    let i = Math.round((Math.atan2(dy, dx) * 180 / Math.PI + 90) / 18);
+    i = ((i % 20) + 20) % 20;
+    const n = this.ORDER[i];
+    if (r >= 99 && r <= 107) return 'T' + n;
+    if (r >= 162) return 'D' + n;
+    return String(n);
+  }
+  center(l) {
+    if (l === '50') return { x: 200, y: 200 };
+    if (l === '25') return { x: 200, y: 189 };
+    if (l === 'Miss') return { x: 200, y: 186 - 186 + 14 };
+    const m = (l[0] === 'T' || l[0] === 'D') ? l[0] : 'S';
+    const n = parseInt(m === 'S' ? l : l.slice(1), 10);
+    const r = m === 'T' ? 103 : m === 'D' ? 166 : 136;
+    const a = (-90 + 18 * this.ORDER.indexOf(n)) * Math.PI / 180;
+    return { x: 200 + r * Math.cos(a), y: 200 + r * Math.sin(a) };
+  }
+  route(left, n) {
+    if (left > 170 || left < 2 || n < 1) return null;
+    const D = ['D20', 'D16', 'D18', 'D12', 'D10', 'D8', 'D19', 'D17', 'D15', 'D14', 'D13', 'D11', 'D9', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'D1', '50'];
+    const S = ['T20', 'T19', 'T18', 'T17', 'T16', 'T15', 'T14', 'T13', 'T12', 'T11', 'T10', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1', '25', '50'];
+    for (const d of D) if (this.val(d) === left) return [d];
+    let best = null, cost = 1e9;
+    if (n >= 2) S.forEach((a, ai) => D.forEach((d, di) => { if (this.val(a) + this.val(d) === left && ai + 4 * di < cost) { cost = ai + 4 * di; best = [a, d]; } }));
+    if (best) return best;
+    if (n >= 3) S.forEach((a, ai) => S.forEach((b, bi) => { if (bi < ai) return; D.forEach((d, di) => { if (this.val(a) + this.val(b) + this.val(d) === left && ai + bi + 4 * di < cost) { cost = ai + bi + 4 * di; best = [a, b, d]; } }); }));
+    return best;
+  }
+  evalVisit(start, labels) {
+    let left = start;
+    for (const l of labels) {
+      const n = left - this.val(l);
+      if (n < 0 || n === 1 || (n === 0 && !this.isDbl(l))) return { left: start, bust: true, won: false };
+      left = n;
+      if (n === 0) return { left: 0, bust: false, won: true };
+    }
+    return { left, bust: false, won: false };
+  }
+  addDart(label, x, y) {
+    const s = this.state;
+    if (s.winner || s.ended || s.visit.length >= 3) return;
+    const p = (x === undefined) ? this.center(label) : { x, y };
+    const visit = [...s.visit, { label, x: p.x, y: p.y }];
+    const res = this.evalVisit(s.visitStart, visit.map((d) => d.label));
+    const left = [res.left, s.left[1]];
+    const legs = [...s.legs];
+    if (res.won) legs[0] += 1;
+    this.setState({ visit, left, bust: res.bust, ended: res.bust || res.won || visit.length >= 3, winner: res.won ? 'you' : null, legs, mult: 'S' });
+  }
+  gauss() { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  botVisit(start) {
+    let left = start; const labels = [];
+    for (let k = 0; k < 3; k++) {
+      let aim = 'T20';
+      const r = this.route(left, 3 - k);
+      if (r) aim = r[0];
+      else if (left <= 60) { for (const dv of [32, 40, 16, 20, 24, 8]) { const sv = left - dv; if (sv >= 1 && sv <= 20) { aim = String(sv); break; } } }
+      const c = this.center(aim);
+      const l = this.hit(c.x + this.gauss() * 12, c.y + this.gauss() * 12);
+      labels.push(l);
+      const n = left - this.val(l);
+      if (n < 0 || n === 1 || (n === 0 && !this.isDbl(l))) return { labels, left: start, bust: true, won: false };
+      left = n;
+      if (n === 0) return { labels, left: 0, bust: false, won: true };
+    }
+    return { labels, left, bust: false, won: false };
+  }
+  name(l) { return l === '50' ? 'Bull' : l; }
+  renderVals() {
+    const s = this.state;
+    const boardOn = s.mode === 'board';
+    const slots = [0, 1, 2].map((i) => {
+      const d = s.visit[i];
+      if (!d) return { text: '—', border: '1px dashed #4a5568', bg: 'transparent', fg: '#6b7588' };
+      return { text: this.name(d.label), border: '0', bg: s.bust ? '#3a1a1a' : '#1b2436', fg: '#f4f6fa' };
+    });
+    const visitSum = s.visit.reduce((t, d) => t + this.val(d.label), 0);
+    const dartsLeft = 3 - s.visit.length;
+    const r = (!s.ended && !s.winner) ? this.route(s.left[0], dartsLeft) : null;
+    let stripLeft, stripRight, stripBg = '#b3261e';
+    if (s.winner === 'you') { stripLeft = 'GAME SHOT'; stripRight = 'LEG TO YOU'; stripBg = '#1d6b3a'; }
+    else if (s.winner === 'bot') { stripLeft = 'DARTBOT WINS THE LEG'; stripRight = ''; stripBg = '#2a3448'; }
+    else if (s.bust) { stripLeft = 'BUST'; stripRight = 'BACK TO ' + s.visitStart; }
+    else if (s.ended) { stripLeft = 'VISIT DONE'; stripRight = 'TAP NEXT'; stripBg = '#2a3448'; }
+    else if (r) { stripLeft = 'YOU REQUIRE ' + s.left[0]; stripRight = r.map((l) => this.name(l)).join(' · '); }
+    else { stripLeft = 'YOU REQUIRE ' + s.left[0]; stripRight = s.left[0] > 170 ? 'NO FINISH YET' : 'NO ' + dartsLeft + '-DART FINISH'; stripBg = '#2a3448'; }
+    const sc = 340 / 400;
+    const marks = s.visit.map((d, i) => ({ n: i + 1, left: (d.x * sc).toFixed(1) + 'px', top: (d.y * sc).toFixed(1) + 'px' }));
+    const mults = [['S', 'Single'], ['D', 'Double'], ['T', 'Treble']].map(([k, label]) => ({ label, on: s.mult === k ? 'true' : 'false', bg: s.mult === k ? '#e8b931' : '#151a24', fg: s.mult === k ? '#07090e' : '#f4f6fa', pick: () => this.setState({ mult: k }) }));
+    const nums = [];
+    for (let n = 1; n <= 20; n++) nums.push({ label: (s.mult === 'S' ? '' : s.mult) + n, pick: () => this.addDart(s.mult === 'S' ? String(n) : s.mult + n) });
+    const b = s.botLast;
+    const botLine = b ? 'DartBot threw ' + b.labels.map((l) => this.name(l)).join(' · ') + (b.bust ? ' · bust' : ' = ' + b.total) : '';
+    return {
+      legNo: s.leg, legsYou: s.legs[0], legsBot: s.legs[1], youLeft: s.left[0], botLeft: s.left[1],
+      stripLeft, stripRight, stripBg, slots, marks, mults, nums, botLine,
+      visitTotal: s.bust ? 'BUST' : visitSum, totalBg: s.bust ? '#b3261e' : '#e8b931', totalFg: s.bust ? '#ffffff' : '#07090e',
+      boardOn, keypadOn: !boardOn,
+      boardBg: boardOn ? '#e8b931' : 'transparent', boardFg: boardOn ? '#07090e' : '#c8cfdb',
+      keypadBg: !boardOn ? '#e8b931' : 'transparent', keypadFg: !boardOn ? '#07090e' : '#c8cfdb',
+      won: !!s.winner, notWon: !s.winner,
+      setBoard: () => this.setState({ mode: 'board' }),
+      setKeypad: () => this.setState({ mode: 'keypad' }),
+      tapBoard: (e) => { const ne = e.nativeEvent; const k = 400 / 340; const x = ne.offsetX * k, y = ne.offsetY * k; this.addDart(this.hit(x, y), x, y); },
+      keyOuter: () => this.addDart('25'),
+      keyBull: () => this.addDart('50'),
+      miss: () => this.addDart('Miss'),
+      undo: () => {
+        const v = s.visit.slice(0, -1);
+        const res = this.evalVisit(s.visitStart, v.map((d) => d.label));
+        this.setState({ visit: v, left: [res.left, s.left[1]], bust: res.bust, ended: res.bust, winner: null, legs: s.winner === 'you' ? [s.legs[0] - 1, s.legs[1]] : s.legs });
+      },
+      next: () => {
+        if (s.winner) return;
+        const bv = this.botVisit(s.left[1]);
+        const legs = [...s.legs];
+        if (bv.won) legs[1] += 1;
+        const total = bv.labels.reduce((t, l) => t + this.val(l), 0);
+        this.setState({ left: [s.left[0], bv.left], visitStart: s.left[0], visit: [], ended: false, bust: false, winner: bv.won ? 'bot' : null, legs, botLast: { labels: bv.labels, total, bust: bv.bust } });
+      },
+      newLeg: () => this.setState({ left: [501, 501], visitStart: 501, visit: [], ended: false, bust: false, winner: null, leg: s.leg + 1, botLast: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

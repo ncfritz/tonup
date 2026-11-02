@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bob's 27</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; padding: 18px 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 8px">
+<a href="V1Practice.dc.html" aria-label="End drill" style="width: 44px; height: 44px; border-radius: 10px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+<h1 style="margin: 0; flex: 1; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px; text-transform: uppercase">Bob's 27</h1>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 1px; color: #9aa4b6">ROUND {{roundNo}} / 21</div>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; padding: 14px 16px; border-radius: 14px; background: #1b2436">
+<div><div style="font-size: 13px; color: #9aa4b6">Score</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 60px; line-height: 0.95">{{score}}</div></div>
+<div style="text-align: right"><div style="font-size: 13px; color: #9aa4b6">Personal best</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 28px; color: #e8b931">412</div><div style="font-size: 12px; color: #9aa4b6">{{pace}}</div></div>
+</div>
+<sc-if value="{{playing}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; gap: 14px; align-items: center">
+<svg width="170" height="170" viewBox="0 0 400 400" role="img" aria-label="{{boardAria}}">
+<circle cx="200" cy="200" r="200" fill="#000"/>
+<g transform="rotate(-99 200 200)" fill="none">
+<circle cx="200" cy="200" r="57.45" stroke="#3a3f4a" stroke-width="83.1"/>
+<circle cx="200" cy="200" r="57.45" stroke="#20242c" stroke-width="83.1" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="103" stroke="#2f5a44" stroke-width="8"/>
+<circle cx="200" cy="200" r="103" stroke="#6b2a26" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="134.5" stroke="#3a3f4a" stroke-width="55"/>
+<circle cx="200" cy="200" r="134.5" stroke="#20242c" stroke-width="55" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="166" stroke="#2f5a44" stroke-width="8"/>
+<circle cx="200" cy="200" r="166" stroke="#6b2a26" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+</g>
+<circle cx="200" cy="200" r="15.9" fill="#2f5a44"/>
+<circle cx="200" cy="200" r="6.35" fill="#6b2a26"/>
+<path d="{{hlPath}}" fill="#e8b931" stroke="#ffe7a3" stroke-width="3"/>
+<g font-size="24" text-anchor="middle" fill="#9aa4b6" font-family="Barlow Condensed, sans-serif" font-weight="700"><text x="200.0" y="21.0">20</text><text x="257.2" y="30.1">1</text><text x="308.7" y="56.3">18</text><text x="349.7" y="97.3">4</text><text x="375.9" y="148.8">13</text><text x="385.0" y="206.0">6</text><text x="375.9" y="263.2">10</text><text x="349.7" y="314.7">15</text><text x="308.7" y="355.7">2</text><text x="257.2" y="381.9">17</text><text x="200.0" y="391.0">3</text><text x="142.8" y="381.9">19</text><text x="91.3" y="355.7">7</text><text x="50.3" y="314.7">16</text><text x="24.1" y="263.2">8</text><text x="15.0" y="206.0">11</text><text x="24.1" y="148.8">14</text><text x="50.3" y="97.3">9</text><text x="91.3" y="56.3">12</text><text x="142.8" y="30.1">5</text></g>
+</svg>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 13px; color: #9aa4b6">Throw three darts at</div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 36px; line-height: 1">{{targetName}}</div>
+<div style="font-size: 14px; line-height: 1.35; color: #c8cfdb">Each hit +{{targetVal}}. Miss all three and lose {{targetVal}}.</div>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-family: 'Barlow Condensed', sans-serif">
+<sc-for list="{{slots}}" as="s" hint-placeholder-count="3">
+<div style="height: 48px; border-radius: 10px; border: {{s.border}}; background: {{s.bg}}; color: {{s.fg}}; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; letter-spacing: 1px">{{s.text}}</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{done}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 14px; background: #151a24; text-align: center">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 1.5px; color: #9aa4b6">{{doneTitle}}</div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 40px; color: #e8b931">{{doneLine}}</div>
+<div style="font-size: 14px; color: #c8cfdb">{{doneNote}}</div>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 12px; color: #9aa4b6"><span>D1</span><span>Hits per round</span><span>Bull</span></div>
+<div style="display: grid; grid-template-columns: repeat(21, minmax(0, 1fr)); gap: 3px" role="img" aria-label="{{stripAria}}">
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="21">
+<div style="height: 30px; border-radius: 4px; background: {{c.bg}}; border: {{c.border}}; box-sizing: border-box; color: #07090e; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center">{{c.text}}</div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 12px; font-size: 12px; color: #9aa4b6"><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #e8b931"></span> hit</span><span><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #b3261e"></span> blank round</span></div>
+</div>
+<div style="flex: 1"></div>
+<sc-if value="{{playing}}" hint-placeholder-val="{{true}}">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+<button onClick="{{miss}}" style="height: 72px; border: 0; border-radius: 12px; background: #151a24; color: #f4f6fa; font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: 1px">MISS</button>
+<button onClick="{{hit}}" style="height: 72px; border: 0; border-radius: 12px; background: #e8b931; color: #07090e; font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: 1px">HIT {{targetShort}}</button>
+</div>
+<button onClick="{{undo}}" style="height: 44px; border: 0; border-radius: 10px; background: transparent; color: #9aa4b6; font-size: 15px; font-weight: 600">Undo last dart</button>
+</sc-if>
+<sc-if value="{{done}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+<a href="V1Practice.dc.html" style="height: 60px; border-radius: 12px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700">PRACTICE</a>
+<button onClick="{{restart}}" style="height: 60px; border: 0; border-radius: 12px; background: #e8b931; color: #07090e; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800">TRY AGAIN</button>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+    this.state = { rounds: [1, 0, 1, 1, 0, 2], darts: [], score: 53, over: false };
+  }
+  v(t) { return t < 20 ? 2 * (t + 1) : 50; }
+  throwDart(isHit) {
+    const s = this.state;
+    if (s.over) return;
+    const darts = [...s.darts, isHit];
+    if (darts.length < 3) { this.setState({ darts }); return; }
+    const t = s.rounds.length;
+    const hits = darts.filter(Boolean).length;
+    const score = s.score + (hits > 0 ? hits * this.v(t) : -this.v(t));
+    const rounds = [...s.rounds, hits];
+    this.setState({ rounds, darts: [], score, over: score <= 0 || rounds.length >= 21 });
+  }
+  renderVals() {
+    const s = this.state;
+    const t = Math.min(s.rounds.length, 20);
+    const val = this.v(t);
+    let hlPath;
+    if (t === 20) hlPath = 'M 200 191 A 9 9 0 1 1 199.9 191 Z';
+    else {
+      const n = t + 1, k = this.ORDER.indexOf(n);
+      const a0 = (-90 + 18 * k - 9) * Math.PI / 180, a1 = a0 + 18 * Math.PI / 180;
+      const P = (a, r) => (200 + r * Math.cos(a)).toFixed(1) + ' ' + (200 + r * Math.sin(a)).toFixed(1);
+      hlPath = 'M ' + P(a0, 171) + ' A 171 171 0 0 1 ' + P(a1, 171) + ' L ' + P(a1, 161) + ' A 161 161 0 0 0 ' + P(a0, 161) + ' Z';
+    }
+    const slots = [0, 1, 2].map((i) => {
+      if (i >= s.darts.length) return { text: 'DART ' + (i + 1), border: '1px dashed #4a5568', bg: 'transparent', fg: '#6b7588' };
+      return s.darts[i] ? { text: 'HIT', border: '0', bg: '#e8b931', fg: '#07090e' } : { text: 'MISS', border: '0', bg: '#2a3344', fg: '#c8cfdb' };
+    });
+    const cells = [];
+    for (let i = 0; i < 21; i++) {
+      if (i < s.rounds.length) { const h = s.rounds[i]; cells.push({ text: h || '', bg: h ? '#e8b931' : '#b3261e', border: '0' }); }
+      else if (i === s.rounds.length && !s.over) cells.push({ text: '', bg: 'transparent', border: '2px solid #e8b931' });
+      else cells.push({ text: '', bg: '#1b2436', border: '0' });
+    }
+    const totalHits = s.rounds.reduce((a, b) => a + b, 0);
+    const name = t === 20 ? 'BULL' : 'DOUBLE ' + (t + 1);
+    const pbLeft = 412 - s.score;
+    const finishedAll = s.rounds.length >= 21 && s.score > 0;
+    return {
+      roundNo: Math.min(s.rounds.length + 1, 21), score: s.score,
+      pace: pbLeft > 0 ? pbLeft + ' to beat it' : 'New best!',
+      playing: !s.over, done: s.over,
+      hlPath, targetName: name, targetVal: val, targetShort: t === 20 ? 'BULL' : 'D' + (t + 1),
+      boardAria: 'Target: ' + name + ' highlighted on the board',
+      slots, cells,
+      stripAria: totalHits + ' hits over ' + s.rounds.length + ' rounds',
+      doneTitle: finishedAll ? 'DRILL COMPLETE' : 'KNOCKED OUT ON ' + (s.rounds.length === 21 ? 'BULL' : 'D' + s.rounds.length),
+      doneLine: s.score > 0 ? s.score + ' POINTS' : 'BELOW ZERO',
+      doneNote: totalHits + ' hits from ' + (s.rounds.length * 3) + ' darts · best is 412',
+      hit: () => this.throwDart(true),
+      miss: () => this.throwDart(false),
+      undo: () => { if (s.darts.length) this.setState({ darts: s.darts.slice(0, -1) }); },
+      restart: () => this.setState({ rounds: [], darts: [], score: 27, over: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

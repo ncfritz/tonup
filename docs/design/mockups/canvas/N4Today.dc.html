@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home as a Today feed</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; overflow: hidden; display: flex; flex-direction: column">
+<div style="padding: 20px 16px 12px; display: flex; flex-direction: column; gap: 14px; background: #07090e; border-bottom: 1px solid #1f2633">
+<div style="display: flex; align-items: center; gap: 8px">
+<div style="flex: 1">
+<div style="font-size: 14px; color: #9aa4b6">Sunday · 4-day streak</div>
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; text-transform: uppercase">Today</h1>
+</div>
+<a href="M10Replay.dc.html" aria-label="History" style="width: 44px; height: 44px; border-radius: 22px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></a>
+<a href="Settings.dc.html" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 22px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></a>
+</div>
+<nav aria-label="Sections" style="display: flex; gap: 8px">
+<a href="N4Today.dc.html" aria-current="page" style="height: 40px; padding: 0 16px; border-radius: 20px; background: #e8b931; color: #07090e; display: flex; align-items: center; font-size: 14px; font-weight: 700">Today</a>
+<a href="M02NewGame.dc.html" style="height: 40px; padding: 0 16px; border-radius: 20px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; font-size: 14px; font-weight: 600">Play</a>
+<a href="M11Practice.dc.html" style="height: 40px; padding: 0 16px; border-radius: 20px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; font-size: 14px; font-weight: 600">Practice</a>
+<a href="M12Rules.dc.html" style="height: 40px; padding: 0 16px; border-radius: 20px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; font-size: 14px; font-weight: 600">Rules</a>
+</nav>
+</div>
+<div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; background: #151a24">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">TONIGHT'S PLAN · 30 MIN</div>
+<div style="font-size: 13px; color: #9aa4b6">1 of 3 done</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 40px"><span style="width: 24px; height: 24px; border-radius: 12px; background: #4ade80; color: #07090e; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">✓</span><span style="flex: 1; color: #9aa4b6; text-decoration: line-through">Warm-up: Count Up · 612</span></div>
+<a href="M11Practice.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; margin: 0 -10px; border-radius: 10px; background: #1b2436; color: #f4f6fa"><span style="width: 24px; height: 24px; border-radius: 12px; border: 2px solid #e8b931; box-sizing: border-box"></span><span style="flex: 1; font-weight: 600">Bob's 27 · beat 412</span><span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; color: #e8b931">START</span></a>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 40px"><span style="width: 24px; height: 24px; border-radius: 12px; border: 2px solid #4a5568; box-sizing: border-box"></span><span style="flex: 1">Match: 501 vs DartBot 5</span></div>
+</div>
+</div>
+<a href="M10Replay.dc.html" style="display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 16px; background: #151a24; color: #f4f6fa">
+<svg width="86" height="86" viewBox="0 0 400 400" role="img" aria-label="Last match heatmap: most darts around treble 20">
+<circle cx="200" cy="200" r="200" fill="#000"/>
+<g transform="rotate(-99 200 200)" fill="none"><circle cx="200" cy="200" r="57.45" stroke="#3a3f4a" stroke-width="83.1"/><circle cx="200" cy="200" r="134.5" stroke="#3a3f4a" stroke-width="55"/><circle cx="200" cy="200" r="134.5" stroke="#262a33" stroke-width="55" pathLength="20" stroke-dasharray="1 1"/><circle cx="200" cy="200" r="103" stroke="#4a5060" stroke-width="8"/><circle cx="200" cy="200" r="166" stroke="#4a5060" stroke-width="8"/></g>
+<circle cx="198" cy="100" r="36" fill="#e8b931" fill-opacity="0.35"/><circle cx="198" cy="100" r="16" fill="#e8b931" fill-opacity="0.75"/><circle cx="248" cy="80" r="16" fill="#e8b931" fill-opacity="0.4"/><circle cx="158" cy="80" r="14" fill="#e8b931" fill-opacity="0.3"/>
+</svg>
+<div style="flex: 1">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">LAST MATCH · FRIDAY</div>
+<div style="font-size: 17px; font-weight: 600">Won 3–1 vs DartBot 4</div>
+<div style="font-size: 13px; color: #9aa4b6">Avg 72.2, your best this month · Replay</div>
+</div>
+</a>
+<a href="M02NewGame.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 16px; background: #e8b931; color: #07090e">
+<div style="flex: 1"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1">QUICK 501</div><div style="font-size: 13px; font-weight: 500">Your usual: vs DartBot 4, best of 5</div></div>
+<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>
+</a>
+<a href="M12Rules.dc.html" style="display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 16px; background: #151a24; color: #f4f6fa">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">GAME NIGHT IDEA</div>
+<div style="font-size: 17px; font-weight: 600">Killer, for 3 or more players</div>
+<div style="font-size: 13px; color: #9aa4b6">Hit your own double to become a Killer, then take lives off everyone else.</div>
+</a>
+<div style="padding: 16px; border-radius: 16px; background: #151a24; height: 90px; box-sizing: border-box">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">PERSONAL BEST</div>
+<div style="font-size: 17px; font-weight: 600">New high checkout: 104</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

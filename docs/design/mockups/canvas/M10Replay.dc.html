@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Replay</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; padding: 18px 16px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px">
+<a href="M09Summary.dc.html" aria-label="Back" style="width: 44px; height: 44px; border-radius: 10px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>
+<h1 style="margin: 0; flex: 1; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px; text-transform: uppercase">Replay · Leg 3</h1>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; font-family: 'Barlow Condensed', sans-serif">
+<div style="border-radius: 10px; background: #151a24; padding: 8px 12px; border-left: 6px solid #e8b931"><div style="font-size: 14px; letter-spacing: 1px; color: #9aa4b6">YOU</div><div style="font-size: 36px; font-weight: 800; line-height: 1">{{youLeft}}</div></div>
+<div style="border-radius: 10px; background: #151a24; padding: 8px 12px; border-left: 6px solid #60a5fa"><div style="font-size: 14px; letter-spacing: 1px; color: #9aa4b6">DARTBOT 4</div><div style="font-size: 36px; font-weight: 800; line-height: 1">{{botLeft}}</div></div>
+</div>
+<div style="position: relative; width: 358px; height: 358px">
+<svg width="358" height="358" viewBox="0 0 400 400" role="img" aria-label="Dartboard showing darts thrown up to the selected visit">
+<circle cx="200" cy="200" r="200" fill="#000"/>
+<g transform="rotate(-99 200 200)" fill="none">
+<circle cx="200" cy="200" r="57.45" stroke="#3a3f4a" stroke-width="83.1"/>
+<circle cx="200" cy="200" r="57.45" stroke="#20242c" stroke-width="83.1" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="103" stroke="#2f5a44" stroke-width="8"/>
+<circle cx="200" cy="200" r="103" stroke="#6b2a26" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="134.5" stroke="#3a3f4a" stroke-width="55"/>
+<circle cx="200" cy="200" r="134.5" stroke="#20242c" stroke-width="55" pathLength="20" stroke-dasharray="1 1"/>
+<circle cx="200" cy="200" r="166" stroke="#2f5a44" stroke-width="8"/>
+<circle cx="200" cy="200" r="166" stroke="#6b2a26" stroke-width="8" pathLength="20" stroke-dasharray="1 1"/>
+</g>
+<circle cx="200" cy="200" r="15.9" fill="#2f5a44"/>
+<circle cx="200" cy="200" r="6.35" fill="#6b2a26"/>
+<g font-size="19" text-anchor="middle" fill="#9aa4b6" font-family="Barlow Condensed, sans-serif" font-weight="700"><text x="200.0" y="21.0">20</text><text x="257.2" y="30.1">1</text><text x="308.7" y="56.3">18</text><text x="349.7" y="97.3">4</text><text x="375.9" y="148.8">13</text><text x="385.0" y="206.0">6</text><text x="375.9" y="263.2">10</text><text x="349.7" y="314.7">15</text><text x="308.7" y="355.7">2</text><text x="257.2" y="381.9">17</text><text x="200.0" y="391.0">3</text><text x="142.8" y="381.9">19</text><text x="91.3" y="355.7">7</text><text x="50.3" y="314.7">16</text><text x="24.1" y="263.2">8</text><text x="15.0" y="206.0">11</text><text x="24.1" y="148.8">14</text><text x="50.3" y="97.3">9</text><text x="91.3" y="56.3">12</text><text x="142.8" y="30.1">5</text></g>
+</svg>
+<sc-for list="{{marks}}" as="d" hint-placeholder-count="0">
+<div aria-hidden="true" style="position: absolute; left: {{d.left}}; top: {{d.top}}; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 7px; background: {{d.color}}; opacity: {{d.opacity}}; box-shadow: 0 0 0 2px #07090e"></div>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 10px; background: #1b2436">
+<div><div style="font-size: 13px; color: #9aa4b6">{{label}}</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px">{{dartsText}}</div></div>
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 32px; color: {{scoreColor}}">{{visitScore}}</div>
+</div>
+<div style="display: flex; gap: 4px" role="group" aria-label="Visits">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="13">
+<button onClick="{{c.pick}}" aria-label="{{c.aria}}" aria-pressed="{{c.on}}" style="flex: 1; height: 44px; padding: 0; border: 0; border-radius: 6px; background: {{c.bg}}; display: flex; align-items: flex-end; justify-content: center"><span style="width: 100%; height: 4px; border-radius: 0 0 6px 6px; background: {{c.bar}}"></span></button>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px">
+<button onClick="{{prev}}" aria-label="Previous visit" style="height: 50px; border: 0; border-radius: 10px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+<button onClick="{{cycleFilter}}" style="height: 50px; border: 0; border-radius: 10px; background: #151a24; color: #f4f6fa; font-size: 15px; font-weight: 600">{{filterLabel}}</button>
+<button onClick="{{next}}" aria-label="Next visit" style="height: 50px; border: 0; border-radius: 10px; background: #e8b931; color: #07090e; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { v: 11, filter: 'both' };
+  }
+  renderVals() {
+    const order = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+    const V = [
+      ['you', ['S20', 'S20', 'S20']], ['bot', ['S20', 'S5', 'S20']],
+      ['you', ['T20', 'S1', 'S20']], ['bot', ['T20', 'S5', 'S20']],
+      ['you', ['S20', 'S20', 'S20']], ['bot', ['T17', 'S20', 'M']],
+      ['you', ['T20', 'S20', 'M']], ['bot', ['T20', 'S19', 'S20']],
+      ['you', ['T20', 'S20', 'M']], ['bot', ['T20', 'S20', 'M']],
+      ['you', ['T20', 'S20', 'M']], ['bot', ['T20', 'S1', 'S20']],
+      ['you', ['S20', 'D20']]
+    ];
+    const val = (s) => s === 'M' ? 0 : ({ S: 1, D: 2, T: 3 })[s[0]] * parseInt(s.slice(1), 10);
+    const name = (s) => s === 'M' ? 'Miss' : s[0] === 'S' ? s.slice(1) : s;
+    const pos = (s, k) => {
+      const jit = [[-3, 4], [4, -5], [-5, -3], [2, 6], [6, 2], [-2, -6]][k % 6];
+      let n = 20, r = 184;
+      if (s !== 'M') { n = parseInt(s.slice(1), 10); r = s[0] === 'T' ? 103 : s[0] === 'D' ? 166 : 136; }
+      const a = (-90 + 18 * order.indexOf(n) + jit[0]) * Math.PI / 180;
+      const rr = r + jit[1];
+      const sc = 358 / 400;
+      return { left: ((200 + rr * Math.cos(a)) * sc).toFixed(1) + 'px', top: ((200 + rr * Math.sin(a)) * sc).toFixed(1) + 'px' };
+    };
+    const cur = Math.max(0, Math.min(V.length - 1, this.state.v));
+    let you = 501, bot = 501;
+    const marks = [];
+    V.forEach(([who, darts], i) => {
+      if (i > cur) return;
+      darts.forEach((d) => { if (who === 'you') you -= val(d); else bot -= val(d); });
+      if (this.state.filter !== 'both' && this.state.filter !== who) return;
+      darts.forEach((d, k) => marks.push({ ...pos(d, i * 3 + k), color: who === 'you' ? '#e8b931' : '#60a5fa', opacity: i === cur ? 1 : 0.35 }));
+    });
+    const [who, darts] = V[cur];
+    const total = darts.reduce((t, d) => t + val(d), 0);
+    const nextFilter = { both: 'you', you: 'bot', bot: 'both' };
+    const chips = V.map(([w], i) => ({
+      on: i === cur ? 'true' : 'false', aria: 'Visit ' + (i + 1),
+      bg: i === cur ? '#2a3448' : '#151a24', bar: w === 'you' ? '#e8b931' : '#60a5fa',
+      pick: () => this.setState({ v: i })
+    }));
+    return {
+      marks, chips, youLeft: you, botLeft: bot,
+      label: 'Visit ' + (cur + 1) + ' of ' + V.length + ' · ' + (who === 'you' ? 'You' : 'DartBot'),
+      dartsText: darts.map(name).join(' · '),
+      visitScore: cur === V.length - 1 ? 'GAME' : total,
+      scoreColor: who === 'you' ? '#e8b931' : '#60a5fa',
+      filterLabel: { both: 'Both players', you: 'You only', bot: 'Bot only' }[this.state.filter],
+      prev: () => this.setState({ v: Math.max(0, cur - 1) }),
+      next: () => this.setState({ v: Math.min(V.length - 1, cur + 1) }),
+      cycleFilter: () => this.setState({ filter: nextFilter[this.state.filter] })
+    };
+  }
+}
+</script>
+</body>
+</html>

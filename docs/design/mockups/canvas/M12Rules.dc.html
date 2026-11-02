@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rules: Cricket</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#e8b931;text-decoration:none}a:hover{color:#ffd45c}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #07090e; color: #f4f6fa; font-family: 'Barlow', sans-serif; padding: 18px 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 8px">
+<a href="V1Rules.dc.html" aria-label="Back" style="width: 44px; height: 44px; border-radius: 10px; background: #151a24; color: #f4f6fa; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>
+<h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px; text-transform: uppercase">Rules</h1>
+</div>
+<div style="display: flex; gap: 6px; overflow: hidden" role="group" aria-label="Game">
+<button aria-pressed="false" style="flex: none; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: #151a24; color: #f4f6fa; font-size: 14px; font-weight: 600">X01</button>
+<button aria-pressed="true" style="flex: none; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: #e8b931; color: #07090e; font-size: 14px; font-weight: 700">Cricket</button>
+<button aria-pressed="false" style="flex: none; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: #151a24; color: #f4f6fa; font-size: 14px; font-weight: 600">Around the Clock</button>
+<button aria-pressed="false" style="flex: none; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: #151a24; color: #f4f6fa; font-size: 14px; font-weight: 600">Shanghai</button>
+</div>
+<div>
+<h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; text-transform: uppercase">Cricket</h2>
+<div style="font-size: 14px; color: #9aa4b6">2–4 players · 15–25 min · Targets 15–20 and bull</div>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.45; color: #c8cfdb">Close each number by hitting it three times, then score on it until your opponent closes it too. Close everything with the most points to win.</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center">
+<div style="padding: 10px 6px; border-radius: 10px; background: #151a24"><svg width="30" height="30" viewBox="0 0 30 30" stroke="#e8b931" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M8 22L22 8"/></svg><div style="font-size: 13px; color: #9aa4b6">Single = 1 mark</div></div>
+<div style="padding: 10px 6px; border-radius: 10px; background: #151a24"><svg width="30" height="30" viewBox="0 0 30 30" stroke="#e8b931" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M8 22L22 8M8 8l14 14"/></svg><div style="font-size: 13px; color: #9aa4b6">Double = 2</div></div>
+<div style="padding: 10px 6px; border-radius: 10px; background: #151a24"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="#e8b931" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M9 21L21 9M9 9l12 12"/><circle cx="15" cy="15" r="11"/></svg><div style="font-size: 13px; color: #9aa4b6">Treble = closed</div></div>
+</div>
+<div style="display: flex; flex-direction: column; border-radius: 12px; background: #151a24; font-size: 14px; line-height: 1.4">
+<div style="padding: 12px 14px; border-bottom: 1px solid #07090e"><b>Scoring.</b> <span style="color: #c8cfdb">Extra marks on a number you've closed add its value, as long as an opponent hasn't closed it.</span></div>
+<div style="padding: 12px 14px; border-bottom: 1px solid #07090e"><b>Bull.</b> <span style="color: #c8cfdb">Outer bull is 1 mark, inner bull 2.</span></div>
+<div style="padding: 12px 14px"><b>Winning.</b> <span style="color: #c8cfdb">Close all seven with points equal to or ahead of everyone else.</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; color: #9aa4b6">VARIANTS</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px">
+<span style="padding: 6px 10px; border-radius: 6px; background: #1b2436">Cut-Throat</span>
+<span style="padding: 6px 10px; border-radius: 6px; background: #1b2436">No-Score</span>
+<span style="padding: 6px 10px; border-radius: 6px; background: #1b2436">Tactics 10–20</span>
+<span style="padding: 6px 10px; border-radius: 6px; background: #1b2436">Random numbers</span>
+</div>
+</div>
+<div style="flex: 1"></div>
+<a href="M02NewGame.dc.html" style="height: 56px; border-radius: 12px; background: #e8b931; color: #07090e; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 1px">PLAY CRICKET</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
