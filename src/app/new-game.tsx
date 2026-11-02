@@ -38,16 +38,18 @@ export default function NewGame() {
   const lastLineup = useSettings((s) => s.lastLineup);
   const setSetting = useSettings((s) => s.set);
   // Home's shortcuts open New game on a game.
-  const { game: asked } = useLocalSearchParams<{ game?: string }>();
+  const { game: asked, variant } = useLocalSearchParams<{ game?: string; variant?: string }>();
   const [gameId, setGameId] = useState<GameId>(
     GAMES.includes(asked as GameId) ? (asked as GameId) : lastGameId,
   );
   const [settings, setSettings] = useState<X01Settings>(
     (saved.x01 as X01Settings | undefined) ?? X01_DEFAULTS,
   );
-  const [cricketSettings, setCricket] = useState<CricketSettings>(
-    (saved.cricket as CricketSettings | undefined) ?? CRICKET_DEFAULTS,
-  );
+  const [cricketSettings, setCricket] = useState<CricketSettings>(() => {
+    const base = (saved.cricket as CricketSettings | undefined) ?? CRICKET_DEFAULTS;
+    // A rules page can ask for a variant ("Play Cut-Throat Cricket").
+    return variant === 'standard' || variant === 'cutThroat' ? { ...base, variant } : base;
+  });
   const [clockSettings, setClock] = useState<ClockSettings>(
     (saved.clock as ClockSettings | undefined) ?? CLOCK_DEFAULTS,
   );

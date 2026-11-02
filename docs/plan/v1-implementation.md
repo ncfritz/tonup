@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0–M7 in place (2026-11-02)
+- Status: Accepted; M0–M8 in place (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -60,7 +60,7 @@ tonup/
 │   ├── features/                    Zustand stores and hooks per feature (game, drill, settings, history)
 │   ├── services/                    db, purchases, speech, haptics, export, diagnostics
 │   ├── ui/                          Board, BoardLoupe, Keypad, Scoreboard*, DartSlots, TabBar, PlayButton, Chart…
-│   ├── content/                     rules pages per game, glossary, board setup (markdown + metadata)
+│   ├── content/                     rules index: each game's family and how to play it (text in i18n rules.json)
 │   ├── theme/                       palettes.json, tokens, fonts, Unistyles themes, ThemeSync
 │   └── i18n/
 ├── modules/                         empty until the camera releases
@@ -201,4 +201,4 @@ Still open:
 3. Finish M0: run the scaffold on a phone (`pnpm install`, then `pnpm ios`) and check the tabs.
 4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
 5. Play a best-of-5 against the bot on a phone with a few corrections, then replay it (the M3 and M4 done-whens).
-6. Try the games, drills and History on a phone, then start M8 (Rules and knowledge).
+6. Try the games, drills, History and Rules on a phone, then start M9 (Settings and the base checkpoint).

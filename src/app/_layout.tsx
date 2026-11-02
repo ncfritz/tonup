@@ -53,6 +53,10 @@ export default function RootLayout() {
             <Stack.Screen name="summary/[sessionId]" options={{ gestureEnabled: false }} />
             <Stack.Screen name="replay/[sessionId]" />
             <Stack.Screen name="drill/[sessionId]" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="rules/[gameId]" />
+            <Stack.Screen name="rules/checkouts" />
+            <Stack.Screen name="rules/board" />
+            <Stack.Screen name="rules/glossary" />
           </Stack>
         </Bootstrap>
       </DatabaseProvider>

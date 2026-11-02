@@ -35,7 +35,7 @@ export function Scoreboard({
 }) {
   const { t } = useTranslation('game');
   const compact = view.rows.length > 3;
-  const strip = stripText(view, t);
+  const strip = stripText(view, t as unknown as T);
   const fmt =
     format ??
     ((r: ScoreboardRow): RowFormat => ({
@@ -126,7 +126,8 @@ export function Scoreboard({
   );
 }
 
-type T = ReturnType<typeof useTranslation<'game'>>['t'];
+/** Loosely typed: the strip builds keys from the status (fully typed keys get too deep here). */
+type T = (key: string, options?: Record<string, unknown>) => string;
 
 function stripText(view: ScoreboardView, t: T): { left: string; right: string; danger: boolean } {
   const s = view.status;

@@ -1,0 +1,389 @@
+{
+  "title": "Rules",
+  "search": "Search games and terms",
+  "searchA11y": "Search rules",
+  "noResults": "Nothing matches “{q}”.",
+  "inApp": "Games in the app",
+  "others": "More games with Ton Up Pro",
+  "quick": {
+    "checkouts": "Checkouts",
+    "board": "Board setup",
+    "glossary": "Glossary"
+  },
+  "families": {
+    "x01": "X01",
+    "cricket": "Cricket",
+    "sequence": "Target games",
+    "elimination": "Party games",
+    "sports": "Sports games"
+  },
+  "page": {
+    "back": "Back",
+    "players": "Players",
+    "how": "How to play",
+    "scoring": "Scoring",
+    "win": "Winning",
+    "variants": "Variants",
+    "play": "Play {name}",
+    "practise": "Practise {name}",
+    "locked": "Part of Ton Up Pro",
+    "lockedBody": "You can read the rules now. Playing it comes with Ton Up Pro."
+  },
+  "games": {
+    "x01": {
+      "name": "501 and 301",
+      "summary": "Count down to exactly zero, finishing on a double.",
+      "players": "1 or more",
+      "how": [
+        "Everyone starts on the same score: 501 for the standard game, 301 for a shorter one, 701 or 1001 for longer ones.",
+        "Take turns throwing three darts (a visit). The visit's total comes off your score."
+      ],
+      "scoring": [
+        "Each dart scores its number, doubled in the outer ring and trebled in the inner ring. The outer bull is 25 and the bull is 50.",
+        "Going below zero, leaving 1, or reaching zero without a double is a bust: the visit scores nothing and your turn ends."
+      ],
+      "win": [
+        "Finish on exactly zero with a double or the bull. Matches are played in legs, and sometimes sets of legs."
+      ],
+      "variants": [
+        "Double in: scoring starts only once you hit a double.",
+        "Master out: finish on a double or a treble. Straight out: finish on anything."
+      ]
+    },
+    "dido201": {
+      "name": "201 Double In, Double Out",
+      "summary": "A short X01 that needs a double to start and a double to finish.",
+      "players": "1 or more",
+      "how": [
+        "Start on 201. Nothing counts until you hit a double; from then on, count down as in 501."
+      ],
+      "scoring": ["As in 501, with busts below zero, on 1, or reaching zero without a double."],
+      "win": ["Check out on a double. It's a quick way to sharpen doubles at both ends of a leg."],
+      "variants": []
+    },
+    "gotcha": {
+      "name": "Gotcha",
+      "summary": "Race up to an exact target, and knock opponents back to zero.",
+      "players": "2 or more",
+      "how": ["Everyone starts on zero and adds each dart, aiming for an exact target, often 301."],
+      "scoring": [
+        "If your total lands exactly on an opponent's score, their score goes back to zero.",
+        "Going over the target is a bust: the visit doesn't count."
+      ],
+      "win": ["First to hit the target exactly wins."],
+      "variants": ["Finish on a double."]
+    },
+    "fives": {
+      "name": "Fifty-One by Fives",
+      "summary": "Only visits that divide by five count.",
+      "players": "2 or more",
+      "how": [
+        "Throw a visit. If its total divides by 5, you bank the total divided by 5 points; otherwise nothing."
+      ],
+      "scoring": [
+        "A dart that misses the board scores nothing for the whole visit. Going past 51 is a bust."
+      ],
+      "win": ["First to exactly 51 wins."],
+      "variants": ["Play to 61, 71 or 101 for a longer game."]
+    },
+    "cricket": {
+      "name": "Cricket",
+      "summary": "Close 20 down to 15 and the bull, and score on the numbers you own.",
+      "players": "1 or more",
+      "how": [
+        "The numbers in play are 20, 19, 18, 17, 16, 15 and the bull.",
+        "Each hit is a mark: a single is one, a double two, a treble three. The outer bull is one mark and the bull two.",
+        "Three marks close a number for you."
+      ],
+      "scoring": [
+        "Once you've closed a number, extra marks on it score its value (25 for the bull) as long as an opponent still has it open.",
+        "When everyone has closed a number, it's dead and scores no more."
+      ],
+      "win": [
+        "Close everything with as many points as anyone, or more. With a round limit, the most points after the last round wins."
+      ],
+      "variants": [
+        "Cut-Throat, No-Score, Tactics, Random and Mickey Mouse Cricket change the numbers or the scoring."
+      ]
+    },
+    "cutThroat": {
+      "name": "Cut-Throat Cricket",
+      "summary": "Cricket where your extra marks give points to everyone else.",
+      "players": "3 or more is best",
+      "how": ["Play as Cricket: close 20 to 15 and the bull with three marks each."],
+      "scoring": [
+        "Extra marks on a number you've closed add its value to every opponent who still has it open."
+      ],
+      "win": ["Close everything with the lowest points (or level with the lowest)."],
+      "variants": []
+    },
+    "noScore": {
+      "name": "No-Score Cricket",
+      "summary": "A pure race to close all seven numbers.",
+      "players": "1 or more",
+      "how": ["Close 20 to 15 and the bull with three marks each. Extra marks do nothing."],
+      "scoring": ["No points are scored."],
+      "win": ["First to close everything wins. A good first game for beginners."],
+      "variants": []
+    },
+    "tactics": {
+      "name": "Tactics",
+      "summary": "Cricket with 10 to 20 and the bull.",
+      "players": "2 or more",
+      "how": ["Play as Cricket, with every number from 10 to 20 and the bull in play."],
+      "scoring": ["As Cricket: extra marks score while an opponent has the number open."],
+      "win": [
+        "Close everything with as many points as anyone, or more. Longer than Cricket, and it rewards treble accuracy."
+      ],
+      "variants": []
+    },
+    "randomCricket": {
+      "name": "Random Cricket",
+      "summary": "Cricket on six numbers drawn at random, plus the bull.",
+      "players": "2 or more",
+      "how": ["Six numbers are drawn at the start and play as Cricket's 20 to 15."],
+      "scoring": ["As Cricket."],
+      "win": ["As Cricket."],
+      "variants": ["Hide the numbers until someone hits one."]
+    },
+    "mickeyMouse": {
+      "name": "Mickey Mouse",
+      "summary": "Cricket with more numbers, plus any double and any treble.",
+      "players": "2 or more",
+      "how": [
+        "A common version uses 20 down to 12, then any double, any treble, and the bull.",
+        "Rules differ by region, so Ton Up offers presets."
+      ],
+      "scoring": [
+        "As Cricket: close each target with three marks, then score on it while it's open for someone else."
+      ],
+      "win": ["As Cricket."],
+      "variants": []
+    },
+    "killerCricket": {
+      "name": "Killer Cricket",
+      "summary": "Close your own number, then take lives off everyone else's.",
+      "players": "3 or more",
+      "how": ["Everyone has a number. Close yours with three marks to start attacking."],
+      "scoring": ["Once you've closed yours, marks on an opponent's number take their lives."],
+      "win": ["Last player with lives left wins."],
+      "variants": []
+    },
+    "clock": {
+      "name": "Around the Clock",
+      "summary": "Hit 1 to 20 in order, then the bull.",
+      "players": "1 or more",
+      "how": ["Start on 1. Any hit on your number moves you on to the next."],
+      "scoring": ["Three darts a visit. You can move on more than once in a visit."],
+      "win": ["First to finish wins. On your own, try to finish in as few darts as you can."],
+      "variants": [
+        "Doubles only, or trebles only.",
+        "Skip ahead: a double moves you on two numbers and a treble three.",
+        "Leave the bull out and finish on 20."
+      ]
+    },
+    "nineLives": {
+      "name": "Nine Lives",
+      "summary": "Around the Clock where a blank visit costs a life.",
+      "players": "2 or more",
+      "how": ["Work from 1 to 20 as in Around the Clock."],
+      "scoring": [
+        "A visit that misses your number with all three darts costs a life. Despite the name, you usually start with three."
+      ],
+      "win": ["Finish first, or be the last player with lives left."],
+      "variants": []
+    },
+    "hareHounds": {
+      "name": "Hare and Hounds",
+      "summary": "A chase around the board.",
+      "players": "2 or more",
+      "how": [
+        "The hare starts on 20, and the hound a few numbers behind, often 5. Both go round the board clockwise, hitting each number to move on."
+      ],
+      "scoring": ["Each hit on your current number moves you one number on."],
+      "win": ["The hound wins by catching the hare; the hare wins by getting all the way round."],
+      "variants": ["The head start sets the handicap."]
+    },
+    "shanghai": {
+      "name": "Shanghai",
+      "summary": "One number a round, and a single, double and treble wins outright.",
+      "players": "1 or more",
+      "how": ["Round 1 is the 1s, round 2 the 2s, and so on, for 7 or 20 rounds."],
+      "scoring": ["Only the round's number scores: its value, doubled or trebled by the ring."],
+      "win": [
+        "A single, double and treble of the round's number in one visit is a Shanghai, and wins at once.",
+        "Otherwise the highest total after the last round wins. Totals can tie."
+      ],
+      "variants": ["Play without the instant win."]
+    },
+    "halveIt": {
+      "name": "Halve-It",
+      "summary": "One visit per target, and a blank visit halves your total.",
+      "players": "1 or more",
+      "how": [
+        "Work through a list of targets, one visit each, for example 20, 19, any double, 18, any treble, 17, then the bull."
+      ],
+      "scoring": [
+        "Hits add their value. Missing the target with all three darts halves your total, rounded up."
+      ],
+      "win": ["The highest total at the end wins."],
+      "variants": ["Use your own list of targets."]
+    },
+    "bermuda": {
+      "name": "Bermuda Triangle",
+      "summary": "A Halve-It with a set run of targets.",
+      "players": "1 or more",
+      "how": [
+        "Like Halve-It, but the targets are a fixed sequence that mixes numbers, rings and the bull."
+      ],
+      "scoring": ["Hits add their value; a blank visit halves your total."],
+      "win": ["The highest total at the end wins. Some sets call it Double Down."],
+      "variants": []
+    },
+    "countUp": {
+      "name": "Count Up",
+      "summary": "A set number of visits, and everything counts.",
+      "players": "1 or more",
+      "how": ["Throw a fixed number of visits, often 8, and add up every dart."],
+      "scoring": ["Every dart scores its full value."],
+      "win": ["The highest total wins. On your own, it's the Count Up drill."],
+      "variants": ["Change the number of visits."]
+    },
+    "killer": {
+      "name": "Killer",
+      "summary": "Hit your own double to become a Killer, then take everyone's lives.",
+      "players": "2 or more",
+      "how": [
+        "Everyone gets a number. Ton Up draws them at the start; at the board, each player throws a dart with their weaker hand.",
+        "Hit the double of your own number to become a Killer."
+      ],
+      "scoring": [
+        "A Killer who hits an opponent's double takes one of their lives.",
+        "A Killer who hits their own double loses a life."
+      ],
+      "win": ["Run out of lives and you're out. The last player standing wins."],
+      "variants": ["More lives for a longer game.", "No penalty for hitting your own double."]
+    },
+    "blindKiller": {
+      "name": "Blind Killer",
+      "summary": "Killer where nobody knows who has which number.",
+      "players": "3 or more",
+      "how": ["Numbers are dealt in secret. Play as Killer."],
+      "scoring": ["Doubles on numbers nobody has do nothing, so you work out who's who as you go."],
+      "win": ["Last player standing wins."],
+      "variants": []
+    },
+    "scam": {
+      "name": "Scam",
+      "summary": "One player blocks numbers while the other scores on them.",
+      "players": "2",
+      "how": [
+        "One player is the stopper, closing numbers by hitting them. The other is the scorer, scoring on numbers that are still open. Then you swap."
+      ],
+      "scoring": ["The scorer adds the value of open numbers they hit."],
+      "win": ["The higher score as scorer wins. Rules vary from place to place."],
+      "variants": []
+    },
+    "baseball": {
+      "name": "Baseball",
+      "summary": "Nine innings, one number each.",
+      "players": "2 or more",
+      "how": ["Inning 1 targets the 1s, inning 2 the 2s, through 9."],
+      "scoring": ["A single scores one run, a double two, a treble three. A perfect game is 81."],
+      "win": ["The most runs after nine innings wins. Ties go to extra innings."],
+      "variants": ["Settle a tie on the bull."]
+    },
+    "bullseyeBaseball": {
+      "name": "Bullseye Baseball",
+      "summary": "Baseball where you need the bull before runs count.",
+      "players": "2 or more",
+      "how": ["Play as Baseball, but you must hit a bull in each inning before your runs count."],
+      "scoring": ["As Baseball."],
+      "win": ["The most runs after nine innings wins."],
+      "variants": ["A limit of six runs an inning."]
+    },
+    "golf": {
+      "name": "Golf",
+      "summary": "Nine or eighteen holes, fewest strokes wins.",
+      "players": "1 or more",
+      "how": [
+        "Hole 1 targets the 1s, hole 2 the 2s, and so on. You can stop after any dart and keep it."
+      ],
+      "scoring": ["A common card: treble 1 stroke, double 2, single 3, a miss 5. Cards vary."],
+      "win": ["The lowest total wins."],
+      "variants": ["Par per hole, or just the front or back nine."]
+    },
+    "football": {
+      "name": "Football",
+      "summary": "Win the ball on the bull, then score goals on doubles.",
+      "players": "2",
+      "how": ["Hit the bull to win possession. While you have it, each double is a goal."],
+      "scoring": ["A visit with no goal loses possession."],
+      "win": ["First to 10 goals wins, or 5 for a short game."],
+      "variants": []
+    },
+    "ticTacToe": {
+      "name": "Tic-Tac-Toe",
+      "summary": "Claim squares on a 3×3 grid of targets.",
+      "players": "2",
+      "how": [
+        "Nine targets are laid out as a grid, with the bull in the centre. Hitting a target claims its square."
+      ],
+      "scoring": ["A claimed square is yours for the game."],
+      "win": ["Three in a row wins."],
+      "variants": ["Doubles or trebles only, or a random grid."]
+    }
+  },
+  "checkouts": {
+    "title": "Checkouts",
+    "intro": "The route to finish each score with three darts, double out. The bull counts as a double.",
+    "search": "Score to finish",
+    "bogey": "No three-dart finish: {list}.",
+    "route": "{score}: {route}",
+    "none": "No finish",
+    "darts": "{count, plural, one {# dart} other {# darts}}"
+  },
+  "board": {
+    "title": "Board setup",
+    "steel": "Steel tip",
+    "height": "Bull height",
+    "heightValue": "1.73 m (5 ft 8 in) from the floor",
+    "oche": "Throw line",
+    "ocheValue": "2.37 m (7 ft 9¼ in) from the face of the board",
+    "diagonal": "Check",
+    "diagonalValue": "2.93 m (9 ft 7⅜ in) from the bull to the throw line",
+    "soft": "Soft tip",
+    "softValue": "The throw line is usually 2.44 m (8 ft) from the board.",
+    "orientation": "Hang the board with the 20 at the top, in the dark segment. Clockwise from the top: {order}.",
+    "rings": "From the centre: the bull (50), the outer bull (25), the inner singles, the treble ring, the outer singles, and the double ring.",
+    "a11y": "A dartboard with the 20 at the top"
+  },
+  "glossary": {
+    "title": "Glossary",
+    "terms": [
+      { "term": "Oche", "def": "The throw line. Your toes stay behind it." },
+      { "term": "Visit", "def": "One turn: three darts." },
+      { "term": "Leg", "def": "One game of 501 or another X01, from the start score to zero." },
+      { "term": "Set", "def": "A group of legs; win enough legs to win the set." },
+      {
+        "term": "Bust",
+        "def": "In X01, going below zero, leaving 1 or reaching zero without a double. The visit counts for nothing."
+      },
+      { "term": "Checkout", "def": "The darts that finish a leg, ending on a double." },
+      { "term": "Ton", "def": "A visit of 100 or more." },
+      { "term": "Ton-80", "def": "180, the most three darts can score: three treble 20s." },
+      { "term": "Madhouse", "def": "Double 1, the lowest finish." },
+      { "term": "Bed", "def": "A segment of the board, such as the treble 20 bed." },
+      { "term": "Shanghai", "def": "A single, double and treble of the same number in one visit." },
+      {
+        "term": "Bogey number",
+        "def": "A score with no three-dart finish: 159, 162, 163, 165, 166, 168 and 169."
+      },
+      {
+        "term": "Three-dart average",
+        "def": "Points scored per three darts thrown, the usual measure of a player's level."
+      },
+      { "term": "Marks per round", "def": "Cricket's measure: marks scored per three darts." }
+    ]
+  }
+}

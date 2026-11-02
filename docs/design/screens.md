@@ -50,7 +50,7 @@ All / Matches / Practice filter; a trend chart (3-dart average over your last 20
 
 ## Rules tab
 
-Search; quick links to Checkouts, Board setup and Glossary; the games in the app with one-line summaries, each opening its rules page (with a Play button); then chips for the other games' rules.
+Search (games and glossary terms); quick links to Checkouts, Board setup and Glossary; the games in the app with one-line summaries, each opening its rules page (How to play, Scoring, Winning, Variants, and a Play button that opens New game on that game and variant, or the Count Up drill); then the other games' rules by family, with a lock, readable but not playable until Ton Up Pro. Checkouts lists the three-dart route for every score from 170 down, with a score search and the bogey numbers.
 
 ## Open questions
 
