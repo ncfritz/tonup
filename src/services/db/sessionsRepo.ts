@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, isNotNull, isNull } from 'drizzle-orm';
 
 import type { DartEvent, PlayerRef } from '@/domain/darts';
 
@@ -130,6 +130,18 @@ export function latestUnfinished(kind?: 'game' | 'drill'): string | null {
     .from(sessions)
     .where(kind ? and(open, eq(sessions.kind, kind)) : open)
     .orderBy(desc(sessions.startedAt))
+    .limit(1)
+    .get();
+  return row?.id ?? null;
+}
+
+/** The most recently finished session of a kind, for the Last match and Last practice cards. */
+export function latestFinished(kind: 'game' | 'drill'): string | null {
+  const row = db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(and(eq(sessions.kind, kind), isNotNull(sessions.endedAt)))
+    .orderBy(desc(sessions.endedAt))
     .limit(1)
     .get();
   return row?.id ?? null;

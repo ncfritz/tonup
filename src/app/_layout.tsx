@@ -51,6 +51,7 @@ export default function RootLayout() {
             <Stack.Screen name="new-game" options={{ presentation: 'modal' }} />
             <Stack.Screen name="game/[sessionId]" options={{ gestureEnabled: false }} />
             <Stack.Screen name="summary/[sessionId]" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="replay/[sessionId]" />
           </Stack>
         </Bootstrap>
       </DatabaseProvider>

@@ -22,11 +22,11 @@ Navigation is option E from the canvas's Home navigation page: a floating tab ba
 
 A pill floating 22 pt above the bottom edge on `surface`, with a soft shadow. Practice and History on the left, Rules and Settings on the right, icon over label; the selected tab's icon and label use `accent`. The Play button (84 pt circle with a 6 pt `bg` border, rising 34 pt above the pill) shows a miniature board; on the Play tab it gets a 2 pt `accent` ring. Screens under the tab bar end their content above it.
 
-Open question: on the Play tab, does tapping Play start your usual game straight away or open New game? (The mockups open New game.)
+On the Play tab, tapping Play again does nothing; Quick start's Start button plays your usual game and the X01 and All games buttons open New game.
 
 ## Play (home)
 
-Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (once the camera exists); **Quick start** with your usual game ("501 vs DartBot 4 · Best of 5 legs · double out") and a Start button; game shortcuts (X01, Cricket, Killer, All games); **Pick up where you left off**: Last match (mini heatmap, result, averages, Replay and Rematch) and Last practice (score trend, gap to your best, the double that cost you most, Try again and All drills).
+Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (once the camera exists); a **Game in progress** card with Resume when a game is unfinished; **Quick start** with your usual game ("501 vs DartBot 4 · Best of 5 legs · double out") and a Start button; game shortcuts (X01, Cricket, Killer, All games; Cricket and Killer join with M5); **Pick up where you left off**: Last match (mini heatmap, result, averages, Replay and Rematch) and Last practice (score trend, gap to your best, the double that cost you most, Try again and All drills).
 
 ## Scoring (phone)
 

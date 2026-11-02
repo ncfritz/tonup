@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0–M3 in place (2026-11-02)
+- Status: Accepted; M0–M4 in place (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -196,4 +196,5 @@ Still open:
 2. Promote the proposed ADRs this plan relies on (0001, 0006, 0007); the stack is ADR 0010.
 3. Finish M0: run the scaffold on a phone (`pnpm install`, then `pnpm ios`) and check the tabs.
 4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
-5. Play a best-of-5 against the bot on a phone with a few corrections (M3's done-when), then start M4 (replay and Home).
+5. Play a best-of-5 against the bot on a phone with a few corrections, then replay it (the M3 and M4 done-whens).
+6. Start M5 (Cricket, Around the Clock, Shanghai and Killer).

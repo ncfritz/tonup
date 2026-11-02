@@ -96,3 +96,14 @@ describe('hitOf and label', () => {
     expect(() => hitOf(21, 1)).toThrow(RangeError);
   });
 });
+
+describe('drawPoint', () => {
+  it('uses the landing point, or the centre of a keypad hit, and skips keypad misses', () => {
+    const { drawPoint } = jest.requireActual<typeof import('.')>('.');
+    expect(drawPoint({ point: { x: 1, y: 2 }, hit: hitOf(20, 3) })).toEqual({ x: 1, y: 2 });
+    expect(drawPoint({ point: null, hit: hitOf(20, 3) })).toEqual(
+      centreOf({ segment: 20, multiplier: 3 }),
+    );
+    expect(drawPoint({ point: null, hit: { segment: 0, multiplier: 0 } })).toBeNull();
+  });
+});

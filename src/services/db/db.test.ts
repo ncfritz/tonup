@@ -9,6 +9,7 @@ import {
   createSession,
   deleteSession,
   getSession,
+  latestFinished,
   latestUnfinished,
   loadDarts,
   readCachedStat,
@@ -143,6 +144,8 @@ describe('sessions and darts', () => {
     abandonSession('s2');
     expect(latestUnfinished('game')).toBe('s1');
     expect(latestUnfinished('drill')).toBeNull();
+    expect(latestFinished('game')).toBe('s3');
+    expect(latestFinished('drill')).toBeNull();
   });
 
   it('caches stats until the darts change, and ignores old versions', () => {

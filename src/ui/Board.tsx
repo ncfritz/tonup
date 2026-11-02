@@ -88,10 +88,18 @@ const BoardArt = memo(function BoardArt() {
   );
 });
 
-function Markers({ markers, scale }: { markers: BoardMarker[]; scale: number }) {
+function Markers({
+  markers,
+  scale,
+  radius = 10,
+}: {
+  markers: BoardMarker[];
+  scale: number;
+  radius?: number;
+}) {
   const { theme } = useUnistyles();
-  // Markers stay about 20 pt across whatever the board's size.
-  const r = 10 / scale;
+  // Markers keep their size on screen whatever the board's size.
+  const r = radius / scale;
   return (
     <G>
       {markers.map((m, i) => (
@@ -129,12 +137,18 @@ export function Board({
   size,
   markers = [],
   onDart,
+  muted = false,
+  markerRadius,
   accessibilityLabel,
   accessibilityHint,
 }: {
   size: number;
   markers?: BoardMarker[];
   onDart?: (point: Point) => void;
+  /** Dimmed, so markers stand out (replay, heatmaps, previews). */
+  muted?: boolean;
+  /** Marker radius in points (default 10). */
+  markerRadius?: number;
   accessibilityLabel: string;
   accessibilityHint?: string;
 }) {
@@ -185,6 +199,7 @@ export function Board({
       style={{ width: size, height: size }}
       accessible
       accessibilityRole={onDart ? 'adjustable' : 'image'}
+      pointerEvents={onDart ? 'auto' : 'none'}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       onStartShouldSetResponder={() => !!onDart}
@@ -202,7 +217,8 @@ export function Board({
         pointerEvents="none"
       >
         <BoardArt />
-        <Markers markers={markers} scale={scale} />
+        {muted ? <Circle cx={0} cy={0} r={HALF} fill={theme.colors.bg} opacity={0.55} /> : null}
+        <Markers markers={markers} scale={scale} radius={markerRadius} />
       </Svg>
       {loupe && touch && aim ? (
         <View

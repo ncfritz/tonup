@@ -97,6 +97,12 @@ export default function Summary() {
         ))}
       </View>
       <Button label={t('summary.rematch')} onPress={rematch} testID="rematch" />
+      <Button
+        kind="secondary"
+        label={t('summary.replay')}
+        onPress={() => router.push({ pathname: '/replay/[sessionId]', params: { sessionId } })}
+        testID="replay"
+      />
       <Button kind="secondary" label={t('summary.done')} onPress={() => router.navigate('/')} />
     </Screen>
   );

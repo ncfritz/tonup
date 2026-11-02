@@ -100,3 +100,16 @@ export function centreOf(t: Target, board: BoardType = 'steel'): Point {
         : (r.trebleOuter + r.doubleInner) / 2;
   return polar(radius, deg);
 }
+
+/**
+ * Where to draw a dart: its landing point, or for a keypad dart the centre of what it hit.
+ * Null for a keypad miss, which has nowhere on the board.
+ */
+export function drawPoint(d: {
+  point: Point | null;
+  hit: { segment: number; multiplier: number };
+}): Point | null {
+  if (d.point) return d.point;
+  if (d.hit.multiplier === 0) return null;
+  return centreOf({ segment: d.hit.segment, multiplier: d.hit.multiplier as 1 | 2 | 3 });
+}
