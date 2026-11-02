@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0 scaffold in place (2026-11-02)
+- Status: Accepted; M0 and M1 in place (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -76,7 +76,7 @@ Rules carried over from Tippytoe: `src/domain` imports nothing from React, Expo 
 ### Board and darts
 
 - Board space is millimetres, bull at (0, 0), the 20 straight up. Steel-tip ring radii: inner bull 6.35, outer bull 15.9, treble 99–107, double 162–170. `hitAt(point, boardType)` returns `{ segment, multiplier, score, isDouble }`; `centreOf(hit)` places keypad darts.
-- A **DartEvent** is `{ id, sessionId, leg, visit, index, playerId, point, hit, intended?, source: 'tap' | 'keypad' | 'bot', precision, corrected, at }` ([../architecture/data-model.md](../architecture/data-model.md)).
+- A **DartEvent** is `{ id, sessionId, playerId, seq, point, hit, intended?, source: 'tap' | 'keypad' | 'bot', precision, corrected, at }`; leg, visit and dart number are derived by the game from the order (`seq`), so they can't disagree with the rules ([../architecture/data-model.md](../architecture/data-model.md)).
 
 ### Games as pure reducers (ADR 0006)
 
@@ -85,16 +85,18 @@ Every game implements one interface, so the scoring screen, replay, stats and ru
 ```ts
 interface GameDefinition<Settings, State> {
   id: GameId; // 'x01', 'cricket', ...
-  family: 'x01' | 'cricket' | 'sequence' | 'elimination';
+  family: 'x01' | 'cricket' | 'sequence' | 'elimination' | 'sports';
   defaults: Settings;
   init(settings: Settings, players: PlayerRef[]): State;
-  applyDart(state: State, dart: DartEvent): State; // includes bust and leg-end handling
-  endVisit(state: State): State; // Next / fewer than 3 darts
+  applyDart(state: State, dart: DartEvent): State; // includes bust, visit, leg and match end
+  currentPlayer(state: State): PlayerRef | null; // whose dart is next
   view(state: State): ScoreboardView; // what the UI draws
   targetFor(state: State): Target | null; // intended target, hints, bot aim
   result(state: State): GameResult | null;
 }
 ```
+
+There is no separate end-of-visit step: pressing Next with darts left records those darts as misses, so the log alone decides every visit (a bust ends a visit by itself).
 
 State is rebuilt by folding the session's darts, so undo, editing any dart and replay are the same operation. Folding a whole match is cheap; the active game keeps its current state in Zustand and refolds only on edits.
 
@@ -102,11 +104,11 @@ Drills use the same shape (`DrillDefinition`) with a score and personal-best rul
 
 ### Checkouts
 
-A curated route table for 2–170 (best route for 1, 2 and 3 darts left), generated once by `scripts/build-checkout-table`, reviewed by hand against standard charts, and committed as JSON. A preferred-double setting picks between equal routes. The mockups' search-based routes are not used.
+Routes for 2–170 (best route for 1, 2 and 3 darts left, and for master and straight out) are worked out in `src/domain/checkout` by a cost model that follows the standard charts: fewest darts, T20 and T19 setups, D20/D16 over small and odd doubles, and a setup that still leaves a finish if the treble drops into its single. Where a chart prefers another route, a hand-written override wins; the table is reviewed against a published chart before M3. A preferred-double setting breaks ties. The mockups' search-based routes are not used.
 
 ### Bot (ADR 0007)
 
-The bot aims at `targetFor(state)` (or the checkout route's next dart), adds 2D Gaussian scatter in millimetres, and produces a normal DartEvent through `hitAt`. `scripts/calibrate-bots` simulates thousands of legs per level and writes the scatter table so the five levels average about 30, 45, 60, 75 and 90. Bot visits play out dart by dart with a short delay so players see them land.
+The bot aims at `targetFor(state)` (or the checkout route's next dart), adds 2D Gaussian scatter in millimetres, and produces a normal DartEvent through `hitAt`. `simulateAverage` plays solo legs of 501 double out per level; the scatter table in `src/domain/bot` (σ 28.5, 18.4, 13.3, 10.2 and 7.7 mm) gives averages of about 30, 45, 60, 75 and 90, and a test keeps each within ±3. Bot visits play out dart by dart with a short delay so players see them land.
 
 ### Stats
 
@@ -182,4 +184,5 @@ Still open:
 1. Settle the open decisions above.
 2. Promote the proposed ADRs this plan relies on (0001, 0006, 0007); the stack is ADR 0010.
 3. Finish M0: run the scaffold on a phone (`pnpm install`, then `pnpm ios`) and check the tabs.
-4. Start M1 (domain core).
+4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
+5. Start M2 (storage).

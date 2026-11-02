@@ -11,7 +11,7 @@ Randomising a bot's three-dart total looks fake. Real players aim at a point and
 
 A bot throws each dart at an aim point with 2D Gaussian scatter, the model from [A Statistician Plays Darts](https://www.stat.cmu.edu/~ryantibs/papers/darts.pdf) (Tibshirani, Price, Taylor). The landing point is scored with the same board geometry as player darts, and produces the same dart events (ADR 0006).
 
-- **Levels:** the scatter radius is calibrated by simulation so each level hits a target 3-dart average (for example 30, 45, 60, 75, 90).
+- **Levels:** the scatter radius is calibrated by simulation so each level hits a target 3-dart average (for example 30, 45, 60, 75, 90). Calibrated in M1 for 501 double out: σ = 28.5, 18.4, 13.3, 10.2 and 7.7 mm per axis.
 - **Strategy:** the bot follows the checkout table, chooses setup shots, and in Cricket picks targets by game state.
 - **Personality (optional):** extra scatter on doubles under pressure, and streakiness.
 - **Ghost bot (Pro):** fit the scatter to the player's own recorded dart positions and play "you from last month".
