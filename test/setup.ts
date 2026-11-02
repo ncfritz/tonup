@@ -20,3 +20,11 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light' },
   NotificationFeedbackType: { Success: 'success', Warning: 'warning' },
 }));
+
+// UUIDs from Node's crypto in tests.
+jest.mock('expo-crypto', () => ({
+  randomUUID: () => jest.requireActual<typeof import('node:crypto')>('node:crypto').randomUUID(),
+}));
+
+// No native SQLite in tests. Tests that need a database mock this with test/sqlite.ts.
+jest.mock('@/services/db/client', () => ({ db: {}, sqlite: {}, DATABASE_NAME: 'test.db' }));

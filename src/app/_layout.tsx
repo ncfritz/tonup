@@ -8,12 +8,16 @@ import { useFonts } from 'expo-font';
 import { type ErrorBoundaryProps, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { setSettingsPersistence, useSettings } from '@/features/settings/store';
 import { initI18n } from '@/i18n';
+import { DatabaseProvider } from '@/services/db/DatabaseProvider';
+import { readAllSettings, writeSetting } from '@/services/db/settingsRepo';
+import { log, pruneLog } from '@/services/diagnostics';
 import { ThemeSync } from '@/theme/ThemeSync';
 import { Button, Screen, Text } from '@/ui';
 
@@ -38,12 +42,46 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <ThemeSync />
-      <ThemedStatusBar />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-      </Stack>
+      <DatabaseProvider fallback={null} onError={(error) => <StartupError error={error} />}>
+        <Bootstrap>
+          <ThemeSync />
+          <ThemedStatusBar />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </Bootstrap>
+      </DatabaseProvider>
     </GestureHandlerRootView>
+  );
+}
+
+/** Runs once after migrations: settings from SQLite with write-through, then log pruning. */
+function Bootstrap({ children }: { children: ReactNode }) {
+  const [ready] = useState(() => {
+    useSettings.getState().hydrate(readAllSettings());
+    setSettingsPersistence(writeSetting);
+    try {
+      pruneLog();
+    } catch (e) {
+      log('warn', 'pruneLog failed', { error: String(e) });
+    }
+    return true;
+  });
+  return ready ? children : null;
+}
+
+function StartupError({ error }: { error: Error }) {
+  const { t } = useTranslation();
+  return (
+    <Screen edges={['top', 'bottom']}>
+      <Text variant="heading" accessibilityRole="header">
+        {t('error.startupTitle')}
+      </Text>
+      <Text tone="muted">{t('error.startupBody')}</Text>
+      <Text variant="caption" tone="muted">
+        {error.message}
+      </Text>
+    </Screen>
   );
 }
 
@@ -53,7 +91,11 @@ function ThemedStatusBar() {
 }
 
 /** Error screen for any route: try again or go back to Play. */
-export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  log('error', 'Route error boundary', {
+    message: error.message,
+    stack: error.stack?.slice(0, 2000),
+  });
   return <Oops retry={retry} />;
 }
 

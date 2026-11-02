@@ -29,6 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-router',
     'expo-font',
+    'expo-sqlite',
     ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
     [
       'expo-splash-screen',

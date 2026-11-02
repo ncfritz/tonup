@@ -36,7 +36,9 @@
   "error": {
     "title": "Something went wrong",
     "body": "This screen hit a problem. Try again, or go back to Play.",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "startupTitle": "Ton Up couldn't open its data",
+    "startupBody": "Please close the app and open it again. Your games are kept on this phone."
   },
   "notFound": {
     "title": "Nothing here",

@@ -1,2 +1,3 @@
 docs/design/mockups/
 pnpm-lock.yaml
+src/services/db/migrations/

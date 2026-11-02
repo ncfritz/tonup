@@ -7,7 +7,13 @@ module.exports = defineConfig([
   expoConfig,
   prettier,
   {
-    ignores: ['dist/*', 'ios/*', 'android/*', 'docs/design/mockups/*'],
+    ignores: [
+      'dist/*',
+      'ios/*',
+      'android/*',
+      'docs/design/mockups/*',
+      'src/services/db/migrations/*',
+    ],
   },
   {
     // Use the app's Pressable so presses behave the same everywhere (src/ui/Pressable.tsx).

@@ -17,12 +17,38 @@ export const DEFAULT_SETTINGS: Settings = {
   haptics: true,
 };
 
+type Persist = (key: string, value: unknown) => void;
+let persist: Persist = () => {};
+
+/** Where settings are saved; set at startup to the settings table (src/app/_layout.tsx). */
+export function setSettingsPersistence(fn: Persist) {
+  persist = fn;
+}
+
+const valid: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
+  theme: (v): v is ThemeId => v === 'pro',
+  appearance: (v): v is AppearanceSetting => v === 'system' || v === 'light' || v === 'dark',
+  haptics: (v): v is boolean => typeof v === 'boolean',
+};
+
 interface SettingsStore extends Settings {
+  /** Fills the store from stored values, ignoring anything unknown or malformed. */
+  hydrate: (stored: Record<string, unknown>) => void;
   set: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
 }
 
-// In memory for now; saved to SQLite from M2 (docs/plan/v1-implementation.md).
 export const useSettings = create<SettingsStore>((set) => ({
   ...DEFAULT_SETTINGS,
-  set: (key, value) => set({ [key]: value } as Partial<Settings>),
+  hydrate: (stored) => {
+    const next: Partial<Settings> = {};
+    for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
+      const v = stored[key];
+      if (valid[key](v)) (next as Record<string, unknown>)[key] = v;
+    }
+    set(next);
+  },
+  set: (key, value) => {
+    set({ [key]: value } as Partial<Settings>);
+    persist(key, value);
+  },
 }));

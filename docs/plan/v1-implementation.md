@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0 and M1 in place (2026-11-02)
+- Status: Accepted; M0–M2 in place (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -116,7 +116,18 @@ Pure functions over events: 3-dart and first-9 averages, checkout %, 100+/140+/1
 
 ## 4. Data
 
-Drizzle tables: `players`, `sessions` (type, game or drill id, settings JSON, board type, started/ended, result), `session_players`, `darts` (one row per DartEvent, indexed by session and order), `stats_cache`, `settings`, `diagnostics_log`. UUID primary keys; UTC timestamps. An unfinished session is resumable from Home. Export/import as JSON (with a format version) plus CSV of sessions, following Tippytoe's ADR 0008.
+Drizzle tables (`src/services/db/schema.ts`), one SQLite file with foreign keys on:
+
+- `players`: local profiles and bots (`bot_level`), archived rather than deleted.
+- `sessions`: `kind` (game or drill), `type_id` (`x01`, a drill id), settings JSON, board type, started, ended, `abandoned_at` (left on purpose, so Home doesn't offer to resume it), and the result JSON.
+- `session_players`: who played, in throwing order.
+- `darts`: one row per DartEvent, unique by session and `seq`.
+- `stats_cache`: derived values per session, player and key, with a version so a changed computation is recomputed; cleared whenever a session's darts change.
+- `settings` and `diagnostics_log` as in Tippytoe.
+
+UUID primary keys; UTC epoch-millisecond times. Migrations are generated with `pnpm db:generate` and applied at launch. `src/features/game/session.ts` is the one place that writes darts: a dart is applied to the game before it is stored, so the rules never see a dart they'd reject; undo deletes the last dart; editing a dart refolds the game and removes later darts that no longer fit the turn order (the UI warns first with `previewEdit`). The most recent session that is neither finished nor abandoned is the one to resume. Export/import as JSON (with a format version) plus CSV of sessions, following Tippytoe's ADR 0008.
+
+Tests run the real migrations against Node's built-in SQLite (`test/sqlite.ts`).
 
 ## 5. Milestones
 
@@ -185,4 +196,4 @@ Still open:
 2. Promote the proposed ADRs this plan relies on (0001, 0006, 0007); the stack is ADR 0010.
 3. Finish M0: run the scaffold on a phone (`pnpm install`, then `pnpm ios`) and check the tabs.
 4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
-5. Start M2 (storage).
+5. Start M3 (the X01 scoring screen).

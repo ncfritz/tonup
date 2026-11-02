@@ -20,3 +20,29 @@ export function fold<S, St>(
   }
   return state;
 }
+
+/**
+ * Like `fold`, but stops at the first dart the game rejects (after an edit changes whose turn
+ * it is, the later darts can belong to the wrong player). Returns how many darts applied, so
+ * the caller can drop the rest.
+ */
+export function foldValid<S, St>(
+  def: GameDefinition<S, St>,
+  settings: S,
+  players: PlayerRef[],
+  darts: readonly DartEvent[],
+): { state: St; applied: number } {
+  const ordered = [...darts].sort((a, b) => a.seq - b.seq);
+  let state = def.init(settings, players);
+  let applied = 0;
+  for (const d of ordered) {
+    if (def.currentPlayer(state)?.id !== d.playerId) break;
+    try {
+      state = def.applyDart(state, d);
+    } catch {
+      break;
+    }
+    applied++;
+  }
+  return { state, applied };
+}
