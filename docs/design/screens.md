@@ -50,7 +50,7 @@ All / Matches / Practice filter; a trend chart (3-dart average over your last 20
 
 ## Rules tab
 
-Search (games and glossary terms); quick links to Checkouts, Board setup and Glossary; the games in the app with one-line summaries, each opening its rules page (How to play, Scoring, Winning, Variants, and a Play button that opens New game on that game and variant, or the Count Up drill); then the other games' rules by family, with a lock, readable but not playable until Ton Up Pro. Checkouts lists the three-dart route for every score from 170 down, with a score search and the bogey numbers.
+Search (games and glossary terms); quick links to Checkouts, Board setup and Glossary; the games in the app with one-line summaries, each opening its rules page (How to play, Scoring, Winning, Variants, a Play button that opens New game on that game, and a Practise button for Around the Clock and Count Up, which have drills); then the other games' rules by family, with a lock, readable but not playable until Ton Up Pro. Checkouts lists the three-dart route for every score from 170 down, with a score search and the bogey numbers.
 
 ## Settings
 
@@ -58,9 +58,9 @@ Appearance (theme and mode; opens the theme picker: System, Light or Dark, and t
 
 ## Pro upgrade
 
-What Pro includes (21 more games, the full practice library, deeper analysis, four more themes, camera scoring when it arrives), the App Store's own price on the Buy button ("Get Ton Up Pro · $19.99"), a note that it's a one-time purchase (and shared with Family Sharing), Restore, and a message for each outcome: unlocked, waiting for approval (Ask to Buy), failed, nothing to restore, or the store unreachable. Every lock opens it: Pro drills, Pro themes, and Pro games' rules pages. With Pro owned, things that arrive in later milestones say "Coming in an update". If Pro is refunded, the locks come back and a Pro theme falls back to Pro.
+What Pro includes (21 more games, the full practice library, deeper analysis, four more themes, camera scoring when it arrives), the App Store's own price on the Buy button ("Get Ton Up Pro · $19.99"), a note that it's a one-time purchase (and shared with Family Sharing), Restore, and a message for each outcome: unlocked, waiting for approval (Ask to Buy), failed, nothing to restore, or the store unreachable. Every lock opens it: Pro games in New game, Pro drills, Pro themes, and Pro games' rules pages. With Pro owned, things that arrive in later milestones say "Coming in an update". If Pro is refunded, the locks come back and a Pro theme falls back to Pro.
 
-New game has a "How to play …" link under the game picker that opens that game's rules page (Cut-Throat when that variant is picked).
+New game picks any of the 26 games, grouped by family as on the Rules tab; Pro games carry a lock and open the Pro screen until Pro is owned. Under the picker, a "How to play …" link opens that game's rules page. Each game shows only its own settings (X01's start, format and in/out; Cricket's round limit; Killer's lives; Gotcha's and Fives' target; Count Up's visits; Golf's holes; Football's goals; what claims a Tic-Tac-Toe square), and Start stays off until the player count suits the game (Hare and Hounds, Scam and Tic-Tac-Toe are for two). Quick start and Rematch replay the same game, dealing Killer numbers and Random Cricket's six afresh.
 
 ## Open questions
 

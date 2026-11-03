@@ -7,6 +7,12 @@ import type { GameDefinition, GameResult, GameVisit, ScoreboardView, StatLine } 
 import { addDart, checkPlayer, endVisit, nextPlayer } from '../visits';
 
 export interface KillerSettings {
+  /**
+   * Classic Killer; Blind (numbers hidden on the scoreboard, so play becomes working out who's
+   * who); or Killer Cricket (close your own number with three marks, then every mark on an
+   * opponent's number takes a life).
+   */
+  variant?: 'classic' | 'blind' | 'cricket';
   lives: number;
   /** Each player's number, by throwing order; drawn when the game is set up. */
   numbers: number[];
@@ -14,7 +20,12 @@ export interface KillerSettings {
   ownDouble: 'loseLife' | 'nothing';
 }
 
-export const KILLER_DEFAULTS: KillerSettings = { lives: 3, numbers: [], ownDouble: 'loseLife' };
+export const KILLER_DEFAULTS: KillerSettings = {
+  variant: 'classic',
+  lives: 3,
+  numbers: [],
+  ownDouble: 'loseLife',
+};
 
 /** Distinct numbers 1–20 for `n` players. */
 export function drawNumbers(n: number, rng: Rng): number[] {
@@ -31,6 +42,8 @@ export interface KillerState {
   players: PlayerRef[];
   lives: number[];
   killer: boolean[];
+  /** Killer Cricket: marks on your own number toward becoming a Killer. */
+  marks: number[];
   current: number;
   visits: GameVisit[];
   winner: number | null;
@@ -51,6 +64,7 @@ function init(settings: KillerSettings, players: PlayerRef[]): KillerState {
     players,
     lives: players.map(() => settings.lives),
     killer: players.map(() => false),
+    marks: players.map(() => 0),
     current: 0,
     visits: [],
     winner: null,
@@ -66,9 +80,24 @@ function applyDart(state: KillerState, dart: DartEvent): KillerState {
   const lives = [...state.lives];
   const killer = [...state.killer];
   const taken = [...state.taken];
+  const marks = [...state.marks];
   const { hit } = dart;
   let effect = 0;
-  if (hit.multiplier === 2 && hit.segment >= 1 && hit.segment <= 20) {
+  if (state.settings.variant === 'cricket') {
+    // Every ring counts: a single is one mark or life, a double two, a treble three.
+    const owner =
+      hit.segment >= 1 && hit.segment <= 20 ? state.settings.numbers.indexOf(hit.segment) : -1;
+    if (owner === p && !killer[p]) {
+      marks[p] = Math.min(3, marks[p]! + hit.multiplier);
+      if (marks[p] === 3) killer[p] = true;
+      effect = hit.multiplier;
+    } else if (owner >= 0 && owner !== p && killer[p] && lives[owner]! > 0) {
+      const lost = Math.min(lives[owner]!, hit.multiplier);
+      lives[owner] = lives[owner]! - lost;
+      taken[p] = taken[p]! + lost;
+      effect = lost;
+    }
+  } else if (hit.multiplier === 2 && hit.segment >= 1 && hit.segment <= 20) {
     const owner = state.settings.numbers.indexOf(hit.segment);
     if (owner === p) {
       if (!killer[p]) {
@@ -87,26 +116,27 @@ function applyDart(state: KillerState, dart: DartEvent): KillerState {
   const alive = lives.flatMap((l, i) => (l > 0 ? [i] : []));
   if (alive.length === 1) {
     visits = endVisit(visits);
-    return { ...state, lives, killer, taken, visits, winner: alive[0]! };
+    return { ...state, lives, killer, marks, taken, visits, winner: alive[0]! };
   }
   // Knocking yourself out ends your visit.
   if (lives[p] === 0) visits = endVisit(visits);
   const done = visits[visits.length - 1]!.done;
   const current = done ? nextPlayer(p, n, (q) => lives[q]! > 0) : p;
-  return { ...state, lives, killer, taken, visits, current };
+  return { ...state, lives, killer, marks, taken, visits, current };
 }
 
 function targetFor(state: KillerState): Target | null {
   if (state.winner !== null) return null;
   const p = state.current;
   const own = state.settings.numbers[p]!;
-  if (!state.killer[p]) return { segment: own, multiplier: 2 };
+  const ring = state.settings.variant === 'cricket' ? 3 : 2;
+  if (!state.killer[p]) return { segment: own, multiplier: ring };
   // Go after whoever is closest to going out.
   let victim = -1;
   state.lives.forEach((l, q) => {
     if (q !== p && l > 0 && (victim < 0 || l < state.lives[victim]!)) victim = q;
   });
-  return { segment: state.settings.numbers[victim]!, multiplier: 2 };
+  return { segment: state.settings.numbers[victim]!, multiplier: ring };
 }
 
 function view(state: KillerState): ScoreboardView {
@@ -121,7 +151,8 @@ function view(state: KillerState): ScoreboardView {
       legs: 0,
       sets: 0,
       active: state.winner === null && i === p,
-      note: `${state.settings.numbers[i]}${state.killer[i] ? ' K' : ''}`,
+      // Blind Killer hides everyone's number ("?").
+      note: `${state.settings.variant === 'blind' ? '?' : state.settings.numbers[i]}${state.killer[i] ? ' K' : ''}`,
       out: state.lives[i] === 0,
     })),
     visit: last
@@ -135,11 +166,13 @@ function view(state: KillerState): ScoreboardView {
     status:
       state.winner !== null
         ? { kind: 'matchWon', playerId: state.players[state.winner]!.id }
-        : {
-            kind: 'aim',
-            target: target!,
-            reason: state.killer[p] ? 'killerAttack' : 'killerQualify',
-          },
+        : state.settings.variant === 'blind'
+          ? { kind: 'playing' }
+          : {
+              kind: 'aim',
+              target: target!,
+              reason: state.killer[p] ? 'killerAttack' : 'killerQualify',
+            },
     set: 0,
     leg: 0,
     round: null,
@@ -164,7 +197,12 @@ function stats(state: KillerState, playerId: string): StatLine[] {
   for (const v of mine) {
     for (const d of v.darts) {
       count++;
-      if (toKiller === null && d.hit.multiplier === 2 && d.hit.segment === own) toKiller = count;
+      if (
+        toKiller === null &&
+        d.hit.segment === own &&
+        (d.hit.multiplier === 2 || state.settings.variant === 'cricket')
+      )
+        toKiller = count;
     }
   }
   return [

@@ -4,6 +4,8 @@ import { TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { FAMILIES, matches, RULES, useRulesT } from '@/content/rules';
+import { canPlayRules } from '@/domain/pro';
+import { useProOwned } from '@/features/pro/pro';
 import { Icon, Pressable, Screen, Section, Text } from '@/ui';
 
 type Term = { term: string; def: string };
@@ -16,8 +18,9 @@ export default function Rules() {
   const name = (id: string) => t(`games.${id}.name`);
   const summary = (id: string) => t(`games.${id}.summary`);
   const shown = RULES.filter((r) => matches(q, name(r.id), summary(r.id)));
-  const playable = shown.filter((r) => r.play);
-  const others = shown.filter((r) => !r.play);
+  const proOwned = useProOwned();
+  const playable = shown.filter((r) => canPlayRules(r.id, proOwned));
+  const others = shown.filter((r) => !canPlayRules(r.id, proOwned));
   const terms = list<Term>('glossary.terms').filter((g) => q.trim() && matches(q, g.term, g.def));
   const open = (id: string) => router.push({ pathname: '/rules/[gameId]', params: { gameId: id } });
 

@@ -17,8 +17,12 @@ export interface Settings {
   preferredDouble: number | null;
   /** How the scoring screen opens. */
   defaultInput: 'board' | 'keypad';
-  /** The last game played, its settings per game, and the line-up, for New game and Quick start. */
-  lastGameId: GameId;
+  /**
+   * The last game played (a rules-library id such as 'x01' or 'tactics',
+   * src/features/game/presets.ts), settings per game engine, and the line-up, for New game and
+   * Quick start.
+   */
+  lastGameId: string;
   gameSettings: Partial<Record<GameId, unknown>>;
   lastLineup: PlayerRef[] | null;
 }
@@ -52,8 +56,7 @@ const valid: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
     v === null ||
     (typeof v === 'number' && Number.isInteger(v) && ((v >= 1 && v <= 20) || v === 25)),
   defaultInput: (v): v is 'board' | 'keypad' => v === 'board' || v === 'keypad',
-  lastGameId: (v): v is GameId =>
-    v === 'x01' || v === 'cricket' || v === 'clock' || v === 'shanghai' || v === 'killer',
+  lastGameId: (v): v is string => typeof v === 'string' && v.length > 0 && v.length < 40,
   gameSettings: (v): v is Partial<Record<GameId, unknown>> =>
     typeof v === 'object' && v !== null && !Array.isArray(v),
   lastLineup: (v): v is PlayerRef[] | null =>

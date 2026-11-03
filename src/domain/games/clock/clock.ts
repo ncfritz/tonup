@@ -11,6 +11,11 @@ export interface ClockSettings {
   skip: boolean;
   /** Finish on the bull after 20. */
   bull: boolean;
+  /**
+   * Nine Lives: a visit that misses your number with all three darts costs a life (usually
+   * three to start); last player with lives left, or first to finish, wins. Null for none.
+   */
+  lives?: number | null;
 }
 
 export const CLOCK_DEFAULTS: ClockSettings = { ring: 'any', skip: false, bull: true };
@@ -23,6 +28,8 @@ export interface ClockState {
   current: number;
   visits: GameVisit[];
   winner: number | null;
+  /** Nine Lives; null otherwise. */
+  lives: number[] | null;
 }
 
 export const clockSequence = (s: ClockSettings): number[] => [
@@ -40,7 +47,16 @@ function counts(s: ClockSettings, hit: Hit, target: number): boolean {
 
 function init(settings: ClockSettings, players: PlayerRef[]): ClockState {
   if (players.length < 1) throw new RangeError('Around the Clock needs at least one player');
-  return { settings, players, next: players.map(() => 0), current: 0, visits: [], winner: null };
+  const lives = settings.lives ? players.map(() => settings.lives!) : null;
+  return {
+    settings,
+    players,
+    next: players.map(() => 0),
+    current: 0,
+    visits: [],
+    winner: null,
+    lives,
+  };
 }
 
 function applyDart(state: ClockState, dart: DartEvent): ClockState {
@@ -66,8 +82,26 @@ function applyDart(state: ClockState, dart: DartEvent): ClockState {
     visits = endVisit(visits);
     return { ...state, next, visits, winner: p };
   }
-  const done = visits[visits.length - 1]!.done;
-  return { ...state, next, visits, current: done ? nextPlayer(p, state.players.length) : p };
+  const visit = visits[visits.length - 1]!;
+  let lives = state.lives;
+  if (visit.done && lives && visit.total === 0) {
+    lives = [...lives];
+    lives[p] = Math.max(0, lives[p]! - 1);
+    const alive = lives.flatMap((l, i) => (l > 0 ? [i] : []));
+    // With others playing, the last one with lives wins; alone, running out ends the game.
+    if (alive.length <= 1 && state.players.length > 1) {
+      return { ...state, next, visits, lives, winner: alive[0] ?? p };
+    }
+    if (alive.length === 0) return { ...state, next, visits, lives, winner: p };
+  }
+  const isIn = (q: number) => !lives || lives[q]! > 0;
+  return {
+    ...state,
+    next,
+    visits,
+    lives,
+    current: visit.done ? nextPlayer(p, state.players.length, isIn) : p,
+  };
 }
 
 function targetFor(state: ClockState): Target | null {
@@ -95,6 +129,8 @@ function view(state: ClockState): ScoreboardView {
         sets: 0,
         active: state.winner === null && i === p,
         note: t === undefined ? 'done' : t === BULL ? 'bull' : String(t),
+        out: state.lives ? state.lives[i] === 0 : undefined,
+        lives: state.lives ? state.lives[i] : undefined,
       };
     }),
     visit: last

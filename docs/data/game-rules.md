@@ -2,7 +2,7 @@
 
 Researched 2026-10-29. 26 games in five families, all playable on a standard steel-tip board with three darts per visit. House rules vary widely in pub games, so each game ships with its common variants as settings toggles. v1: X01, Standard and Cut-Throat Cricket, Around the Clock, Shanghai and Killer; the rest follow as content updates on the same engine (Pro).
 
-The in-app Rules pages are generated from the same game definitions the engine runs, so this doc is the source for both. Scam, Mickey Mouse and the Golf stroke values vary most by region: confirm a preset before building them.
+The in-app Rules pages are generated from the same game definitions the engine runs, so this doc is the source for both. Scam, Mickey Mouse and the Golf stroke values vary most by region; the presets the app plays are listed at the end.
 
 **Scoring basics for every game:** singles count face value, the outer ring doubles, the inner ring trebles, outer bull 25, inner bull 50 (counts as a double).
 
@@ -59,7 +59,7 @@ Social games built around attacking other players; the engine needs per-player o
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Killer       | Each player throws one dart (often weak hand) to draw their number. Hit the double of your own number to become a Killer. Killers then hit opponents' doubles to take lives (usually 3). Hitting your own double as a Killer costs a life or your Killer status. Last player standing wins. | Lives 3–6; any segment counts with double = 2 and treble = 3 lives; hit own number 3 times to qualify; Kamikaze (own hits always hurt) ([Dolf Darts](https://dolfdarts.com/games/killer), [Darts Corner](https://www.dartscorner.co.uk/blog/how-to-play-killer-darts/)) |
 | Blind Killer | Killer with secretly assigned numbers; doubles on unowned numbers do nothing, so play becomes deduction                                                                                                                                                                                     | The app can deal numbers privately to each phone ([Dolf Darts](https://dolfdarts.com/games/blind-killer))                                                                                                                                                               |
-| Scam         | Two players alternate roles: the stopper closes numbers by hitting them, the scorer scores on numbers still open. Roles swap; higher score as scorer wins.                                                                                                                                  | Rules vary; confirm a preset before shipping                                                                                                                                                                                                                            |
+| Scam         | Two players alternate roles: the stopper closes numbers by hitting them, the scorer scores on numbers still open. Roles swap; higher score as scorer wins.                                                                                                                                  | Rules vary; see Presets in the app                                                                                                                                                                                                                                      |
 
 **Stats:** lives taken and lost, darts to become a Killer, own-number accidents. These games are mostly for fun; history matters more than averages.
 
@@ -76,6 +76,19 @@ Popular in the US and in casual play; they map a sport's structure onto board ta
 | Tic-Tac-Toe       | Nine targets laid out as a 3×3 grid (bull in the centre). Hitting a target claims its square; three in a row wins.                                              | Require doubles or trebles to claim; random grids                                                                                                               |
 
 **Stats:** runs per inning, strokes per hole, goals per possession.
+
+## Presets in the app
+
+Chosen in M11; each is a setting on its engine, so other house rules can be added without new games.
+
+- **Mickey Mouse:** 20 down to 12, then any double, any treble and the bull, scored as Standard Cricket.
+- **Random Cricket:** six numbers drawn from 1–20 at the start, plus the bull.
+- **Scam:** two players and two innings; the second player stops first while the first scores, then they swap. Targets are 1–20 and the bull; a number is closed by any hit from the stopper.
+- **Golf:** 9 or 18 holes, and each hole counts the best dart of the visit: treble 1, double 2, single 3, miss 5.
+- **Bermuda Triangle:** the Halve-It list 12, 13, 14, any double, 15, 16, 17, any treble, 18, 19, 20, bull.
+- **Hare and Hounds:** two players; the first is the hare, the second the hound, five numbers behind by default. The hound wins by reaching the hare's number.
+- **Baseball:** a tie after nine innings goes to extra innings on the bull.
+- **Tic-Tac-Toe:** the grid is 12 20 1 / 11 bull 6 / 16 3 2, any ring claims a square by default, and a full board with no line is a draw.
 
 ## Board setup and reference
 

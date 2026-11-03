@@ -8,6 +8,8 @@ import { YOU_ID } from '@/features/game/lineup';
 import { useProOwned } from '@/features/pro/pro';
 import { startDrill } from '@/features/game/session';
 import { COUNT_UP_DEFAULTS } from '@/domain/drills';
+import { CLOCK_DEFAULTS } from '@/domain/games/clock';
+import { canPlayRules } from '@/domain/pro';
 import { Button, Header, Screen, Section, Text } from '@/ui';
 
 /** One game's rules, with Play for games in the app (docs/design/screens.md → Rules). */
@@ -15,6 +17,7 @@ export default function RulesPage() {
   const { gameId } = useLocalSearchParams<{ gameId: string }>();
   const { t, list } = useRulesT();
   const { t: tg } = useTranslation('game');
+  const { t: tp } = useTranslation('practice');
   const entry = rulesEntry(gameId);
   const proOwned = useProOwned();
   if (!entry) {
@@ -27,19 +30,13 @@ export default function RulesPage() {
   const key = `games.${entry.id}`;
   const name = t(`${key}.name`);
   const lines = (k: 'how' | 'scoring' | 'win' | 'variants') => list(`${key}.${k}`);
-  const play = () => {
-    if (!entry.play) return;
-    if (entry.play.kind === 'drill') {
-      const id = startDrill('countUp', COUNT_UP_DEFAULTS, { id: YOU_ID, name: tg('players.you') });
-      router.push({ pathname: '/drill/[sessionId]', params: { sessionId: id } });
-      return;
-    }
-    router.push({
-      pathname: '/new-game',
-      params: entry.play.variant
-        ? { game: entry.play.game, variant: entry.play.variant }
-        : { game: entry.play.game },
-    });
+  const playable = canPlayRules(entry.id, proOwned);
+  const play = () => router.push({ pathname: '/new-game', params: { game: entry.id } });
+  const practise = () => {
+    if (!entry.drill) return;
+    const settings = entry.drill === 'countUp' ? COUNT_UP_DEFAULTS : CLOCK_DEFAULTS;
+    const id = startDrill(entry.drill, settings, { id: YOU_ID, name: tg('players.you') });
+    router.push({ pathname: '/drill/[sessionId]', params: { sessionId: id } });
   };
   const sections = (['how', 'scoring', 'win', 'variants'] as const).filter((k) => lines(k).length);
   return (
@@ -68,30 +65,30 @@ export default function RulesPage() {
           ))}
         </Section>
       ))}
-      {entry.play ? (
-        <Button
-          label={
-            entry.play.kind === 'drill' ? t('page.practise', { name }) : t('page.play', { name })
-          }
-          onPress={play}
-          testID="rules-play"
-        />
+      {playable ? (
+        <Button label={t('page.play', { name })} onPress={play} testID="rules-play" />
       ) : (
         <View style={styles.locked}>
           <Text variant="bodyStrong">{t('page.locked')}</Text>
           <Text variant="caption" tone="muted">
-            {proOwned ? t('page.soon') : t('page.lockedBody')}
+            {t('page.lockedBody')}
           </Text>
-          {proOwned ? null : (
-            <Button
-              kind="secondary"
-              label={t('page.seePro')}
-              onPress={() => router.push('/pro')}
-              testID="see-pro"
-            />
-          )}
+          <Button
+            kind="secondary"
+            label={t('page.seePro')}
+            onPress={() => router.push('/pro')}
+            testID="see-pro"
+          />
         </View>
       )}
+      {entry.drill ? (
+        <Button
+          kind="secondary"
+          label={t('page.practise', { name: tp(`drills.${entry.drill}.name`) })}
+          onPress={practise}
+          testID="rules-practise"
+        />
+      ) : null}
     </Screen>
   );
 }

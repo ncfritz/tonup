@@ -53,15 +53,21 @@
     "nothing": "Nothing",
     "killerNumbers": "Everyone gets a number when the game starts.",
     "killerNeedsTwo": "Killer needs at least two players.",
-    "gameShort": {
-      "x01": "X01",
-      "cricket": "Cricket",
-      "clock": "Clock",
-      "shanghai": "Shanghai",
-      "killer": "Killer"
-    },
     "rules": "How to play {game}",
-    "rulesA11y": "Rules for {game}"
+    "rulesA11y": "Rules for {game}",
+    "lockedA11y": "{game}, part of Ton Up Pro",
+    "exactly": "{game} is for {count} players.",
+    "atLeast": "{game} needs at least {count} players.",
+    "randomNumbers": "Six numbers are drawn when the game starts.",
+    "blindNumbers": "Numbers are drawn and kept hidden. Each player can hold their row to see their own.",
+    "target": "Target",
+    "visits": "Visits",
+    "headStart": "Hound's head start",
+    "hareFirst": "The first player is the hare, the second the hound.",
+    "scamRoles": "The second player stops first while the first player scores; then you swap.",
+    "holes": "Holes",
+    "goals": "Goals to win",
+    "claim": "What claims a square"
   },
   "header": {
     "pause": "Pause and go to Play",
@@ -99,8 +105,15 @@
       "clock": "Aim for",
       "shanghai": "This round",
       "killerQualify": "Hit your double to become a Killer",
-      "killerAttack": "Killer: take a life"
-    }
+      "killerAttack": "Killer: take a life",
+      "target": "Aim for",
+      "possession": "Win the ball",
+      "goal": "Shoot",
+      "stopper": "Stop on",
+      "scorer": "Score on"
+    },
+    "anyDouble": "Any double",
+    "anyTreble": "Any treble"
   },
   "slots": {
     "dartA11y": "Dart {n}: {dart}",
@@ -189,7 +202,12 @@
     "otherLine": "{game} · {stat}",
     "drew": "Drew {game} vs {opponents}",
     "wonGame": "Won {game} vs {opponents}",
-    "lostGame": "Lost {game} vs {opponents}"
+    "lostGame": "Lost {game} vs {opponents}",
+    "shortcut": {
+      "x01": "501",
+      "cricket": "Cricket",
+      "killer": "Killer"
+    }
   },
   "replay": {
     "title": "Replay · Leg {leg}",
@@ -212,15 +230,9 @@
   "cricket": {
     "bull": "Bull",
     "points": "Points",
-    "marksA11y": "{name}, {number}: {marks, plural, =0 {no marks} one {# mark} =3 {closed} other {# marks}}"
-  },
-  "games": {
-    "x01": "X01",
-    "cricket": "Cricket",
-    "cutThroat": "Cut-Throat Cricket",
-    "clock": "Around the Clock",
-    "shanghai": "Shanghai",
-    "killer": "Killer"
+    "marksA11y": "{name}, {number}: {marks, plural, =0 {no marks} one {# mark} =3 {closed} other {# marks}}",
+    "anyDouble": "D",
+    "anyTreble": "T"
   },
   "rows": {
     "clockOn": "On {target}",
@@ -231,7 +243,19 @@
     "points": "{name}, {score} points",
     "killerNote": "Number {number}{killer, select, yes { · Killer} other {}}",
     "killerOut": "Out",
-    "livesA11y": "{name}, number {number}, {lives, plural, =0 {out} one {# life} other {# lives}}{killer, select, yes {, Killer} other {}}"
+    "livesA11y": "{name}, number {number}, {lives, plural, =0 {out} one {# life} other {# lives}}{killer, select, yes {, Killer} other {}}",
+    "lives": "{lives, plural, one {# life} other {# lives}}",
+    "outA11y": "{name}, out",
+    "chase": "{role, select, hare {Hare} other {Hound}} · on {number}",
+    "chaseA11y": "{name}, {role, select, hare {the hare} other {the hound}}, on {number}",
+    "scam": "{role, select, scorer {Scoring} other {Stopping}}",
+    "scamA11y": "{name}, {role, select, scorer {scoring} other {stopping}}, {score} points",
+    "runs": "{name}, {score, plural, one {# run} other {# runs}}",
+    "strokes": "{name}, {score, plural, one {# stroke} other {# strokes}}",
+    "ball": "Has the ball",
+    "goals": "{name}, {score, plural, one {# goal} other {# goals}}{ball, select, yes {, has the ball} other {}}",
+    "mark": "{mark, select, x {Crosses} other {Noughts}}",
+    "squares": "{name}, {mark, select, x {crosses} other {noughts}}, {score, plural, one {# square} other {# squares}}"
   },
   "stats": {
     "average": "3-dart average",
@@ -257,6 +281,20 @@
     "roundsPlayed": "Rounds played",
     "costliestDouble": "Costliest double",
     "bestVisit": "Best visit",
-    "dartsToFinish": "Darts to finish"
+    "dartsToFinish": "Darts to finish",
+    "gotchas": "Gotchas",
+    "scoringVisits": "Scoring visits",
+    "halvings": "Halvings",
+    "steps": "Targets hit",
+    "runs": "Runs",
+    "runsPerInning": "Runs per inning",
+    "strokes": "Strokes",
+    "strokesPerHole": "Strokes per hole",
+    "goals": "Goals",
+    "squares": "Squares"
+  },
+  "ticTacToe": {
+    "openA11y": "{number}, open",
+    "takenA11y": "{number}, claimed by {name}"
   }
 }

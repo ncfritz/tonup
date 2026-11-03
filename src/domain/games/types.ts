@@ -2,7 +2,22 @@
 // reducer over its darts: undo, editing a dart and replay are all a refold of the event list.
 import type { DartEvent, Hit, PlayerRef, Target } from '../darts';
 
-export type GameId = 'x01' | 'cricket' | 'clock' | 'shanghai' | 'killer';
+export type GameId =
+  | 'x01'
+  | 'cricket'
+  | 'clock'
+  | 'shanghai'
+  | 'killer'
+  | 'gotcha'
+  | 'fives'
+  | 'countUp'
+  | 'halveIt'
+  | 'hareHounds'
+  | 'scam'
+  | 'baseball'
+  | 'golf'
+  | 'football'
+  | 'ticTacToe';
 export type GameFamily = 'x01' | 'cricket' | 'sequence' | 'elimination' | 'sports';
 
 /** One player's row on the scoreboard. */
@@ -17,8 +32,10 @@ export interface ScoreboardRow {
   active: boolean;
   /** A short line under the name: "On 7", "Killer · 14", "Out". */
   note?: string;
-  /** Out of the game (Killer). */
+  /** Out of the game (Killer, Nine Lives). */
   out?: boolean;
+  /** Lives left, in games that have them. */
+  lives?: number;
 }
 
 /** Cricket's marks grid: rows are the numbers, columns the players. */
@@ -30,9 +47,20 @@ export interface CricketDetail {
   marks: number[][];
   /** A number closed by everyone, so it no longer scores. */
   dead: boolean[];
+  /** False in No-Score Cricket, which has no points row. */
+  points: boolean;
 }
 
-export type ScoreDetail = CricketDetail;
+/** Tic-Tac-Toe's grid: nine targets and who has claimed each. */
+export interface GridDetail {
+  kind: 'grid';
+  /** Target codes, row by row (25 is the bull). */
+  cells: number[];
+  /** The player index that claimed each cell, or null. */
+  owner: (number | null)[];
+}
+
+export type ScoreDetail = CricketDetail | GridDetail;
 
 export type ScoreboardStatus =
   | { kind: 'checkout'; route: Target[] }
@@ -45,7 +73,19 @@ export type ScoreboardStatus =
   | { kind: 'aim'; target: Target; reason: AimReason }
   | { kind: 'playing' };
 
-export type AimReason = 'clock' | 'shanghai' | 'killerQualify' | 'killerAttack';
+export type AimReason =
+  | 'clock'
+  | 'shanghai'
+  | 'killerQualify'
+  | 'killerAttack'
+  /** A game with one target per visit or inning: Halve-It, Baseball, Golf, Hare and Hounds. */
+  | 'target'
+  /** Football: win the ball on the bull, then score on doubles. */
+  | 'possession'
+  | 'goal'
+  /** Scam: the stopper closes numbers, the scorer scores on open ones. */
+  | 'stopper'
+  | 'scorer';
 
 export interface ScoreboardView {
   rows: ScoreboardRow[];

@@ -24,7 +24,8 @@ describe('Cricket', () => {
     // A closes 20 and scores 2 extra marks (40); B closes 20; A's next 20s score nothing.
     const s = playHits(cricket, std, [A, B], [T(20), T(20), M, T(20), M, M, T(20)]);
     expect(s.points).toEqual([60, 0]);
-    expect(cricket.view(s).detail?.dead[0]).toBe(true);
+    const detail = cricket.view(s).detail;
+    expect(detail?.kind === 'cricket' && detail.dead[0]).toBe(true);
   });
 
   it('wins when everything is closed and points are level or ahead', () => {
@@ -36,7 +37,7 @@ describe('Cricket', () => {
   });
 
   it('does not win while behind on points', () => {
-    // B scores 40 on 20 first; A closes everything with 0 points: no win yet.
+    // B scores 60 on 20 first; A closes everything with 0 points: no win yet.
     const hits = [
       M,
       M,
@@ -98,5 +99,42 @@ describe('Cricket', () => {
     expect(cricket.stats(s, 'a')).toEqual(
       expect.arrayContaining([{ key: 'mpr', value: 4, format: 'one' }]),
     );
+  });
+});
+
+describe('Cricket variants', () => {
+  it('No-Score: closing everything wins, with no points', () => {
+    const close = [T(20), T(19), T(18), T(17), T(16), T(15), BULL, OUTER];
+    const s = playHits(cricket, { variant: 'noScore', roundLimit: null }, [A], close);
+    expect(s.points).toEqual([0]);
+    expect(s.winner).toBe(0);
+  });
+
+  it('Tactics plays 10–20 and the bull', () => {
+    const s = cricket.init({ variant: 'tactics', roundLimit: null }, [A]);
+    expect(s.targets).toEqual([20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 25]);
+    expect(
+      playHits(cricket, { variant: 'tactics', roundLimit: null }, [A], [T(10)]).marks[0]![10],
+    ).toBe(3);
+  });
+
+  it('Random plays the six numbers drawn, highest first, plus the bull', () => {
+    const s = cricket.init({ variant: 'random', roundLimit: null, numbers: [3, 17, 9, 1, 12, 6] }, [
+      A,
+    ]);
+    expect(s.targets).toEqual([17, 12, 9, 6, 3, 1, 25]);
+    expect(() =>
+      cricket.init({ variant: 'random', roundLimit: null, numbers: [1, 1, 2, 3, 4, 5] }, [A]),
+    ).toThrow();
+  });
+
+  it('Mickey Mouse counts doubles and trebles off the board toward any double and any treble', () => {
+    const settings = { variant: 'mickeyMouse' as const, roundLimit: null };
+    // D5 and T7 aren't targets: they mark "any double" and "any treble".
+    const s = playHits(cricket, settings, [A], [hitOf(5, 2), hitOf(7, 3), T(12)]);
+    const t = s.targets;
+    expect(s.marks[0]![t.indexOf(-2)]).toBe(1);
+    expect(s.marks[0]![t.indexOf(-3)]).toBe(1);
+    expect(s.marks[0]![t.indexOf(12)]).toBe(3);
   });
 });

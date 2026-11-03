@@ -2,53 +2,43 @@
 // where the app can play it, how to start it. Rules for Pro games stay readable (ADR 0009).
 import { useTranslation } from 'react-i18next';
 
-import type { GameId } from '@/domain/games';
-
 export type RulesFamily = 'x01' | 'cricket' | 'sequence' | 'elimination' | 'sports';
 
 export interface RulesEntry {
+  /** Also the preset that plays it (src/features/game/presets.ts). */
   id: string;
   family: RulesFamily;
-  /** How to start it in the app: a game (with settings) or a drill. Null when it's Pro. */
-  play:
-    { kind: 'game'; game: GameId; variant?: string } | { kind: 'drill'; drill: 'countUp' } | null;
+  /** A drill that practises it on your own, open to everyone. */
+  drill?: 'countUp' | 'clock';
 }
 
 export const RULES: RulesEntry[] = [
-  { id: 'x01', family: 'x01', play: { kind: 'game', game: 'x01' } },
-  { id: 'dido201', family: 'x01', play: null },
-  { id: 'gotcha', family: 'x01', play: null },
-  { id: 'fives', family: 'x01', play: null },
-  {
-    id: 'cricket',
-    family: 'cricket',
-    play: { kind: 'game', game: 'cricket', variant: 'standard' },
-  },
-  {
-    id: 'cutThroat',
-    family: 'cricket',
-    play: { kind: 'game', game: 'cricket', variant: 'cutThroat' },
-  },
-  { id: 'noScore', family: 'cricket', play: null },
-  { id: 'tactics', family: 'cricket', play: null },
-  { id: 'randomCricket', family: 'cricket', play: null },
-  { id: 'mickeyMouse', family: 'cricket', play: null },
-  { id: 'killerCricket', family: 'cricket', play: null },
-  { id: 'clock', family: 'sequence', play: { kind: 'game', game: 'clock' } },
-  { id: 'nineLives', family: 'sequence', play: null },
-  { id: 'hareHounds', family: 'sequence', play: null },
-  { id: 'shanghai', family: 'sequence', play: { kind: 'game', game: 'shanghai' } },
-  { id: 'halveIt', family: 'sequence', play: null },
-  { id: 'bermuda', family: 'sequence', play: null },
-  { id: 'countUp', family: 'sequence', play: { kind: 'drill', drill: 'countUp' } },
-  { id: 'killer', family: 'elimination', play: { kind: 'game', game: 'killer' } },
-  { id: 'blindKiller', family: 'elimination', play: null },
-  { id: 'scam', family: 'elimination', play: null },
-  { id: 'baseball', family: 'sports', play: null },
-  { id: 'bullseyeBaseball', family: 'sports', play: null },
-  { id: 'golf', family: 'sports', play: null },
-  { id: 'football', family: 'sports', play: null },
-  { id: 'ticTacToe', family: 'sports', play: null },
+  { id: 'x01', family: 'x01' },
+  { id: 'dido201', family: 'x01' },
+  { id: 'gotcha', family: 'x01' },
+  { id: 'fives', family: 'x01' },
+  { id: 'cricket', family: 'cricket' },
+  { id: 'cutThroat', family: 'cricket' },
+  { id: 'noScore', family: 'cricket' },
+  { id: 'tactics', family: 'cricket' },
+  { id: 'randomCricket', family: 'cricket' },
+  { id: 'mickeyMouse', family: 'cricket' },
+  { id: 'killerCricket', family: 'cricket' },
+  { id: 'clock', family: 'sequence', drill: 'clock' },
+  { id: 'nineLives', family: 'sequence' },
+  { id: 'hareHounds', family: 'sequence' },
+  { id: 'shanghai', family: 'sequence' },
+  { id: 'halveIt', family: 'sequence' },
+  { id: 'bermuda', family: 'sequence' },
+  { id: 'countUp', family: 'sequence', drill: 'countUp' },
+  { id: 'killer', family: 'elimination' },
+  { id: 'blindKiller', family: 'elimination' },
+  { id: 'scam', family: 'elimination' },
+  { id: 'baseball', family: 'sports' },
+  { id: 'bullseyeBaseball', family: 'sports' },
+  { id: 'golf', family: 'sports' },
+  { id: 'football', family: 'sports' },
+  { id: 'ticTacToe', family: 'sports' },
 ];
 
 export const FAMILIES: RulesFamily[] = ['x01', 'cricket', 'sequence', 'elimination', 'sports'];

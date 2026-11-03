@@ -40,7 +40,7 @@ describe('a rules page', () => {
     await fireEvent.press(screen.getByTestId('rules-play'));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/new-game',
-      params: { game: 'cricket', variant: 'cutThroat' },
+      params: { game: 'cutThroat' },
     });
   });
 

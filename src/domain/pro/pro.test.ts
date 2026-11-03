@@ -16,7 +16,9 @@ describe('Ton Up Pro (ADR 0009)', () => {
     expect(canPlayGame('cricket', false, 'cutThroat')).toBe(true);
     for (const d of ['bobs27', 'countUp', 'clock']) expect(canUseDrill(d, false)).toBe(true);
     expect(canUseTheme(BASE_THEME, false)).toBe(true);
-    expect(canPlayRules('countUp', false)).toBe(true);
+    expect(canPlayRules('cutThroat', false)).toBe(true);
+    expect(canPlayRules('countUp', false)).toBe(false);
+    expect(canPlayRules('dido201', false)).toBe(false);
   });
 
   it('locks the rest until Pro, then opens everything', () => {

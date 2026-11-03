@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0–M10 in place, the base app is complete (2026-11-02)
+- Status: Accepted; M0–M11 in place: the base app, Pro purchase and all 26 games (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -180,7 +180,7 @@ M1 and M2 can run alongside M0's UI work; M5–M8 are largely independent once M
 | Game rule variants multiply                             | Variants are settings on one engine per game, covered by table-driven tests                                                                                                                   |
 | Five themes × two modes is a lot of design work         | Screens use tokens from M0; the Pro theme ships in the base app and the other four in M14 from the mockup palettes                                                                            |
 | v1 scope is large with all of Pro included              | The base app is a checkpoint (M9, internal TestFlight) before Pro work; Pro milestones are independent, so games and drills can also slip to content updates without changing the Pro promise |
-| Pub-game rules vary by region                           | Confirm presets for Scam, Mickey Mouse and Golf stroke values before M11; variants are settings                                                                                               |
+| Pub-game rules vary by region                           | Presets chosen in M11 (docs/data/game-rules.md → Presets in the app); variants are settings, so house rules can be added later                                                                |
 
 ## 8. Decisions
 
@@ -191,7 +191,6 @@ Still open:
 - **Base theme:** this plan assumes Pro (light and dark) is the free theme and the default, following the system appearance.
 - **Languages at launch:** English only, with i18n in place (assumed).
 - **Seller account:** individual or LLC before the first external TestFlight build.
-- **House-rule presets** for Scam, Mickey Mouse and Golf (before M11).
 
 ## Next steps
 
@@ -202,4 +201,5 @@ Still open:
 5. Play a best-of-5 against the bot on a phone with a few corrections, then replay it (the M3 and M4 done-whens).
 6. Base checkpoint: run through the whole app on a phone, then make an internal TestFlight build (`pnpm ios:release` for a device build; archive in Xcode for TestFlight).
 7. Check Pro against the local StoreKit file: run from Xcode (⌘R), buy, then refund in Debug › StoreKit › Manage Transactions and come back to the app; restore after deleting and reinstalling.
-8. Start M11 (the 21 Pro games).
+8. Play each of the Pro games on a phone and confirm the presets in docs/data/game-rules.md.
+9. Start M12.

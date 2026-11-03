@@ -87,7 +87,7 @@ export const useGame = create<GameStore>((set, get) => ({
 }));
 
 /** Games whose visit totals are worth calling out. */
-const CALLS_TOTALS = new Set(['x01', 'shanghai', 'countUp']);
+const CALLS_TOTALS = new Set(['x01', 'shanghai', 'countUp', 'gotcha', 'fives', 'halveIt']);
 
 /** Caller, haptics and the leg pause after a dart. */
 function announce(game: LoadedGame) {

@@ -10,6 +10,7 @@ import GameScreen from '../../app/game/[sessionId]';
 import NewGame from '../../app/new-game';
 import { useSettings } from '../settings/store';
 
+import { settingsFor } from './presets';
 import { startGame } from './session';
 import { useGame } from './store';
 
@@ -19,7 +20,9 @@ jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), navigate: jest.fn(), back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: () => mockParams,
 }));
-const router = jest.requireMock<{ router: { replace: jest.Mock } }>('expo-router').router;
+const router = jest.requireMock<{ router: { replace: jest.Mock; push: jest.Mock } }>(
+  'expo-router',
+).router;
 
 const YOU = { id: 'you', name: 'You' };
 const GUEST = { id: 'g', name: 'Sam' };
@@ -78,19 +81,47 @@ describe('Killer on the scoring screen', () => {
   });
 });
 
+describe('Pro games on the scoring screen', () => {
+  it('draws Tic-Tac-Toe squares and who claimed them', async () => {
+    const id = startGame('ticTacToe', settingsFor('ticTacToe'), [YOU, GUEST]);
+    await open(id);
+    expect(screen.getByText(/Tic-Tac-Toe/)).toBeOnTheScreen();
+    expect(screen.getByLabelText('Bull, open')).toBeOnTheScreen();
+    await press('Single', 12);
+    expect(screen.getByLabelText('12, claimed by You')).toBeOnTheScreen();
+  });
+
+  it("shows Mickey Mouse's any double and Halve-It's target", async () => {
+    const id = startGame('cricket', settingsFor('mickeyMouse'), [YOU, GUEST]);
+    await open(id);
+    expect(screen.getByText(/Mickey Mouse/)).toBeOnTheScreen();
+    expect(screen.getByLabelText('You, Any double: no marks')).toBeOnTheScreen();
+    await screen.unmount();
+    const h = startGame('halveIt', settingsFor('halveIt'), [YOU]);
+    await open(h);
+    expect(screen.getByText('Aim for')).toBeOnTheScreen();
+  });
+});
+
 describe('New game for other games', () => {
   it('starts Cut-Throat Cricket', async () => {
     mockParams = {};
     await render(<NewGame />);
-    await fireEvent.press(screen.getByText('Cricket'));
-    await fireEvent.press(screen.getByText('Cut-Throat'));
+    await fireEvent.press(screen.getByTestId('pick-cutThroat'));
     await fireEvent.press(screen.getByTestId('start-game'));
     const sessionId = router.replace.mock.calls[0][0].params.sessionId;
     expect(getSession(sessionId)).toMatchObject({
       typeId: 'cricket',
       settings: { variant: 'cutThroat', roundLimit: 20 },
     });
-    expect(useSettings.getState().lastGameId).toBe('cricket');
+    expect(useSettings.getState().lastGameId).toBe('cutThroat');
+  });
+
+  it('sends a locked game to Ton Up Pro', async () => {
+    mockParams = {};
+    await render(<NewGame />);
+    await fireEvent.press(screen.getByTestId('pick-golf'));
+    expect(router.push).toHaveBeenCalledWith('/pro');
   });
 
   it('opens on the game a shortcut asked for, and draws Killer numbers at the start', async () => {

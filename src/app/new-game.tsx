@@ -4,15 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { FAMILIES, RULES, useRulesT } from '@/content/rules';
 import { BOT_LEVELS, botLevel } from '@/domain/bot';
-import type { PlayerRef } from '@/domain/darts';
 import type { OutRule } from '@/domain/checkout';
+import type { PlayerRef } from '@/domain/darts';
 import type { GameId } from '@/domain/games';
-import { CLOCK_DEFAULTS, type ClockSettings } from '@/domain/games/clock';
-import { CRICKET_DEFAULTS, type CricketSettings } from '@/domain/games/cricket';
-import { drawNumbers, KILLER_DEFAULTS, type KillerSettings } from '@/domain/games/killer';
-import { SHANGHAI_DEFAULTS, type ShanghaiSettings } from '@/domain/games/shanghai';
-import { X01_DEFAULTS, type InRule, type X01Settings } from '@/domain/games/x01';
+import type { InRule } from '@/domain/games/x01';
+import { canPlayRules } from '@/domain/pro';
 import {
   bestOf,
   botId,
@@ -22,52 +20,55 @@ import {
   newGuest,
   YOU_ID,
 } from '@/features/game/lineup';
+import { deal, isPresetId, PRESETS, settingsFor, type PresetId } from '@/features/game/presets';
 import { startGame } from '@/features/game/session';
+import { useProOwned } from '@/features/pro/pro';
 import { useSettings } from '@/features/settings/store';
 import { Button, Header, Icon, Pressable, Screen, Section, SegmentedControl, Text } from '@/ui';
 
-const GAMES: GameId[] = ['x01', 'cricket', 'clock', 'shanghai', 'killer'];
 const STARTS = ['301', '501', '701'] as const;
 const LEGS = ['1', '3', '5', '7', '9'] as const;
 const SETS = ['1', '3', '5'] as const;
 
+type Settings = Record<string, unknown>;
+
+/** New game (docs/design/screens.md → New game): pick one of the 26 games, its settings, players. */
 export default function NewGame() {
   const { t } = useTranslation('game');
+  const rt = useRulesT();
   const { theme } = useUnistyles();
+  const proOwned = useProOwned();
   const lastGameId = useSettings((s) => s.lastGameId);
   const saved = useSettings((s) => s.gameSettings);
   const lastLineup = useSettings((s) => s.lastLineup);
   const setSetting = useSettings((s) => s.set);
-  // Home's shortcuts open New game on a game.
-  const { game: asked, variant } = useLocalSearchParams<{ game?: string; variant?: string }>();
-  const [gameId, setGameId] = useState<GameId>(
-    GAMES.includes(asked as GameId) ? (asked as GameId) : lastGameId,
-  );
-  const [settings, setSettings] = useState<X01Settings>(
-    (saved.x01 as X01Settings | undefined) ?? X01_DEFAULTS,
-  );
-  const [cricketSettings, setCricket] = useState<CricketSettings>(() => {
-    const base = (saved.cricket as CricketSettings | undefined) ?? CRICKET_DEFAULTS;
-    // A rules page can ask for a variant ("Play Cut-Throat Cricket").
-    return variant === 'standard' || variant === 'cutThroat' ? { ...base, variant } : base;
-  });
-  const [clockSettings, setClock] = useState<ClockSettings>(
-    (saved.clock as ClockSettings | undefined) ?? CLOCK_DEFAULTS,
-  );
-  const [shanghaiSettings, setShanghai] = useState<ShanghaiSettings>(
-    (saved.shanghai as ShanghaiSettings | undefined) ?? SHANGHAI_DEFAULTS,
-  );
-  const [killerSettings, setKiller] = useState<KillerSettings>(
-    (saved.killer as KillerSettings | undefined) ?? KILLER_DEFAULTS,
-  );
+  // Home's shortcuts and the rules pages open New game on a game.
+  const { game: asked } = useLocalSearchParams<{ game?: string }>();
+  const initial: PresetId = isPresetId(asked) ? asked : isPresetId(lastGameId) ? lastGameId : 'x01';
+  const [presetId, setPresetId] = useState<PresetId>(initial);
+  const preset = PRESETS[presetId];
+  const game: GameId = preset.game;
+  // Settings being edited, per game engine; a preset's fixed settings always apply on top.
+  const [edits, setEdits] = useState<Partial<Record<GameId, Settings>>>({});
+  const settings: Settings = {
+    ...settingsFor(presetId, saved[game]),
+    ...edits[game],
+    ...preset.fixed,
+  };
+  const set = (patch: Settings) =>
+    setEdits((e) => ({
+      ...e,
+      [game]: { ...settingsFor(presetId, saved[game]), ...e[game], ...patch },
+    }));
+
   const [players, setPlayers] = useState<PlayerRef[]>(
     lastLineup ?? [
       { id: YOU_ID, name: t('players.you') },
       { id: botId(3), name: t('players.bot', { level: 3 }), botLevel: 3 },
     ],
   );
-  const update = (patch: Partial<X01Settings>) => setSettings((s) => ({ ...s, ...patch }));
-  const full = players.length >= MAX_PLAYERS;
+  const max = Math.min(MAX_PLAYERS, preset.players.max);
+  const full = players.length >= max;
 
   const setPlayer = (i: number, p: PlayerRef) =>
     setPlayers((ps) => ps.map((q, j) => (j === i ? p : q)));
@@ -92,76 +93,84 @@ export default function NewGame() {
     setPlayer(i, { id: botId(level), name: t('players.bot', { level }), botLevel: level });
   };
 
-  const chosen = (): unknown => {
-    switch (gameId) {
-      case 'x01':
-        return settings;
-      case 'cricket':
-        return cricketSettings;
-      case 'clock':
-        return clockSettings;
-      case 'shanghai':
-        return shanghaiSettings;
-      case 'killer':
-        return { ...killerSettings, numbers: [] };
-    }
-  };
-  const tooFew = gameId === 'killer' && players.length < 2;
-  // The rules page for the game (and Cricket variant) picked.
-  const rulesIdFor = (g: GameId) =>
-    g === 'cricket' && cricketSettings.variant === 'cutThroat' ? 'cutThroat' : g;
+  const count = players.length;
+  const wrongCount = count < preset.players.min || count > preset.players.max;
+  const locked = !canPlayRules(presetId, proOwned);
 
   const start = () => {
     const lineup = players.map((p, i) => ({
       ...p,
       name: p.name.trim() || t('players.guest', { n: i + 1 }),
     }));
-    const stored = chosen();
-    setSetting('lastGameId', gameId);
-    setSetting('gameSettings', { ...saved, [gameId]: stored });
+    // Saved without what's dealt at the start (Killer numbers, Random Cricket's six).
+    const { numbers: _dealt, ...keep } = settings;
+    void _dealt;
+    setSetting('lastGameId', presetId);
+    setSetting('gameSettings', { ...saved, [game]: keep });
     setSetting('lastLineup', lineup);
-    // Killer numbers are drawn fresh for each game.
-    const play =
-      gameId === 'killer'
-        ? { ...(stored as KillerSettings), numbers: drawNumbers(lineup.length, Math.random) }
-        : stored;
-    const id = startGame(gameId, play, lineup);
+    const id = startGame(game, deal(game, keep, lineup), lineup);
     router.replace({ pathname: '/game/[sessionId]', params: { sessionId: id } });
   };
+
+  const pick = (id: PresetId) => {
+    if (!canPlayRules(id, proOwned)) {
+      router.push('/pro');
+      return;
+    }
+    setPresetId(id);
+  };
+  const name = rt.t(`games.${presetId}.name`);
+  const num = (k: string) => Number(settings[k]);
 
   return (
     <Screen scroll edges={['top', 'bottom']}>
       <Header title={t('newGame.title')} backLabel={t('edit.close')} onBack={() => router.back()} />
       <Section label={t('newGame.game')}>
-        <SegmentedControl<GameId>
-          accessibilityLabel={t('newGame.game')}
-          value={gameId}
-          onChange={setGameId}
-          segments={GAMES.map((g) => ({ value: g, label: t(`newGame.gameShort.${g}`) }))}
-        />
+        {FAMILIES.map((f) => (
+          <View key={f} style={styles.family}>
+            <Text variant="caption" tone="muted">
+              {rt.t(`families.${f}`)}
+            </Text>
+            <View style={styles.chips}>
+              {RULES.filter((r) => r.family === f).map((r) => {
+                const id = r.id as PresetId;
+                const on = id === presetId;
+                const open = canPlayRules(id, proOwned);
+                const label = rt.t(`games.${id}.name`);
+                return (
+                  <Pressable
+                    key={id}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: on }}
+                    accessibilityLabel={open ? label : t('newGame.lockedA11y', { game: label })}
+                    style={[styles.chip, on && styles.chipOn]}
+                    onPress={() => pick(id)}
+                    testID={`pick-${id}`}
+                  >
+                    {open ? null : <Icon name="lock" color={theme.colors.muted} size={14} />}
+                    <Text variant="bodyStrong" tone={on ? 'onAccent' : open ? 'text' : 'muted'}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ))}
         <Pressable
           accessibilityRole="link"
-          accessibilityLabel={t('newGame.rulesA11y', { game: t(`newGame.gameShort.${gameId}`) })}
+          accessibilityLabel={t('newGame.rulesA11y', { game: name })}
           style={({ pressed }) => [styles.rulesLink, pressed && styles.pressed]}
-          onPress={() =>
-            router.push({ pathname: '/rules/[gameId]', params: { gameId: rulesIdFor(gameId) } })
-          }
+          onPress={() => router.push({ pathname: '/rules/[gameId]', params: { gameId: presetId } })}
           testID="game-rules"
         >
           <Icon name="info" color={theme.colors.accent} size={18} />
           <Text variant="bodyStrong" tone="accent">
-            {t('newGame.rules', { game: t(`newGame.gameShort.${gameId}`) })}
+            {t('newGame.rules', { game: name })}
           </Text>
         </Pressable>
-        {gameId === 'x01' ? (
-          <SegmentedControl
-            accessibilityLabel={t('newGame.start')}
-            value={String(settings.startScore)}
-            onChange={(v) => update({ startScore: Number(v) })}
-            segments={STARTS.map((s) => ({ value: s, label: s }))}
-          />
-        ) : null}
       </Section>
+
       <Section label={t('newGame.players')}>
         {players.map((p, i) => (
           <PlayerRow
@@ -170,14 +179,14 @@ export default function NewGame() {
             index={i}
             first={i === 0}
             canRemove={players.length > 1}
-            onRename={(name) => setPlayer(i, { ...p, name })}
+            onRename={(n) => setPlayer(i, { ...p, name: n })}
             onLevel={(d) => changeLevel(i, d)}
             onRemove={() => remove(i)}
           />
         ))}
         {full ? (
           <Text variant="caption" tone="muted">
-            {t('newGame.maxPlayers', { max: MAX_PLAYERS })}
+            {t('newGame.maxPlayers', { max })}
           </Text>
         ) : (
           <View style={styles.addRow}>
@@ -189,86 +198,105 @@ export default function NewGame() {
             </View>
           </View>
         )}
+        {wrongCount ? (
+          <Text variant="caption" tone="danger" testID="player-count">
+            {preset.players.min === preset.players.max
+              ? t('newGame.exactly', { count: preset.players.min, game: name })
+              : t('newGame.atLeast', { count: preset.players.min, game: name })}
+          </Text>
+        ) : null}
       </Section>
-      {gameId === 'x01' ? (
+
+      {game === 'x01' ? (
         <>
+          {presetId === 'x01' ? (
+            <Section label={t('newGame.start')}>
+              <SegmentedControl
+                accessibilityLabel={t('newGame.start')}
+                value={String(settings.startScore)}
+                onChange={(v) => set({ startScore: Number(v) })}
+                segments={STARTS.map((s) => ({ value: s, label: s }))}
+              />
+            </Section>
+          ) : null}
           <Section label={t('newGame.format')}>
             <SegmentedControl
               accessibilityLabel={t('newGame.format')}
-              value={String(bestOf(settings.legs))}
-              onChange={(v) => update({ legs: firstTo(Number(v)) })}
+              value={String(bestOf(num('legs')))}
+              onChange={(v) => set({ legs: firstTo(Number(v)) })}
               segments={LEGS.map((n) => ({ value: n, label: n }))}
             />
             <Text variant="caption" tone="muted">
-              {t('newGame.legs', { count: bestOf(settings.legs) })}
+              {t('newGame.legs', { count: bestOf(num('legs')) })}
             </Text>
             <Text variant="bodyStrong">{t('newGame.sets')}</Text>
             <SegmentedControl
               accessibilityLabel={t('newGame.sets')}
-              value={String(bestOf(settings.sets))}
-              onChange={(v) => update({ sets: firstTo(Number(v)) })}
+              value={String(bestOf(num('sets')))}
+              onChange={(v) => set({ sets: firstTo(Number(v)) })}
               segments={SETS.map((n) => ({
                 value: n,
                 label: n === '1' ? t('newGame.setsOff') : t('newGame.setsOf', { count: Number(n) }),
               }))}
             />
           </Section>
-          <Section label={t('newGame.out')}>
-            <SegmentedControl<OutRule>
-              accessibilityLabel={t('newGame.out')}
-              value={settings.out}
-              onChange={(out) => update({ out })}
-              segments={[
-                { value: 'double', label: t('newGame.doubleOut') },
-                { value: 'master', label: t('newGame.masterOut') },
-                { value: 'straight', label: t('newGame.straightOut') },
-              ]}
-            />
-          </Section>
-          <Section label={t('newGame.in')}>
-            <SegmentedControl<InRule>
-              accessibilityLabel={t('newGame.in')}
-              value={settings.in}
-              onChange={(v) => update({ in: v })}
-              segments={[
-                { value: 'straight', label: t('newGame.straightIn') },
-                { value: 'double', label: t('newGame.doubleIn') },
-                { value: 'master', label: t('newGame.masterIn') },
-              ]}
-            />
-          </Section>
+          {presetId === 'x01' ? (
+            <>
+              <Section label={t('newGame.out')}>
+                <SegmentedControl<OutRule>
+                  accessibilityLabel={t('newGame.out')}
+                  value={settings.out as OutRule}
+                  onChange={(out) => set({ out })}
+                  segments={[
+                    { value: 'double', label: t('newGame.doubleOut') },
+                    { value: 'master', label: t('newGame.masterOut') },
+                    { value: 'straight', label: t('newGame.straightOut') },
+                  ]}
+                />
+              </Section>
+              <Section label={t('newGame.in')}>
+                <SegmentedControl<InRule>
+                  accessibilityLabel={t('newGame.in')}
+                  value={settings.in as InRule}
+                  onChange={(v) => set({ in: v })}
+                  segments={[
+                    { value: 'straight', label: t('newGame.straightIn') },
+                    { value: 'double', label: t('newGame.doubleIn') },
+                    { value: 'master', label: t('newGame.masterIn') },
+                  ]}
+                />
+              </Section>
+            </>
+          ) : null}
         </>
       ) : null}
-      {gameId === 'cricket' ? (
-        <Section label={t('newGame.cricketVariant')}>
-          <SegmentedControl<CricketSettings['variant']>
-            accessibilityLabel={t('newGame.cricketVariant')}
-            value={cricketSettings.variant}
-            onChange={(variant) => setCricket((c) => ({ ...c, variant }))}
-            segments={[
-              { value: 'standard', label: t('newGame.standard') },
-              { value: 'cutThroat', label: t('newGame.cutThroatShort') },
-            ]}
-          />
-          <Text variant="bodyStrong">{t('newGame.roundLimit')}</Text>
+
+      {game === 'cricket' ? (
+        <Section label={t('newGame.roundLimit')}>
           <SegmentedControl
             accessibilityLabel={t('newGame.roundLimit')}
-            value={String(cricketSettings.roundLimit ?? 0)}
-            onChange={(v) => setCricket((c) => ({ ...c, roundLimit: Number(v) || null }))}
+            value={String(settings.roundLimit ?? 0)}
+            onChange={(v) => set({ roundLimit: Number(v) || null })}
             segments={[
               { value: '10', label: '10' },
               { value: '20', label: '20' },
               { value: '0', label: t('newGame.noLimit') },
             ]}
           />
+          {presetId === 'randomCricket' ? (
+            <Text variant="caption" tone="muted">
+              {t('newGame.randomNumbers')}
+            </Text>
+          ) : null}
         </Section>
       ) : null}
-      {gameId === 'clock' ? (
+
+      {game === 'clock' ? (
         <Section label={t('newGame.clockRing')}>
-          <SegmentedControl<ClockSettings['ring']>
+          <SegmentedControl
             accessibilityLabel={t('newGame.clockRing')}
-            value={clockSettings.ring}
-            onChange={(ring) => setClock((c) => ({ ...c, ring }))}
+            value={String(settings.ring)}
+            onChange={(ring) => set({ ring })}
             segments={[
               { value: 'any', label: t('newGame.anyRing') },
               { value: 'doubles', label: t('newGame.doublesOnly') },
@@ -277,60 +305,185 @@ export default function NewGame() {
           />
           <YesNo
             label={t('newGame.clockSkip')}
-            value={clockSettings.skip}
-            onChange={(skip) => setClock((c) => ({ ...c, skip }))}
+            value={!!settings.skip}
+            onChange={(skip) => set({ skip })}
           />
           <YesNo
             label={t('newGame.clockBull')}
-            value={clockSettings.bull}
-            onChange={(bull) => setClock((c) => ({ ...c, bull }))}
+            value={!!settings.bull}
+            onChange={(bull) => set({ bull })}
           />
         </Section>
       ) : null}
-      {gameId === 'shanghai' ? (
+
+      {game === 'shanghai' ? (
         <Section label={t('newGame.rounds')}>
-          <SegmentedControl
-            accessibilityLabel={t('newGame.rounds')}
-            value={String(shanghaiSettings.rounds)}
-            onChange={(v) => setShanghai((c) => ({ ...c, rounds: Number(v) }))}
-            segments={[
-              { value: '7', label: '7' },
-              { value: '10', label: '10' },
-              { value: '20', label: '20' },
-            ]}
+          <Choice
+            value={num('rounds')}
+            options={[7, 10, 20]}
+            onChange={(rounds) => set({ rounds })}
+            label={t('newGame.rounds')}
           />
           <YesNo
             label={t('newGame.instantWin')}
-            value={shanghaiSettings.instantWin}
-            onChange={(instantWin) => setShanghai((c) => ({ ...c, instantWin }))}
+            value={!!settings.instantWin}
+            onChange={(instantWin) => set({ instantWin })}
           />
         </Section>
       ) : null}
-      {gameId === 'killer' ? (
+
+      {game === 'killer' ? (
         <Section label={t('newGame.lives')}>
-          <SegmentedControl
-            accessibilityLabel={t('newGame.lives')}
-            value={String(killerSettings.lives)}
-            onChange={(v) => setKiller((c) => ({ ...c, lives: Number(v) }))}
-            segments={['3', '4', '5', '6'].map((n) => ({ value: n, label: n }))}
+          <Choice
+            value={num('lives')}
+            options={[3, 4, 5, 6]}
+            onChange={(lives) => set({ lives })}
+            label={t('newGame.lives')}
           />
-          <Text variant="bodyStrong">{t('newGame.ownDouble')}</Text>
-          <SegmentedControl<KillerSettings['ownDouble']>
-            accessibilityLabel={t('newGame.ownDouble')}
-            value={killerSettings.ownDouble}
-            onChange={(ownDouble) => setKiller((c) => ({ ...c, ownDouble }))}
-            segments={[
-              { value: 'loseLife', label: t('newGame.loseLife') },
-              { value: 'nothing', label: t('newGame.nothing') },
-            ]}
-          />
+          {presetId === 'killerCricket' ? null : (
+            <>
+              <Text variant="bodyStrong">{t('newGame.ownDouble')}</Text>
+              <SegmentedControl
+                accessibilityLabel={t('newGame.ownDouble')}
+                value={String(settings.ownDouble)}
+                onChange={(ownDouble) => set({ ownDouble })}
+                segments={[
+                  { value: 'loseLife', label: t('newGame.loseLife') },
+                  { value: 'nothing', label: t('newGame.nothing') },
+                ]}
+              />
+            </>
+          )}
           <Text variant="caption" tone="muted">
-            {tooFew ? t('newGame.killerNeedsTwo') : t('newGame.killerNumbers')}
+            {presetId === 'blindKiller' ? t('newGame.blindNumbers') : t('newGame.killerNumbers')}
           </Text>
         </Section>
       ) : null}
-      <Button label={t('newGame.continue')} onPress={start} disabled={tooFew} testID="start-game" />
+
+      {game === 'gotcha' ? (
+        <Section label={t('newGame.target')}>
+          <Choice
+            value={num('target')}
+            options={[201, 301, 501]}
+            onChange={(target) => set({ target })}
+            label={t('newGame.target')}
+          />
+          <YesNo
+            label={t('newGame.doubleOut')}
+            value={!!settings.doubleOut}
+            onChange={(doubleOut) => set({ doubleOut })}
+          />
+        </Section>
+      ) : null}
+
+      {game === 'fives' ? (
+        <Section label={t('newGame.target')}>
+          <Choice
+            value={num('target')}
+            options={[51, 61, 71, 101]}
+            onChange={(target) => set({ target })}
+            label={t('newGame.target')}
+          />
+        </Section>
+      ) : null}
+
+      {game === 'countUp' ? (
+        <Section label={t('newGame.visits')}>
+          <Choice
+            value={num('visits')}
+            options={[6, 8, 10, 12]}
+            onChange={(visits) => set({ visits })}
+            label={t('newGame.visits')}
+          />
+        </Section>
+      ) : null}
+
+      {game === 'hareHounds' ? (
+        <Section label={t('newGame.headStart')}>
+          <Choice
+            value={num('headStart')}
+            options={[3, 5, 7]}
+            onChange={(headStart) => set({ headStart })}
+            label={t('newGame.headStart')}
+          />
+          <Text variant="caption" tone="muted">
+            {t('newGame.hareFirst')}
+          </Text>
+        </Section>
+      ) : null}
+
+      {game === 'scam' ? (
+        <Text variant="caption" tone="muted">
+          {t('newGame.scamRoles')}
+        </Text>
+      ) : null}
+
+      {game === 'golf' ? (
+        <Section label={t('newGame.holes')}>
+          <Choice
+            value={num('holes')}
+            options={[9, 18]}
+            onChange={(holes) => set({ holes })}
+            label={t('newGame.holes')}
+          />
+        </Section>
+      ) : null}
+
+      {game === 'football' ? (
+        <Section label={t('newGame.goals')}>
+          <Choice
+            value={num('goals')}
+            options={[5, 10]}
+            onChange={(goals) => set({ goals })}
+            label={t('newGame.goals')}
+          />
+        </Section>
+      ) : null}
+
+      {game === 'ticTacToe' ? (
+        <Section label={t('newGame.claim')}>
+          <SegmentedControl
+            accessibilityLabel={t('newGame.claim')}
+            value={String(settings.ring)}
+            onChange={(ring) => set({ ring })}
+            segments={[
+              { value: 'any', label: t('newGame.anyRing') },
+              { value: 'doubles', label: t('newGame.doublesOnly') },
+              { value: 'trebles', label: t('newGame.treblesOnly') },
+            ]}
+          />
+        </Section>
+      ) : null}
+
+      <Button
+        label={t('newGame.continue')}
+        onPress={start}
+        disabled={wrongCount || locked}
+        testID="start-game"
+      />
     </Screen>
+  );
+}
+
+/** A row of numbers to choose from. */
+function Choice({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: number;
+  options: number[];
+  onChange: (v: number) => void;
+  label: string;
+}) {
+  return (
+    <SegmentedControl
+      accessibilityLabel={label}
+      value={String(value)}
+      onChange={(v) => onChange(Number(v))}
+      segments={options.map((o) => ({ value: String(o), label: String(o) }))}
+    />
   );
 }
 
@@ -465,6 +618,18 @@ const styles = StyleSheet.create((theme) => ({
     justifyContent: 'center',
   },
   pressed: { opacity: 0.7 },
+  family: { gap: theme.spacing.xs },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.xs },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    minHeight: 40,
+    paddingHorizontal: theme.spacing.m,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.surface,
+  },
+  chipOn: { backgroundColor: theme.colors.accent },
   rulesLink: {
     flexDirection: 'row',
     alignItems: 'center',

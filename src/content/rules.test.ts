@@ -1,4 +1,5 @@
 import { GAME_IDS } from '@/domain/games';
+import { isPresetId, PRESET_IDS, PRESETS } from '@/features/game/presets';
 
 import rules from '../i18n/locales/en/rules.json';
 
@@ -25,10 +26,10 @@ describe('rules library', () => {
     }
   });
 
-  it('links every game the app can play, and only those', () => {
-    const played = RULES.flatMap((r) => (r.play?.kind === 'game' ? [r.play.game] : []));
-    expect(new Set(played)).toEqual(new Set(GAME_IDS));
-    expect(rulesEntry('golf')?.play).toBeNull();
+  it('has a preset for every game, and every engine is played', () => {
+    for (const r of RULES) expect(isPresetId(r.id)).toBe(true);
+    expect(RULES).toHaveLength(PRESET_IDS.length);
+    expect(new Set(PRESET_IDS.map((id) => PRESETS[id].game))).toEqual(new Set(GAME_IDS));
     expect(rulesEntry('nope')).toBeNull();
   });
 

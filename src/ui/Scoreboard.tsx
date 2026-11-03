@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
 import { label } from '@/domain/darts';
-import type { CricketDetail, ScoreboardRow, ScoreboardView } from '@/domain/games';
+import type { CricketDetail, GridDetail, ScoreboardRow, ScoreboardView } from '@/domain/games';
 
 import { Pressable } from './Pressable';
 import { Text } from './Text';
@@ -51,7 +51,8 @@ export function Scoreboard({
   return (
     <View style={styles.wrap} accessibilityRole="summary">
       {view.detail?.kind === 'cricket' ? <CricketGrid view={view} detail={view.detail} /> : null}
-      {view.detail
+      {view.detail?.kind === 'grid' ? <SquareGrid view={view} detail={view.detail} /> : null}
+      {view.detail?.kind === 'cricket'
         ? null
         : view.rows.map((r) => {
             const f = fmt(r);
@@ -149,7 +150,15 @@ function stripText(view: ScoreboardView, t: T): { left: string; right: string; d
     case 'noFinish':
       return { left: t('strip.noFinish', { score: active?.score ?? 0 }), right: '', danger: false };
     case 'aim':
-      return { left: t(`strip.aim.${s.reason}`), right: label(s.target), danger: false };
+      return {
+        left: t(`strip.aim.${s.reason}`),
+        // Segment 0 stands for "any": Halve-It's any double or treble.
+        right:
+          s.target.segment === 0
+            ? t(s.target.multiplier === 3 ? 'strip.anyTreble' : 'strip.anyDouble')
+            : label(s.target),
+        danger: false,
+      };
     default:
       return { left: '', right: '', danger: false };
   }
@@ -182,7 +191,7 @@ function CricketGrid({ view, detail }: { view: ScoreboardView; detail: CricketDe
         <View key={n} style={[styles.gridRow, detail.dead[i] && styles.dead]}>
           <View style={styles.gridNumber}>
             <Text variant="value" tone="accent">
-              {n === 25 ? t('cricket.bull') : n}
+              {numberLabel(n, t as unknown as T)}
             </Text>
           </View>
           {view.rows.map((r, p) => (
@@ -192,7 +201,7 @@ function CricketGrid({ view, detail }: { view: ScoreboardView; detail: CricketDe
               accessible
               accessibilityLabel={t('cricket.marksA11y', {
                 name: r.name,
-                number: n === 25 ? t('cricket.bull') : n,
+                number: numberLabel(n, t as unknown as T, true),
                 marks: detail.marks[p]![i]!,
               })}
             >
@@ -201,18 +210,67 @@ function CricketGrid({ view, detail }: { view: ScoreboardView; detail: CricketDe
           ))}
         </View>
       ))}
-      <View style={styles.gridRow}>
-        <View style={styles.gridNumber}>
-          <Text variant="caption" tone="muted">
-            {t('cricket.points')}
-          </Text>
-        </View>
-        {view.rows.map((r) => (
-          <View key={r.playerId} style={[styles.gridCell, r.active && styles.gridActive]}>
-            <Text variant="value">{r.score}</Text>
+      {detail.points === false ? null : (
+        <View style={styles.gridRow}>
+          <View style={styles.gridNumber}>
+            <Text variant="caption" tone="muted">
+              {t('cricket.points')}
+            </Text>
           </View>
-        ))}
-      </View>
+          {view.rows.map((r) => (
+            <View key={r.playerId} style={[styles.gridCell, r.active && styles.gridActive]}>
+              <Text variant="value">{r.score}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+/** A cricket number: 20…, Bull, and Mickey Mouse's any double (-2) and any treble (-3). */
+function numberLabel(n: number, t: T, long = false): string {
+  if (n === 25) return t('cricket.bull');
+  if (n === -2) return t(long ? 'strip.anyDouble' : 'cricket.anyDouble');
+  if (n === -3) return t(long ? 'strip.anyTreble' : 'cricket.anyTreble');
+  return String(n);
+}
+
+/** Tic-Tac-Toe's three-by-three board: each square's number, and the mark of who claimed it. */
+function SquareGrid({ view, detail }: { view: ScoreboardView; detail: GridDetail }) {
+  const { t } = useTranslation('game');
+  const marks = ['✕', '○'];
+  const rows = [0, 1, 2].map((r) => detail.cells.slice(r * 3, r * 3 + 3));
+  return (
+    <View style={styles.squares}>
+      {rows.map((cells, r) => (
+        <View key={r} style={styles.squareRow}>
+          {cells.map((n, c) => {
+            const i = r * 3 + c;
+            const owner = detail.owner[i];
+            const number = numberLabel(n, t as unknown as T);
+            return (
+              <View
+                key={i}
+                style={[styles.square, owner != null && styles.squareTaken]}
+                accessible
+                accessibilityLabel={
+                  owner == null
+                    ? t('ticTacToe.openA11y', { number })
+                    : t('ticTacToe.takenA11y', { number, name: view.rows[owner]?.name ?? '' })
+                }
+              >
+                <Text variant="caption" tone="muted">
+                  {number}
+                </Text>
+                <Text variant="title" tone={owner == null ? 'muted' : 'accent'}>
+                  {owner == null ? '' : marks[owner]}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      ))}
     </View>
   );
 }
@@ -294,6 +352,17 @@ const styles = StyleSheet.create((theme) => ({
   },
   gridActive: { backgroundColor: theme.colors.surface2 },
   dead: { opacity: 0.35 },
+  squares: { backgroundColor: theme.colors.surface, padding: theme.spacing.xs, gap: 4 },
+  squareRow: { flexDirection: 'row', gap: 4 },
+  square: {
+    flex: 1,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.radii.s,
+    backgroundColor: theme.colors.bg,
+  },
+  squareTaken: { backgroundColor: theme.colors.surface2 },
   count: { width: 36, textAlign: 'center' },
   score: {
     width: 104,

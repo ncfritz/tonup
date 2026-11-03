@@ -8,16 +8,18 @@ import Svg, { Circle, Polyline, Rect } from 'react-native-svg';
 import { drawPoint } from '@/domain/board';
 import { beats, drills } from '@/domain/drills';
 import { label, type PlayerRef } from '@/domain/darts';
-import { gameFor, type GameId } from '@/domain/games';
-import { X01_DEFAULTS, type X01Settings } from '@/domain/games/x01';
+import type { GameId } from '@/domain/games';
+import type { X01Settings } from '@/domain/games/x01';
 import { formatStat, gameName, rowFormat } from '@/features/game/format';
-import { drawNumbers } from '@/domain/games/killer';
 import { bestOf, botId, YOU_ID } from '@/features/game/lineup';
+import { deal, isPresetId, PRESETS, presetOf, settingsFor } from '@/features/game/presets';
 import { lastMatch, resumable, type MatchCard, type ResumeCard } from '@/features/game/recent';
 import { startDrill, startGame } from '@/features/game/session';
 import { lastPractice, type PracticeCard } from '@/features/practice/bests';
 import { dayLabel } from '@/features/game/when';
+import { useProOwned } from '@/features/pro/pro';
 import { useSettings } from '@/features/settings/store';
+import { canPlayRules } from '@/domain/pro';
 import { Board, Button, Pressable, Screen, Text } from '@/ui';
 
 /** Play, the home tab (docs/design/screens.md → Play; navigation option E). */
@@ -53,7 +55,7 @@ export default function Play() {
         {(['x01', 'cricket', 'killer'] as const).map((g) => (
           <Shortcut
             key={g}
-            label={tg(`newGame.gameShort.${g}`)}
+            label={tg(`home.shortcut.${g}`)}
             onPress={() => router.push({ pathname: '/new-game', params: { game: g } })}
           />
         ))}
@@ -93,10 +95,15 @@ function ResumeCardView({ card }: { card: ResumeCard }) {
 
 function QuickStart() {
   const { t } = useTranslation('game');
-  const gameId = useSettings((s) => s.lastGameId);
+  const last = useSettings((s) => s.lastGameId);
   const saved = useSettings((s) => s.gameSettings);
   const lineup = useSettings((s) => s.lastLineup);
-  const settings = saved[gameId] ?? (gameId === 'x01' ? X01_DEFAULTS : gameFor(gameId).defaults);
+  const proOwned = useProOwned();
+  // The last game, unless it's Pro and Pro isn't owned (a refund): then X01.
+  const presetId = isPresetId(last) && canPlayRules(last, proOwned) ? last : 'x01';
+  const preset = PRESETS[presetId];
+  const gameId: GameId = preset.game;
+  const settings = settingsFor(presetId, saved[gameId]);
   const players: PlayerRef[] = lineup ?? [
     { id: YOU_ID, name: t('players.you') },
     { id: botId(3), name: t('players.bot', { level: 3 }), botLevel: 3 },
@@ -108,7 +115,7 @@ function QuickStart() {
   const name = gameName(t, gameId, settings);
   let body = '';
   if (gameId === 'x01') {
-    const x = settings as X01Settings;
+    const x = settings as unknown as X01Settings;
     const out =
       x.out === 'double'
         ? t('newGame.doubleOut')
@@ -117,15 +124,9 @@ function QuickStart() {
           : t('newGame.straightOut');
     body = t('home.quickBody', { format: t('newGame.legs', { count: bestOf(x.legs) }), out });
   }
-  const start = () => {
-    // Killer numbers are drawn fresh for each game.
-    const play =
-      gameId === 'killer'
-        ? { ...(settings as object), numbers: drawNumbers(players.length, Math.random) }
-        : settings;
-    go(startGame(gameId as GameId, play, players));
-  };
-  const blocked = gameId === 'killer' && players.length < 2;
+  // Killer numbers and Random Cricket's six are drawn fresh for each game.
+  const start = () => go(startGame(gameId, deal(gameId, settings, players), players));
+  const blocked = players.length < preset.players.min || players.length > preset.players.max;
   return (
     <View style={styles.card}>
       <Text variant="overline" tone="muted">
@@ -253,14 +254,11 @@ function LastMatchView({ card, now }: { card: MatchCard | null; now: number }) {
   );
 }
 
-/** The same game again; Killer draws new numbers. */
+/** The same game again; whatever is dealt at the start is dealt again. */
 function rematch(card: MatchCard): string {
   const { typeId, settings, players } = card.game.session;
-  const play =
-    typeId === 'killer'
-      ? { ...(settings as object), numbers: drawNumbers(players.length, Math.random) }
-      : settings;
-  return startGame(typeId as GameId, play, players);
+  const game = PRESETS[presetOf(typeId, settings)].game;
+  return startGame(game, deal(game, settings as Record<string, unknown>, players), players);
 }
 
 function LastPractice({ card, now }: { card: PracticeCard | null; now: number }) {

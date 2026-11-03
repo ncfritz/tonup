@@ -10,25 +10,22 @@ export const PRO_PRICE_USD = '19.99';
 const BASE_GAMES = new Set(['x01', 'cricket', 'clock', 'shanghai', 'killer']);
 const BASE_CRICKET = new Set(['standard', 'cutThroat']);
 /** Rules-library ids that are base games. */
-const BASE_RULES = new Set([
-  'x01',
-  'cricket',
-  'cutThroat',
-  'clock',
-  'shanghai',
-  'killer',
-  'countUp',
-]);
+const BASE_RULES = new Set(['x01', 'cricket', 'cutThroat', 'clock', 'shanghai', 'killer']);
 const BASE_DRILLS = new Set(['bobs27', 'countUp', 'clock']);
 const BASE_THEMES = new Set(['pro']);
 
 export function canPlayGame(gameId: string, pro: boolean, variant?: string): boolean {
   if (pro) return true;
   if (!BASE_GAMES.has(gameId)) return false;
-  return gameId !== 'cricket' || variant === undefined || BASE_CRICKET.has(variant);
+  if (gameId === 'cricket') return variant === undefined || BASE_CRICKET.has(variant);
+  if (gameId === 'killer') return variant === undefined || variant === 'classic';
+  return true;
 }
 
-/** Whether a game in the rules library can be played (its rules are always readable). */
+/**
+ * Whether a game in the rules library can be played, by its rules id (which is also its preset:
+ * src/features/game/presets.ts). Its rules are always readable.
+ */
 export const canPlayRules = (rulesId: string, pro: boolean) => pro || BASE_RULES.has(rulesId);
 
 export const canUseDrill = (drillId: string, pro: boolean) => pro || BASE_DRILLS.has(drillId);

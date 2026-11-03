@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
 import type { GameId } from '@/domain/games';
-import { drawNumbers } from '@/domain/games/killer';
+import { deal } from '@/features/game/presets';
 import { formatStat, gameName } from '@/features/game/format';
 import { loadGame, sessionStats, sessionX01Stats, startGame } from '@/features/game/session';
 import { Button, Header, Screen, Text } from '@/ui';
@@ -69,11 +69,12 @@ export default function Summary() {
 
   const rematch = () => {
     const { typeId, settings } = game.session;
-    const play =
-      typeId === 'killer'
-        ? { ...(settings as object), numbers: drawNumbers(players.length, Math.random) }
-        : settings;
-    const id = startGame(typeId as GameId, play, players);
+    // Killer numbers and Random Cricket's six are drawn again.
+    const id = startGame(
+      typeId as GameId,
+      deal(typeId as GameId, settings as Record<string, unknown>, players),
+      players,
+    );
     router.replace({ pathname: '/game/[sessionId]', params: { sessionId: id } });
   };
 

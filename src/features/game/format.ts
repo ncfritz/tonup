@@ -2,20 +2,19 @@
 import type { TFunction } from 'i18next';
 
 import type { ScoreboardRow, ScoreboardView, StatLine } from '@/domain/games';
-import type { CricketSettings } from '@/domain/games/cricket';
+import i18next from '@/i18n';
 import type { RowFormat } from '@/ui/Scoreboard';
 
+import { presetOf } from './presets';
 import type { LoadedGame } from './session';
 
 type T = TFunction<'game'>;
 
-/** The game's name, with the variant where it matters. */
-export function gameName(t: T, typeId: string, settings: unknown): string {
-  if (typeId === 'x01') return String((settings as { startScore: number }).startScore);
-  if (typeId === 'cricket' && (settings as CricketSettings).variant === 'cutThroat') {
-    return t('games.cutThroat');
-  }
-  return t(`games.${typeId}` as 'games.x01');
+/** The game's name: the start score for X01, otherwise the rules library's name for its preset. */
+export function gameName(_t: T, typeId: string, settings: unknown): string {
+  const id = presetOf(typeId, settings);
+  if (id === 'x01') return String((settings as { startScore: number }).startScore);
+  return String((i18next.t as unknown as (k: string) => unknown)(`rules:games.${id}.name`));
 }
 
 /** The row format for non-X01 games; undefined keeps X01's own. */
@@ -24,14 +23,64 @@ export function rowFormat(t: T, typeId: string): ((row: ScoreboardRow) => RowFor
     case 'clock':
       return (r) => {
         const target = r.note === 'bull' ? t('rows.bull') : r.note;
+        const lives = r.lives === undefined ? '' : ` · ${t('rows.lives', { lives: r.lives })}`;
+        if (r.out) {
+          return { big: t('rows.killerOut'), a11y: t('rows.outA11y', { name: r.name }) };
+        }
         return r.note === 'done'
           ? { big: '✓', note: t('rows.clockDone'), a11y: t('rows.clockDoneA11y', { name: r.name }) }
           : {
               big: target ?? '',
-              note: t('rows.clockOn', { target }),
-              a11y: t('rows.clockA11y', { name: r.name, target }),
+              note: t('rows.clockOn', { target }) + lives,
+              a11y: t('rows.clockA11y', { name: r.name, target }) + lives,
             };
       };
+    case 'hareHounds':
+      return (r) => {
+        const [role, n] = (r.note ?? '').split(':');
+        const number = n === '25' ? t('rows.bull') : n;
+        return {
+          big: number ?? '',
+          note: t('rows.chase', { role, number }),
+          a11y: t('rows.chaseA11y', { name: r.name, role, number }),
+        };
+      };
+    case 'scam':
+      return (r) => ({
+        big: String(r.score),
+        note: t('rows.scam', { role: r.note }),
+        a11y: t('rows.scamA11y', { name: r.name, role: r.note, score: r.score }),
+      });
+    case 'baseball':
+      return (r) => ({
+        big: String(r.score),
+        a11y: t('rows.runs', { name: r.name, score: r.score }),
+      });
+    case 'golf':
+      return (r) => ({
+        big: String(r.score),
+        a11y: t('rows.strokes', { name: r.name, score: r.score }),
+      });
+    case 'football':
+      return (r) => ({
+        big: String(r.score),
+        note: r.note === 'ball' ? t('rows.ball') : undefined,
+        a11y: t('rows.goals', {
+          name: r.name,
+          score: r.score,
+          ball: r.note === 'ball' ? 'yes' : 'no',
+        }),
+      });
+    case 'ticTacToe':
+      return (r) => ({
+        big: String(r.score),
+        note: t('rows.mark', { mark: r.note }),
+        a11y: t('rows.squares', { name: r.name, mark: r.note, score: r.score }),
+      });
+    case 'gotcha':
+    case 'fives':
+    case 'countUp':
+    case 'halveIt':
     case 'shanghai':
     case 'cricket':
       return (r) => ({
