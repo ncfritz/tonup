@@ -28,13 +28,23 @@ const pairs = [
   // Large text and icons: the selected tab and accent headings.
   ['accent', 'surface', 3],
   ['accent', 'bg', 3],
-  // Board numbers around the board.
-  ['boardNumber', 'bg', 4.5],
+  // Board numbers on the ring around the board.
+  ['boardNumber', 'boardSurround', 4.5],
+  // A dart's outline, and the number on it, against its fill.
+  ['dartStroke', 'dart', 4.5],
 ];
 
 let failures = 0;
 for (const [theme, modes] of Object.entries(palettes)) {
   for (const [mode, c] of Object.entries(modes)) {
+    // Darts stand out on every segment (WCAG 1.4.11, 3:1 for graphics): the fill or the outline.
+    for (const seg of ['boardDark', 'boardLight', 'boardRed', 'boardGreen']) {
+      const r = Math.max(ratio(c.dart, c[seg]), ratio(c.dartStroke, c[seg]));
+      if (r < 3) {
+        failures++;
+        console.error(`✗ ${theme}-${mode}: dart on ${seg} = ${r.toFixed(2)} (needs 3)`);
+      }
+    }
     for (const [fg, bg, min] of pairs) {
       const r = ratio(c[fg], c[bg]);
       if (r < min) {
@@ -45,22 +55,6 @@ for (const [theme, modes] of Object.entries(palettes)) {
   }
 }
 
-// The theme picker's previews of the Pro themes (src/theme/previews.json), until their full
-// palettes arrive in M14.
-const previews = JSON.parse(readFileSync(new URL('../src/theme/previews.json', import.meta.url)));
-for (const [theme, modes] of Object.entries(previews)) {
-  for (const [mode, c] of Object.entries(modes)) {
-    for (const [fg, bg] of [['text', 'bg'], ['text', 'surface']]) {
-      const r = ratio(c[fg], c[bg]);
-      if (r < 4.5) {
-        failures++;
-        console.error(`✗ preview ${theme}-${mode}: ${fg} on ${bg} = ${r.toFixed(2)} (needs 4.5)`);
-      }
-    }
-  }
-}
-
 if (failures) process.exit(1);
-console.log(
-  `Contrast OK for ${Object.keys(palettes).length} theme(s) and ${Object.keys(previews).length} previews`,
-);
+const variants = Object.values(palettes).reduce((n, m) => n + Object.keys(m).length, 0);
+console.log(`Contrast OK for ${variants} palettes`);

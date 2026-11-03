@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import type { PlayerRef } from '@/domain/darts';
 import type { GameId } from '@/domain/games';
-import type { ThemeId } from '@/theme/themes';
+import { THEME_IDS, type ThemeId } from '@/theme/themes';
 
 export type AppearanceSetting = 'system' | 'light' | 'dark';
 
@@ -48,7 +48,7 @@ export function setSettingsPersistence(fn: Persist) {
 }
 
 const valid: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
-  theme: (v): v is ThemeId => v === 'pro',
+  theme: (v): v is ThemeId => typeof v === 'string' && (THEME_IDS as string[]).includes(v),
   appearance: (v): v is AppearanceSetting => v === 'system' || v === 'light' || v === 'dark',
   haptics: (v): v is boolean => typeof v === 'boolean',
   caller: (v): v is boolean => typeof v === 'boolean',

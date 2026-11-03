@@ -1,9 +1,3 @@
-import { Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold } from '@expo-google-fonts/barlow';
-import {
-  BarlowCondensed_600SemiBold,
-  BarlowCondensed_700Bold,
-  BarlowCondensed_800ExtraBold,
-} from '@expo-google-fonts/barlow-condensed';
 import { useFonts } from 'expo-font';
 import { type ErrorBoundaryProps, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -20,6 +14,7 @@ import { initI18n } from '@/i18n';
 import { DatabaseProvider } from '@/services/db/DatabaseProvider';
 import { readAllSettings, writeSetting } from '@/services/db/settingsRepo';
 import { log, pruneLog } from '@/services/diagnostics';
+import { FONT_ASSETS } from '@/theme/fonts';
 import { ThemeSync } from '@/theme/ThemeSync';
 import { Button, Screen, Text } from '@/ui';
 
@@ -28,14 +23,8 @@ SplashScreen.preventAutoHideAsync();
 initI18n();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    Barlow_400Regular,
-    Barlow_500Medium,
-    Barlow_600SemiBold,
-    BarlowCondensed_600SemiBold,
-    BarlowCondensed_700Bold,
-    BarlowCondensed_800ExtraBold,
-  });
+  // Every theme's typefaces (src/theme/fonts.ts), so switching theme needs no load.
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
   const ready = fontsLoaded || !!fontError;
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();

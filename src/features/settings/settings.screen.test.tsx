@@ -9,6 +9,7 @@ import Appearance from '../../app/(tabs)/settings/appearance';
 import Settings from '../../app/(tabs)/settings/index';
 import NewGame from '../../app/new-game';
 import { startX01 } from '../game/session';
+import { usePro } from '../pro/pro';
 
 import { DEFAULT_SETTINGS, setSettingsPersistence, useSettings } from './store';
 
@@ -63,6 +64,14 @@ describe('Appearance', () => {
     await fireEvent.press(screen.getByTestId('theme-arcade'));
     expect(useSettings.getState().theme).toBe('pro');
     expect(router.push).toHaveBeenCalledWith('/pro');
+  });
+
+  it('switches to a Pro theme once Pro is owned', async () => {
+    usePro.setState({ owned: true });
+    await render(<Appearance />);
+    await fireEvent.press(screen.getByTestId('theme-heritage'));
+    expect(useSettings.getState().theme).toBe('heritage');
+    usePro.setState({ owned: false });
   });
 });
 

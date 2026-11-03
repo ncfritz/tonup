@@ -15,7 +15,7 @@ Use Tippytoe's stack and tooling, with the same versions where both apps use a p
 - **App:** Expo SDK 58, React Native 0.88, React 19.3, TypeScript 6 (strict, `noUncheckedIndexedAccess`), React Compiler on, typed routes.
 - **Navigation:** expo-router (`src/app/`), with our own tab bar (`src/ui/TabBar.tsx`) for the floating pill and the dartboard Play button.
 - **Styling:** Unistyles 3 with ten named themes (`<theme>-<mode>`, for example `pro-dark`). Adaptive themes are off; `ThemeSync` picks the theme from the theme and appearance settings.
-- **Fonts:** Barlow and Barlow Condensed (`@expo-google-fonts`), as in the Pro mockups. The Pro themes add their own fonts in M14.
+- **Fonts:** Barlow and Barlow Condensed (`@expo-google-fonts`), as in the Pro mockups. The Pro themes add their own (Permanent Marker and Kalam, Orbitron and Rajdhani, Playfair Display and Libre Franklin, JetBrains Mono and Inter; docs/design/themes.md).
 - **State and data:** Zustand; expo-sqlite with Drizzle ORM and bundled SQL migrations (from M2).
 - **Drawing and motion:** react-native-svg for the board, charts and icons; Reanimated 4 and Gesture Handler for the loupe, drag and the replay scrubber.
 - **i18n:** i18next with ICU and typed keys; English only at launch.

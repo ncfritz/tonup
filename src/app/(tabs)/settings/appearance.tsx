@@ -6,13 +6,12 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { canUseTheme } from '@/domain/pro';
 import { useProOwned } from '@/features/pro/pro';
 import { useSettings, type AppearanceSetting } from '@/features/settings/store';
-import previews from '@/theme/previews.json';
+import { FONT_SETS } from '@/theme/fonts';
+import palettes from '@/theme/palettes.json';
+import { THEME_IDS, type ThemeId } from '@/theme/themes';
 import { Header, Icon, Pressable, Screen, Section, SegmentedControl, Text } from '@/ui';
 
-type PreviewId = keyof typeof previews;
-const ORDER: PreviewId[] = ['pro', 'chalkboard', 'arcade', 'heritage', 'training'];
-/** Themes with palettes so far; the other four are Pro and arrive in M14. */
-const BUILT = new Set<PreviewId>(['pro']);
+const ORDER: ThemeId[] = THEME_IDS;
 
 /** Settings › Appearance (docs/design/screens.md; the canvas's theme picker). */
 export default function Appearance() {
@@ -45,28 +44,30 @@ export default function Appearance() {
       </Section>
       <Section label={t('appearance.theme')}>
         {ORDER.map((id) => {
-          const p = previews[id][mode];
+          const p = palettes[id][mode];
           const name = t(`appearance.themes.${id}.name`);
           const unlocked = canUseTheme(id, proOwned);
-          const open = unlocked && BUILT.has(id);
+          const open = unlocked;
           const selected = current === id;
           return (
             <Pressable
               key={id}
               accessibilityRole="radio"
-              accessibilityState={{ selected, disabled: unlocked && !open }}
+              accessibilityState={{ selected }}
               accessibilityLabel={unlocked ? name : t('appearance.lockedA11y', { name })}
               accessibilityHint={t(`appearance.themes.${id}.blurb`)}
-              disabled={unlocked && !open}
               style={[styles.row, selected && styles.rowOn]}
-              onPress={() => (open ? set('theme', id as 'pro') : router.push('/pro'))}
+              onPress={() => (open ? set('theme', id) : router.push('/pro'))}
               testID={`theme-${id}`}
             >
               {/* A swatch drawn in the theme's own colours (data, not this theme's tokens). */}
               <View style={[styles.swatch, { backgroundColor: p.bg }]}>
                 <View style={[styles.swatchBar, { backgroundColor: p.surface }]}>
                   <View style={[styles.swatchAccent, { backgroundColor: p.accent }]} />
-                  <Text variant="bodyStrong" style={{ color: p.text }}>
+                  <Text
+                    variant="bodyStrong"
+                    style={{ color: p.text, fontFamily: FONT_SETS[id].displayBold }}
+                  >
                     140
                   </Text>
                 </View>
@@ -79,11 +80,7 @@ export default function Appearance() {
               </View>
               {selected ? (
                 <Icon name="check" color={theme.colors.accent} />
-              ) : open ? null : unlocked ? (
-                <Text variant="caption" tone="muted">
-                  {t('appearance.soon')}
-                </Text>
-              ) : (
+              ) : open ? null : (
                 <View style={styles.lock}>
                   <Icon name="lock" color={theme.colors.muted} size={16} />
                   <Text variant="caption" tone="muted">

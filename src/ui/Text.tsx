@@ -26,10 +26,13 @@ const styles = StyleSheet.create((theme) => ({
     variants: {
       variant: {
         score: theme.type.score,
-        heading: { ...theme.type.heading, textTransform: 'uppercase' },
+        heading: { ...theme.type.heading, textTransform: theme.look.upper ? 'uppercase' : 'none' },
         title: theme.type.title,
         value: theme.type.value,
-        overline: { ...theme.type.overline, textTransform: 'uppercase' },
+        overline: {
+          ...theme.type.overline,
+          textTransform: theme.look.upper ? 'uppercase' : 'none',
+        },
         body: theme.type.body,
         bodyStrong: theme.type.bodyStrong,
         caption: theme.type.caption,

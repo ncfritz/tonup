@@ -53,7 +53,7 @@ const BoardArt = memo(function BoardArt() {
   );
   return (
     <G>
-      <Circle cx={0} cy={0} r={HALF} fill={c.boardDark} />
+      <Circle cx={0} cy={0} r={HALF} fill={c.boardSurround} />
       {rings.inner.map((w) => (
         <Path key={`i${w.segment}`} d={w.d} fill={w.alt ? c.boardDark : c.boardLight} />
       ))}
@@ -78,7 +78,7 @@ const BoardArt = memo(function BoardArt() {
             fontSize={20}
             fontWeight="700"
             fontFamily={theme.type.title.fontFamily}
-            fill={c.boardLight}
+            fill={c.boardNumber}
             textAnchor="middle"
           >
             {s}
@@ -105,13 +105,24 @@ function Markers({
     <G>
       {markers.map((m, i) => (
         <G key={i} opacity={m.faded ? 0.45 : 1}>
+          {theme.look.marker === 'glow' ? (
+            <Circle
+              cx={m.point.x}
+              cy={svgY(m.point)}
+              r={r * 1.8}
+              fill="none"
+              stroke={theme.colors.dart}
+              strokeWidth={2 / scale}
+              opacity={0.6}
+            />
+          ) : null}
           <Circle
             cx={m.point.x}
             cy={svgY(m.point)}
             r={r}
             fill={theme.colors.dart}
-            stroke={theme.colors.bg}
-            strokeWidth={3 / scale}
+            stroke={theme.colors.dartStroke}
+            strokeWidth={theme.look.markerStroke / scale}
           />
           <SvgText
             x={m.point.x}
@@ -119,7 +130,7 @@ function Markers({
             fontSize={r * 1.25}
             fontWeight="800"
             fontFamily={theme.type.heading.fontFamily}
-            fill={theme.colors.onAccent}
+            fill={theme.colors.dartStroke}
             textAnchor="middle"
           >
             {m.text}

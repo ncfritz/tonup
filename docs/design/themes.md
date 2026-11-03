@@ -6,18 +6,18 @@ Five themes, each with a light and a dark variant, chosen in Settings › Appear
 
 Components use only tokens, never literal colours, so a new theme is data only.
 
-| Token      | Used for                                                                   |
-| ---------- | -------------------------------------------------------------------------- |
-| `bg`       | Screen background                                                          |
-| `surface`  | Cards, rows, buttons, the tab bar                                          |
-| `surface2` | Raised or selected cards (the active player's row, dart slots)             |
-| `text`     | Primary text and icons                                                     |
-| `muted`    | Labels and secondary text                                                  |
-| `accent`   | Primary buttons, selected items, active tab, the active player's bar       |
-| `onAccent` | Text and icons on `accent`                                                 |
-| `danger`   | Bust and checkout strip                                                    |
-| `board.*`  | Board segments (light and dark), treble/double ring colours, bull, numbers |
-| `dart`     | Dart markers; must stand out against every segment in both modes           |
+| Token      | Used for                                                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `bg`       | Screen background                                                                                                        |
+| `surface`  | Cards, rows, buttons, the tab bar                                                                                        |
+| `surface2` | Raised or selected cards (the active player's row, dart slots)                                                           |
+| `text`     | Primary text and icons                                                                                                   |
+| `muted`    | Labels and secondary text                                                                                                |
+| `accent`   | Primary buttons, selected items, active tab, the active player's bar                                                     |
+| `onAccent` | Text and icons on `accent`                                                                                               |
+| `danger`   | Bust and checkout strip                                                                                                  |
+| `board.*`  | Board segments (light and dark), treble/double ring colours, bull, numbers, and the surround the numbers sit on          |
+| `dart`     | Dart markers; with `dartStroke` (its outline and the number on it) it must stand out against every segment in both modes |
 
 ## Palettes (from the mockups)
 
@@ -34,6 +34,20 @@ Components use only tokens, never literal colours, so a new theme is data only.
 | Training   | Dark  | `#0e1217` | `#151b22` | `#e6edf3` | `#8b98a5` | `#2dd4bf` | `#0e1217`  |
 | Training   | Light | `#f6f8fa` | `#ffffff` | `#1f2328` | `#59636e` | `#0f766e` | `#ffffff`  |
 
+The full palettes, with `surface2`, `line`, `danger`, the board and the Play button, are in `src/theme/palettes.json`; boards follow the mockups (Arcade's neon rings, Training's muted slate board, Chalkboard light's navy surround).
+
+## Typefaces and drawing
+
+| Theme      | Display (scores, headings) | Body           | Headings in capitals | Darts                |
+| ---------- | -------------------------- | -------------- | -------------------- | -------------------- |
+| Pro        | Barlow Condensed           | Barlow         | Yes                  | Dot with an outline  |
+| Chalkboard | Permanent Marker           | Kalam          | No                   | Dot with an outline  |
+| Arcade     | Orbitron                   | Rajdhani       | Yes                  | Dot with a glow ring |
+| Heritage   | Playfair Display           | Libre Franklin | No                   | Dot with an outline  |
+| Training   | JetBrains Mono             | Inter          | Yes                  | Dot, thin outline    |
+
+Wide display faces are scaled down to fit the same layouts (Orbitron to 74%, JetBrains Mono 78%, Heritage 86%, Chalkboard 88%; `src/theme/fonts.ts`). All the fonts load at launch, so switching theme is instant.
+
 Theme character:
 
 - **Chalkboard:** a slate in a wood frame with hand lettering and crossed-out earlier scores (dark); a whiteboard with navy and red marker (light).
@@ -48,7 +62,8 @@ Theme character:
 - The board keeps strong contrast between neighbouring segments in every theme so taps and markers stay readable.
 - The selected theme and mode are stored in settings; System follows the iPhone's appearance.
 
+`pnpm check` runs `scripts/check-contrast.mjs` over all ten palettes: text, muted and accent on their backgrounds, labels on accent, danger and the Play button, board numbers on the surround, and darts (fill or outline, 3:1) on every segment.
+
 ## Open questions
 
 - Default on first launch: Pro, following the system appearance (assumed, since it is the only base theme).
-- Final `danger`, `surface2` and `board.*` values per theme (taken from the mockups when the theme code is written).
