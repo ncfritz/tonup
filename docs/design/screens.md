@@ -22,11 +22,11 @@ Navigation is option E from the canvas's Home navigation page: a floating tab ba
 
 A pill floating 22 pt above the bottom edge on `surface`, with a soft shadow. Practice and History on the left, Rules and Settings on the right, icon over label; the selected tab's icon and label use `accent`. The Play button (84 pt circle with a 6 pt `bg` border, centred on the pill so it overhangs its top and bottom edges a little) shows a miniature board; on the Play tab it gets a 2 pt `accent` ring. Screens under the tab bar end their content above it.
 
-On the Play tab, tapping Play again does nothing; Quick start's Start button plays your usual game and the X01 and All games buttons open New game.
+On the Play tab, tapping Play again does nothing; Quick start's Start button plays your usual game and any game in the list opens New game on it.
 
 ## Play (home)
 
-Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (once the camera exists); a **Game in progress** card with Resume when a game is unfinished; **Quick start** with your usual game ("501 vs DartBot 4 · Best of 5 legs · double out") and a Start button; game shortcuts (X01, Cricket, Killer, each opening New game on that game, and All games); **Pick up where you left off**: Last match (mini heatmap, result, averages, Replay and Rematch) and Last practice (score trend, gap to your best, the double that cost you most, Try again and All drills).
+Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (once the camera exists); a **Game in progress** card with Resume when a game is unfinished; **Quick start** with your usual game ("501 vs DartBot 4 · Best of 5 legs · double out") and a Start button; **Last match** (mini heatmap, result, averages, Replay and Rematch); then **All games**: every game as a full-width button by family, as on New game's first step, each opening New game set up for it (Pro games open the Pro screen).
 
 ## Scoring (phone)
 
@@ -51,7 +51,7 @@ Round x/21, the score and personal best with the gap to beat it, the target doub
 
 ## Practice tab
 
-Without Pro, a suggested drill (with the reason, for example low checkout % this week). With Pro, **Today's plan** instead: before your first assessment it asks you to take one; afterwards it names your weakest area and level, your levels for scoring, doubles and checkouts, the two doubles you've hit least recently (when doubles are weakest), about how long the session takes, and a warm-up plus two drills with Start buttons, each marked "Done today" once finished. A month after the last assessment it asks for another. Then the drills grouped by skill (Scoring, Accuracy, Doubles, Checkouts, Assessment) with personal bests in `accent`, and the Checkout trainer under Checkouts. Pro drills and the trainer show a lock and open the Pro screen.
+Without Pro, a suggested drill (with the reason, for example low checkout % this week). With Pro, **Today's plan** instead: before your first assessment it asks you to take one; afterwards it names your weakest area and level, your levels for scoring, doubles and checkouts, the two doubles you've hit least recently (when doubles are weakest), about how long the session takes, and a warm-up plus two drills with Start buttons, each marked "Done today" once finished. A month after the last assessment it asks for another. Under it, **Last practice** (once you have one): the drill and its score against your best, a small trend of recent goes, the double that cost the most, and Try again. Then the drills grouped by skill (Scoring, Accuracy, Doubles, Checkouts, Assessment) with personal bests in `accent`, and the Checkout trainer under Checkouts. Pro drills and the trainer show a lock and open the Pro screen.
 
 ## Checkout trainer
 

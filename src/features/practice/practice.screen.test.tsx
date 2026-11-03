@@ -109,16 +109,32 @@ describe("Bob's 27 on the drill screen", () => {
   });
 });
 
-describe('Last practice on Play', () => {
+describe('Last practice on Practice', () => {
   it('shows the last drill with its score and the gap to your best', async () => {
     playBobs();
     playBobs(false);
-    await render(<Play />);
+    await render(<Practice />);
     await act(async () => {});
     expect(screen.getByText("Bob's 27 · -3")).toBeOnTheScreen();
     expect(
       screen.getByText('500 short of your best (497) · D5 missed with all three darts'),
     ).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('practice-again'));
+    expect(router.push).toHaveBeenLastCalledWith(
+      expect.objectContaining({ pathname: '/drill/[sessionId]' }),
+    );
+  });
+
+  it('is gone from Play, which lists every game instead', async () => {
+    playBobs();
+    await render(<Play />);
+    await act(async () => {});
+    expect(screen.queryByTestId('last-practice')).toBeNull();
+    await fireEvent.press(screen.getByTestId('pick-cricket'));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: '/new-game',
+      params: { game: 'cricket' },
+    });
   });
 });
 

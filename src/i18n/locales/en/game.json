@@ -191,7 +191,6 @@
     "draw": "It's a draw"
   },
   "home": {
-    "newGame": "New game",
     "resume": "Resume game",
     "resumeTitle": "Game in progress",
     "resumeBody": "{game} · {players}",
@@ -200,9 +199,7 @@
     "quickSolo": "{start} solo",
     "quickBody": "{format} · {out}",
     "start": "START",
-    "x01": "X01",
     "allGames": "All games",
-    "pickUp": "Pick up where you left off",
     "lastMatch": "Last match · {when}",
     "won": "Won {score} vs {opponents}",
     "lost": "Lost {score} vs {opponents}",
@@ -211,8 +208,6 @@
     "replay": "Replay",
     "rematch": "Rematch",
     "lastPractice": "Last practice",
-    "noPractice": "Your last drill will show here, with your score against your best.",
-    "allDrills": "All drills",
     "noMatch": "Your last match will show here, with a replay of every dart.",
     "today": "Today",
     "yesterday": "Yesterday",
@@ -221,12 +216,7 @@
     "otherLine": "{game} · {stat}",
     "drew": "Drew {game} vs {opponents}",
     "wonGame": "Won {game} vs {opponents}",
-    "lostGame": "Lost {game} vs {opponents}",
-    "shortcut": {
-      "x01": "501",
-      "cricket": "Cricket",
-      "killer": "Killer"
-    }
+    "lostGame": "Lost {game} vs {opponents}"
   },
   "replay": {
     "title": "Replay · Leg {leg}",

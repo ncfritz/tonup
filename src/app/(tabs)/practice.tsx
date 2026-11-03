@@ -7,7 +7,14 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { DRILL_IDS, drills, type DrillId, type Skill } from '@/domain/drills';
 import { label } from '@/domain/darts';
 import { canUseDrill } from '@/domain/pro';
-import { allBests, suggestedDrill, type DrillScore } from '@/features/practice/bests';
+import {
+  allBests,
+  lastPractice,
+  suggestedDrill,
+  type DrillScore,
+  type PracticeCard,
+} from '@/features/practice/bests';
+import { LastPractice } from '@/features/practice/components/LastPractice';
 import { todayPlan, type TodayPlan } from '@/features/practice/plan';
 import { startPractice } from '@/features/practice/start';
 import { useProOwned } from '@/features/pro/pro';
@@ -28,11 +35,15 @@ export default function Practice() {
   const [bests, setBests] = useState<Partial<Record<DrillId, DrillScore>>>({});
   const [suggested, setSuggested] = useState<ReturnType<typeof suggestedDrill> | null>(null);
   const [today, setToday] = useState<TodayPlan | null>(null);
+  const [last, setLast] = useState<PracticeCard | null>(null);
+  const [now, setNow] = useState(0);
   useFocusEffect(
     useCallback(() => {
       setBests(allBests());
       setSuggested(suggestedDrill());
       setToday(proOwned ? todayPlan() : null);
+      setLast(lastPractice());
+      setNow(Date.now());
     }, [proOwned]),
   );
 
@@ -112,6 +123,7 @@ export default function Practice() {
           />
         </View>
       ) : null}
+      {last ? <LastPractice card={last} now={now} /> : null}
       {SKILLS.map((skill) => (
         <Section key={skill} label={t(`skills.${skill}`)}>
           {DRILL_IDS.filter((id) => drills[id].skill === skill).map(row)}

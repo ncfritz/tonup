@@ -20,6 +20,7 @@ import type { Setup } from './recent';
 export function GamePicker({
   proOwned,
   recent,
+  search = true,
   describe,
   onPick,
   onAgain,
@@ -27,6 +28,8 @@ export function GamePicker({
 }: {
   proOwned: boolean;
   recent: Setup[];
+  /** The search box; Play shows the list without it. */
+  search?: boolean;
   /** "Best of 5 · vs DartBot 3" for a Play again button. */
   describe: (s: Setup) => string;
   onPick: (id: PresetId) => void;
@@ -43,20 +46,22 @@ export function GamePicker({
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.search}>
-        <Icon name="search" color={theme.colors.muted} size={18} />
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={t('newGame.search', { count: RULES.length })}
-          placeholderTextColor={theme.colors.muted}
-          accessibilityLabel={t('newGame.searchA11y')}
-          autoCorrect={false}
-          clearButtonMode="while-editing"
-          style={[styles.searchInput, theme.type.body, { color: theme.colors.text }]}
-          testID="game-search"
-        />
-      </View>
+      {search ? (
+        <View style={styles.search}>
+          <Icon name="search" color={theme.colors.muted} size={18} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t('newGame.search', { count: RULES.length })}
+            placeholderTextColor={theme.colors.muted}
+            accessibilityLabel={t('newGame.searchA11y')}
+            autoCorrect={false}
+            clearButtonMode="while-editing"
+            style={[styles.searchInput, theme.type.body, { color: theme.colors.text }]}
+            testID="game-search"
+          />
+        </View>
+      ) : null}
 
       {query === '' && recent.length > 0 ? (
         <View style={styles.group}>

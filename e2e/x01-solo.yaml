@@ -3,8 +3,10 @@ appId: app.tonup.ios
 ---
 - launchApp:
     clearState: true
-- tapOn:
-    id: 'shortcut-all'
+# Play lists every game under Last match.
+- scrollUntilVisible:
+    element:
+      id: 'pick-x01'
 - tapOn:
     id: 'pick-x01'
 # The default lineup is You and DartBot 3: take the bot out.
