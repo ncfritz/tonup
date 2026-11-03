@@ -24,6 +24,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: false,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      // Snap-to-score photos kept for training show in Files › On My iPhone › Ton Up (ADR 0011).
+      UIFileSharingEnabled: true,
+      LSSupportsOpeningDocumentsInPlace: true,
     },
     // Apple's privacy manifest (docs/release/privacy.md): no tracking and no data collected.
     // The required-reason APIs are the ones React Native, Expo and SQLite use on the phone.
@@ -59,6 +62,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-router',
     'expo-font',
     'expo-sqlite',
+    // Snap to score (ADR 0011): the camera only, no microphone.
+    [
+      'expo-camera',
+      {
+        cameraPermission:
+          'Ton Up uses the camera to read your darts from a photo of the board. Photos stay on your iPhone.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
+      },
+    ],
     // StoreKit 2 for Ton Up Pro (ADR 0009); the plugin adds the OpenIAP pod's source.
     'expo-iap',
     // Xcode runs buy Pro against storekit/TonUp.storekit.

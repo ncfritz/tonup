@@ -27,16 +27,16 @@ The bet: the best darts coach on iPhone, built on per-dart positions, offline-fi
 
 ## Input
 
-| Feature                                                       | Status     | Notes                                                                                           |
-| ------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------- |
-| Tap-on-board                                                  | v1         | Records roughly where each dart landed, so heatmaps and replay work from day one                |
-| Keypad                                                        | v1         | Single/double/treble plus number; dart placed at the segment's centre with a low-precision flag |
-| Snap to score (handheld photo after each visit)               | Pro, later | "Camera lite" release; see [research/camera-scoring.md](research/camera-scoring.md)             |
-| Live-view auto-capture                                        | Pro, later | Same model on the preview; snaps when steady and confident                                      |
-| Fixed camera on a stand, with placement guide and calibration | Pro, later | Camera release after snap-to-score                                                              |
-| Linked display (iPad or second iPhone)                        | Pro, later | Local network, joined by QR code ([research/multi-device.md](research/multi-device.md))         |
-| Second camera to beat occlusion                               | Pro, later |                                                                                                 |
-| Soft-tip boards                                               | Later      | Board type is in the data model from day one (ADR 0003)                                         |
+| Feature                                                       | Status     | Notes                                                                                              |
+| ------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------- |
+| Tap-on-board                                                  | v1         | Records roughly where each dart landed, so heatmaps and replay work from day one                   |
+| Keypad                                                        | v1         | Single/double/treble plus number; dart placed at the segment's centre with a low-precision flag    |
+| Snap to score (handheld photo after each visit)               | Pro        | In progress: [plan/snap-to-score.md](plan/snap-to-score.md); marking by hand until the model ships |
+| Live-view auto-capture                                        | Pro, later | Same model on the preview; snaps when steady and confident                                         |
+| Fixed camera on a stand, with placement guide and calibration | Pro, later | Camera release after snap-to-score                                                                 |
+| Linked display (iPad or second iPhone)                        | Pro, later | Local network, joined by QR code ([research/multi-device.md](research/multi-device.md))            |
+| Second camera to beat occlusion                               | Pro, later |                                                                                                    |
+| Soft-tip boards                                               | Later      | Board type is in the data model from day one (ADR 0003)                                            |
 
 ## Practice and training
 

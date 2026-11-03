@@ -4,12 +4,13 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@/assets/*": ["./assets/*"]
+      "@/assets/*": ["./assets/*"],
+      "@modules/*": ["./modules/*"]
     },
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "types": ["jest", "node"]
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules", "docs/design/mockups", "ios", "android"]
+  "exclude": ["node_modules", "docs/design/mockups", "ios", "android", "ml"]
 }

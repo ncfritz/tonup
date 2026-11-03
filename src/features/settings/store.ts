@@ -17,6 +17,8 @@ export interface Settings {
   preferredDouble: number | null;
   /** How the scoring screen opens. */
   defaultInput: 'board' | 'keypad';
+  /** Snap to score keeps its photos and labels in Documents/captures, for training (ADR 0011). */
+  keepPhotos: boolean;
   /**
    * The last game played (a rules-library id such as 'x01' or 'tactics',
    * src/features/game/presets.ts), settings per game engine, and the line-up, for New game and
@@ -34,6 +36,7 @@ export const DEFAULT_SETTINGS: Settings = {
   caller: true,
   preferredDouble: null,
   defaultInput: 'board',
+  keepPhotos: false,
   lastGameId: 'x01',
   gameSettings: {},
   lastLineup: null,
@@ -56,6 +59,7 @@ const valid: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
     v === null ||
     (typeof v === 'number' && Number.isInteger(v) && ((v >= 1 && v <= 20) || v === 25)),
   defaultInput: (v): v is 'board' | 'keypad' => v === 'board' || v === 'keypad',
+  keepPhotos: (v): v is boolean => typeof v === 'boolean',
   lastGameId: (v): v is string => typeof v === 'string' && v.length > 0 && v.length < 40,
   gameSettings: (v): v is Partial<Record<GameId, unknown>> =>
     typeof v === 'object' && v !== null && !Array.isArray(v),

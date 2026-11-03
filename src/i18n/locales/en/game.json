@@ -78,7 +78,8 @@
     "visits": "Visits",
     "titleGame": "{game}",
     "titleRound": "{game} · Round {n} of {of}",
-    "leave": "Leave the game"
+    "leave": "Leave the game",
+    "camera": "Camera"
   },
   "board": {
     "a11y": "Dartboard",
@@ -320,5 +321,44 @@
     "keep": "Keep for later",
     "discard": "Discard",
     "cancel": "Cancel"
+  },
+  "snap": {
+    "panelTitle": "{count, plural, one {Throw your last dart} other {Throw your # darts}}, then snap the board",
+    "panelBody": "Take the photo before you pull the darts. Standing a little to the side shows the tips best.",
+    "open": "Snap the board",
+    "title": "Snap the board",
+    "cancel": "Back to the game",
+    "permission": "Ton Up needs the camera to read your darts from a photo. The photo stays on your phone.",
+    "allow": "Allow the camera",
+    "openSettings": "Open Settings",
+    "coach": "Fill the circle with the board, from a little to the side",
+    "coachTip": "{count, plural, one {Snap, then pull · 1 dart} other {Snap, then pull · # darts}}",
+    "shutter": "Take the photo",
+    "markTitle": "Mark the board",
+    "reviewTitle": "Check your darts",
+    "retake": "Retake",
+    "mark": {
+      "cal20": "Tap where the wire between 20 and 5 meets the outside of the double ring",
+      "cal6": "Now where the 6 and 13 wire meets the outside of the double ring",
+      "cal3": "Now where the 3 and 17 wire meets the outside of the double ring",
+      "cal11": "Now where the 11 and 8 wire meets the outside of the double ring",
+      "bull": "Last, tap the bullseye"
+    },
+    "markFailed": "Those points didn't line up with a board. Let's start again.",
+    "noModel": "Darts are marked by hand until the detection model is installed. Hold to magnify.",
+    "notFound": "The board wasn't found in this photo, so mark it by hand. Hold to magnify.",
+    "reviewTap": "{count, plural, one {Tap where the last dart went in, or add a miss} other {Tap where each dart went in (# to go), or add a miss}}",
+    "reviewDone": "Tap a dart to move or remove it, then confirm.",
+    "dartA11y": "Dart {n}: {dart}, {score}",
+    "onWire": "On a wire?",
+    "unsure": "Check",
+    "missed": "Missed the board",
+    "undoMiss": "Undo",
+    "moveHint": "Tap the photo where this dart really went in.",
+    "remove": "Remove",
+    "addMiss": "One missed the board",
+    "remark": "Mark the board again",
+    "confirm": "Confirm · {total}",
+    "photoA11y": "Your photo, {count, plural, one {# dart marked} other {# darts marked}}"
   }
 }

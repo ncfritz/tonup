@@ -1,12 +1,14 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
 import { DevMenu } from '@/dev/DevMenu';
 import { exportBackup, exportCsv, importBackup } from '@/features/backup/backup';
+import { keptPhotoCount } from '@/features/camera/captures';
+import { visionCapabilities, type VisionCapabilities } from '@/services/vision';
 import { useProOwned } from '@/features/pro/pro';
 import { useSettings } from '@/features/settings/store';
 import { ListRow, Pressable, Screen, Section, SegmentedControl, Text, ToggleRow } from '@/ui';
@@ -20,6 +22,12 @@ export default function Settings() {
   const s = useSettings();
   const proOwned = useProOwned();
   const [message, setMessage] = useState<string | null>(null);
+  const [vision, setVision] = useState<VisionCapabilities | null>(null);
+  useEffect(() => {
+    void visionCapabilities().then(setVision);
+  }, []);
+  // Cheap: lists one folder.
+  const kept = proOwned ? keptPhotoCount() : 0;
 
   const doImport = async () => {
     setMessage(null);
@@ -110,6 +118,32 @@ export default function Settings() {
             );
           })}
         </View>
+      </Section>
+      <Section label={t('sections.camera')}>
+        {proOwned ? (
+          <>
+            <ToggleRow
+              label={t('camera.keep')}
+              note={t('camera.keepNote')}
+              value={s.keepPhotos}
+              onChange={(v) => s.set('keepPhotos', v)}
+              testID="settings-keep-photos"
+            />
+            <ListRow label={t('camera.kept', { count: kept })} />
+            <ListRow
+              label={t('camera.model')}
+              value={
+                vision === null
+                  ? ''
+                  : vision.model
+                    ? t('camera.modelVersion', { version: vision.version ?? '?' })
+                    : t('camera.modelNone')
+              }
+            />
+          </>
+        ) : (
+          <ListRow label={t('camera.locked')} onPress={() => router.push('/pro')} />
+        )}
       </Section>
       <Section label={t('sections.data')}>
         <ListRow

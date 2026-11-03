@@ -16,7 +16,7 @@ Navigation is option E from the canvas's Home navigation page: a floating tab ba
 | Settings › Appearance                                                                | Spec v1                                   | Settings · Theme picker (Themes)              |
 | Pro upgrade                                                                          | Spec v1                                   | 13 · Pro upgrade (MVP flow)                   |
 | Devices, Link a display, Camera placement, Calibration, iPad scoring, Correct a dart | Parked for the camera releases (ADR 0005) | 3–8 (MVP flow)                                |
-| Snap to score (capture, result, missed-dart prompt)                                  | Later; not mocked yet                     | —                                             |
+| Snap to score (capture, mark, review)                                                | Spec, built (S1); not mocked yet          | —                                             |
 
 ## Tab bar
 
@@ -36,6 +36,14 @@ Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (
 - Visit: three dart slots and the visit total (or BUST).
 - Input: the board (tap where the dart landed; numbered markers appear) or the keypad (Single/Double/Treble, 1–20, outer bull, bull).
 - A line showing the bot's last visit; Undo, Miss, Next. After the leg: Next leg and Leg summary.
+
+## Snap to score
+
+Pro (ADR 0011). **Camera** is a third input on the scoring screen, beside Board and Keypad: a panel says how many darts to throw, then "Snap the board" before you pull.
+
+- **Capture:** full-screen camera with a dashed circle to fill with the board, coaching ("Fill the circle with the board, from a little to the side"; "Snap, then pull · 3 darts"), a shutter and a close button. The first time, a camera permission prompt; if it was refused, a button to Settings.
+- **Mark the board** (no model yet, or the board wasn't found): step by step, a small board shows which point to tap (where the 20/5, 6/13, 3/17 and 11/8 wires meet the outside of the double ring, then the bull). Holding shows a 3× magnifier above the finger. Points that don't make a board start the marking again.
+- **Check your darts:** the photo with the found board's rings drawn on it and numbered darts; a row per dart with its score, and "Check" or "On a wire?" where it needs a look. Tap the photo to add a dart, tap a dart then the photo to move it, Remove, "One missed the board", "Mark the board again", Retake, and Confirm with the visit total. Only confirmed darts are recorded; if the visit ends early (a checkout or a bust), the rest aren't.
 
 ## Drill in progress (Bob's 27)
 
@@ -82,5 +90,3 @@ What Pro includes (21 more games, the full practice library, deeper analysis, fo
 New game picks any of the 26 games, grouped by family as on the Rules tab; Pro games carry a lock and open the Pro screen until Pro is owned. Under the picker, a "How to play …" link opens that game's rules page. Each game shows only its own settings (X01's start, format and in/out; Cricket's round limit; Killer's lives; Gotcha's and Fives' target; Count Up's visits; Golf's holes; Football's goals; what claims a Tic-Tac-Toe square), and Start stays off until the player count suits the game (Hare and Hounds, Scam and Tic-Tac-Toe are for two). Quick start and Rematch replay the same game, dealing Killer numbers and Random Cricket's six afresh.
 
 ## Open questions
-
-- Snap-to-score screens: capture with coaching, result with markers, the missed-dart prompt.

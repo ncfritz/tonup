@@ -29,7 +29,7 @@ Same as Tippytoe unless noted, so tooling, scripts and patterns can be copied ac
 | iOS target             | iOS 18.0                                                                                                                        | Same as Tippytoe                                                         |
 | IDs                    | Bundle `app.tonup.ios`; Pro product `app.tonup.pro`                                                                             |                                                                          |
 
-Native modules: none in v1. `modules/` is created for the camera releases.
+Native modules: none in v1. `modules/dart-vision` arrives with snap to score ([snap-to-score.md](snap-to-score.md)).
 
 ## 2. Project layout
 

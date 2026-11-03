@@ -12,6 +12,7 @@ import {
   recentSessions,
 } from '@/services/db/sessionsRepo';
 
+import { deleteCapturePhotos } from '../camera/captures';
 import { YOU_ID } from '../game/lineup';
 import { loadGame, sessionStats, sessionX01Stats, type LoadedGame } from '../game/session';
 import { drillScores, personalBest } from '../practice/bests';
@@ -158,6 +159,7 @@ export function destination(sessionId: string): {
 
 /** Deletes a game or drill and its darts for good; stats, bests and trends follow from what's left. */
 export function removeSession(sessionId: string) {
+  deleteCapturePhotos(sessionId);
   deleteSession(sessionId);
   log('info', 'deleted session');
 }

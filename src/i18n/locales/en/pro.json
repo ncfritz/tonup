@@ -1,6 +1,6 @@
 {
   "title": "Ton Up Pro",
-  "tagline": "One purchase. Everything in the app, and camera scoring when it arrives.",
+  "tagline": "One purchase. Everything in the app, including camera scoring.",
   "close": "Close",
   "includes": "What you get",
   "items": [
@@ -21,8 +21,8 @@
       "body": "Chalkboard, Arcade, Heritage and Training, each in light and dark."
     },
     {
-      "title": "Camera scoring, when it arrives",
-      "body": "Snap to score and the fixed camera come to Pro as free updates."
+      "title": "Camera scoring",
+      "body": "Snap the board after your visit and Ton Up reads your darts; the fixed camera follows as a free update."
     }
   ],
   "buy": "Get Ton Up Pro · {price}",

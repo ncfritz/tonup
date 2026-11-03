@@ -4,7 +4,8 @@
     "appearance": "Appearance",
     "playing": "Playing",
     "data": "Your data",
-    "about": "About"
+    "about": "About",
+    "camera": "Camera"
   },
   "appearance": {
     "title": "Appearance",
@@ -94,5 +95,14 @@
     "send": "Send report",
     "sendA11y": "Send report through the share sheet",
     "close": "Settings"
+  },
+  "camera": {
+    "keep": "Keep photos to improve detection",
+    "keepNote": "Snap-to-score photos and what you confirmed are saved on this phone, in Files › On My iPhone › Ton Up › captures, for training the detection model. Nothing is uploaded.",
+    "kept": "{count, plural, =0 {No photos kept} one {# photo kept} other {# photos kept}}",
+    "model": "Detection model",
+    "modelNone": "Not installed: darts are marked by hand",
+    "modelVersion": "Version {version}",
+    "locked": "Camera scoring is part of Ton Up Pro."
   }
 }

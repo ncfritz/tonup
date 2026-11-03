@@ -1,0 +1,7 @@
+.venv/
+data/
+runs/
+*.mlpackage
+*.mlmodelc
+__pycache__/
+.pytest_cache/

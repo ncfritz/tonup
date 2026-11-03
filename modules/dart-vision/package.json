@@ -1,0 +1,7 @@
+{
+  "name": "dart-vision",
+  "version": "0.1.0",
+  "private": true,
+  "description": "On-device dart and board keypoint detection for Ton Up snap to score (ADR 0011)",
+  "main": "index.ts"
+}

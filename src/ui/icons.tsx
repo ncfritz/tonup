@@ -17,6 +17,9 @@ const paths = {
   info: ['M12 11v6M12 7.5v.5', [[12, 12, 9]]],
   chevron: ['M9 5l7 7-7 7', []],
   check: ['M5 12l4 4 10-10', []],
+  // From the camera mockups: a body with a lens.
+  camera: ['M3 8h3l2-3h8l2 3h3v11H3z', [[12, 13, 4]]],
+  close: ['M6 6l12 12M18 6L6 18', []],
 } as const satisfies Record<string, readonly [string, readonly (readonly number[])[]]>;
 
 export type IconName = keyof typeof paths;

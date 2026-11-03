@@ -53,6 +53,10 @@ export default function RootLayout() {
             <Stack.Screen name="pro" options={{ presentation: 'modal' }} />
             <Stack.Screen name="trainer" />
             <Stack.Screen name="analysis" />
+            <Stack.Screen
+              name="snap/[sessionId]"
+              options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
+            />
           </Stack>
           <ProSync />
         </Bootstrap>

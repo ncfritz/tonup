@@ -37,3 +37,7 @@ App Store Connect needs a privacy policy URL even for an app that collects nothi
 ## Report a problem
 
 Settings › Report a problem builds a plain-text report the user previews and sends through the share sheet (`src/features/diagnostics/report.ts`). It holds the app and iOS versions, settings, whether Pro is owned, how many sessions and darts are stored, the user's description, and the local diagnostics log (errors, purchase and backup results). It never includes player names or game data.
+
+## Camera
+
+Snap to score (ADR 0011) uses the camera with permission ("Ton Up uses the camera to read your darts from a photo of the board. Photos stay on your iPhone."); no microphone. Photos are read on the phone by the bundled model and discarded, unless the player turns on Settings › Camera › Keep photos to improve detection, which keeps them and their labels in the app's Documents folder (visible in the Files app). Nothing is uploaded, so the App Store label stays Data Not Collected.

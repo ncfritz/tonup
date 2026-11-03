@@ -86,6 +86,6 @@ Start from the public DeepDarts data (about 15k mostly face-on phone images plus
 
 ## Open questions
 
-- The DeepDarts repo states no licence; check the dataset's terms on IEEE Dataport before using it in a paid app.
+- The DeepDarts code states no licence, so we don't use it; the dataset is CC BY 4.0 on [IEEE DataPort](https://ieee-dataport.org/node/4367), usable in a paid app with attribution (ADR 0011).
 - Minimum iPhone for camera scoring (competitors require A12 or newer); measure on the oldest device available.
 - Soft-tip boards need their own data (hole texture, backlit segments); many electronic boards also report hits over Bluetooth, which may beat the camera (ADR 0003).

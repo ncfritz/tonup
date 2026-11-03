@@ -16,6 +16,9 @@ import { x01State } from '@/features/game/session';
 import { botUp, dartsText, useGame } from '@/features/game/store';
 import { useBotTurns } from '@/features/game/useBotTurns';
 import { useLeave } from '@/features/game/useLeave';
+import { SnapPanel } from '@/features/camera/SnapPanel';
+import { useProOwned } from '@/features/pro/pro';
+import { canUseCamera } from '@/domain/pro';
 import { useSettings } from '@/features/settings/store';
 import { haptics } from '@/services/haptics';
 import {
@@ -33,7 +36,7 @@ import {
   useScreenReader,
 } from '@/ui';
 
-type Input = 'board' | 'keypad';
+type Input = 'board' | 'keypad' | 'camera';
 
 export default function GameScreen() {
   useKeepAwake();
@@ -62,6 +65,7 @@ export default function GameScreen() {
   }, [finished, sessionId]);
 
   const { leave, asking } = useLeave('game', '/');
+  const proOwned = useProOwned();
   useBotTurns(!!editing || visitsOpen || asking);
 
   if (!game || game.session.id !== sessionId)
@@ -158,10 +162,13 @@ export default function GameScreen() {
       <SegmentedControl<Input>
         accessibilityLabel={t('header.input')}
         value={input}
-        onChange={setInput}
+        onChange={(v) =>
+          v === 'camera' && !canUseCamera(proOwned) ? router.push('/pro') : setInput(v)
+        }
         segments={[
           { value: 'board', label: t('header.board') },
           { value: 'keypad', label: t('header.keypad') },
+          { value: 'camera', label: t('header.camera') },
         ]}
       />
       <View style={styles.input} onLayout={onLayout}>
@@ -187,6 +194,12 @@ export default function GameScreen() {
               accessibilityHint={screenReader ? t('board.screenReaderHint') : t('board.hint')}
             />
           ) : null
+        ) : input === 'camera' ? (
+          <SnapPanel
+            disabled={!humanTurn}
+            left={3 - (current?.darts.length ?? 0)}
+            onSnap={() => router.push({ pathname: '/snap/[sessionId]', params: { sessionId } })}
+          />
         ) : (
           <View style={styles.keypad}>
             <Keypad disabled={!humanTurn} onHit={(hit) => throwHit(null, 'keypad', hit)} />

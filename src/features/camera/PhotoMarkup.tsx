@@ -1,0 +1,225 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Image, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
+import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+
+import { STEEL_TIP_RADII_MM as R, polar } from '@/domain/board';
+import {
+  applyHomography,
+  CALIBRATION_IDS,
+  type DartProposal,
+  type ImagePoint,
+} from '@/domain/camera';
+
+import { needsLook, type SnapState } from './snap';
+
+/** The loupe's size, how much it magnifies, and how far above the finger it sits. */
+const LOUPE = 120;
+const ZOOM = 3;
+const LIFT = 90;
+/** A tap this close to a marker selects it. */
+const HIT_PT = 22;
+
+/**
+ * The photo with what was read drawn on it: the board's rings as found, the calibration points,
+ * and numbered darts. Touch shows a magnifier; letting go marks, adds, selects or moves.
+ */
+export function PhotoMarkup({
+  state,
+  darts,
+  onTap,
+  onSelect,
+}: {
+  state: SnapState;
+  darts: DartProposal[];
+  onTap: (p: ImagePoint) => void;
+  onSelect: (i: number) => void;
+}) {
+  const { t } = useTranslation('game');
+  const { theme } = useUnistyles();
+  const [w, setW] = useState(0);
+  const [touch, setTouch] = useState<{ x: number; y: number } | null>(null);
+  const h = w * (state.photo.height / state.photo.width);
+  const toPx = (p: ImagePoint) => ({ x: p.x * w, y: p.y * h });
+
+  const at = (e: GestureResponderEvent) => ({
+    x: Math.min(w, Math.max(0, e.nativeEvent.locationX)),
+    y: Math.min(h, Math.max(0, e.nativeEvent.locationY)),
+  });
+  const release = (e: GestureResponderEvent) => {
+    const p = at(e);
+    setTouch(null);
+    const image = { x: p.x / w, y: p.y / h };
+    if (state.phase.kind === 'review' && state.selected === null) {
+      const near = darts
+        .map((d, i) => ({ i, d: Math.hypot(toPx(d.image).x - p.x, toPx(d.image).y - p.y) }))
+        .filter((n) => n.d < HIT_PT)
+        .sort((a, b) => a.d - b.d)[0];
+      if (near) {
+        onSelect(near.i);
+        return;
+      }
+    }
+    onTap(image);
+  };
+
+  // The double and treble rings as the fit sees them, drawn back onto the photo.
+  const ring = (r: number) =>
+    state.fit
+      ? Array.from({ length: 73 }, (_, i) =>
+          toPx(applyHomography(state.fit!.toImage, polar(r, i * 5))),
+        )
+          .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+          .join(' ')
+      : '';
+
+  return (
+    <View
+      onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}
+      style={styles.wrap}
+      testID="snap-photo-frame"
+    >
+      {w > 0 ? (
+        <View
+          style={{ width: w, height: h }}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={t('snap.photoA11y', { count: darts.length })}
+          onStartShouldSetResponder={() => true}
+          onMoveShouldSetResponder={() => true}
+          onResponderGrant={(e) => setTouch(at(e))}
+          onResponderMove={(e) => setTouch(at(e))}
+          onResponderRelease={release}
+          onResponderTerminate={() => setTouch(null)}
+          testID="snap-photo"
+        >
+          <Image source={{ uri: state.photo.uri }} style={{ width: w, height: h }} />
+          <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
+            {state.fit ? (
+              <>
+                <Polyline
+                  points={ring(R.doubleOuter)}
+                  fill="none"
+                  stroke={theme.colors.accent}
+                  strokeWidth={1.5}
+                />
+                <Polyline
+                  points={ring(R.trebleOuter)}
+                  fill="none"
+                  stroke={theme.colors.accent}
+                  strokeWidth={1}
+                />
+                <Polyline
+                  points={ring(R.outerBull)}
+                  fill="none"
+                  stroke={theme.colors.accent}
+                  strokeWidth={1}
+                />
+              </>
+            ) : null}
+            {CALIBRATION_IDS.map((id) => {
+              const p = state.calibration[id];
+              if (!p) return null;
+              const q = toPx(p);
+              return (
+                <Circle
+                  key={id}
+                  cx={q.x}
+                  cy={q.y}
+                  r={5}
+                  fill="none"
+                  stroke={theme.colors.accent}
+                  strokeWidth={2}
+                />
+              );
+            })}
+            {darts.map((d, i) => {
+              const q = toPx(d.image);
+              const sel = state.selected === i;
+              return (
+                <Circle
+                  key={`d${i}`}
+                  cx={q.x}
+                  cy={q.y}
+                  r={sel ? 14 : 11}
+                  fill={theme.colors.dart}
+                  stroke={needsLook(d) ? theme.colors.danger : theme.colors.dartStroke}
+                  strokeWidth={sel ? 4 : 2.5}
+                />
+              );
+            })}
+            {darts.map((d, i) => {
+              const q = toPx(d.image);
+              return (
+                <SvgText
+                  key={`n${i}`}
+                  x={q.x}
+                  y={q.y + 4.5}
+                  fontSize={13}
+                  fontWeight="800"
+                  fill={theme.colors.dartStroke}
+                  textAnchor="middle"
+                >
+                  {i + 1}
+                </SvgText>
+              );
+            })}
+          </Svg>
+          {touch ? (
+            <View
+              pointerEvents="none"
+              style={[
+                styles.loupe,
+                { left: touch.x - LOUPE / 2, top: Math.max(0, touch.y - LIFT - LOUPE / 2) },
+              ]}
+            >
+              <Image
+                source={{ uri: state.photo.uri }}
+                style={{
+                  position: 'absolute',
+                  width: w * ZOOM,
+                  height: h * ZOOM,
+                  left: LOUPE / 2 - touch.x * ZOOM,
+                  top: LOUPE / 2 - touch.y * ZOOM,
+                }}
+              />
+              <Svg width={LOUPE} height={LOUPE} style={StyleSheet.absoluteFill}>
+                <Line
+                  x1={LOUPE / 2 - 10}
+                  x2={LOUPE / 2 + 10}
+                  y1={LOUPE / 2}
+                  y2={LOUPE / 2}
+                  stroke={theme.colors.accent}
+                  strokeWidth={1.5}
+                />
+                <Line
+                  x1={LOUPE / 2}
+                  x2={LOUPE / 2}
+                  y1={LOUPE / 2 - 10}
+                  y2={LOUPE / 2 + 10}
+                  stroke={theme.colors.accent}
+                  strokeWidth={1.5}
+                />
+              </Svg>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create((theme) => ({
+  wrap: { alignSelf: 'stretch', borderRadius: theme.radii.m, overflow: 'hidden' },
+  loupe: {
+    position: 'absolute',
+    width: LOUPE,
+    height: LOUPE,
+    borderRadius: LOUPE / 2,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: theme.colors.accent,
+    backgroundColor: theme.colors.bg,
+  },
+}));

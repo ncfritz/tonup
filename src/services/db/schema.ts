@@ -91,7 +91,7 @@ export const darts = sqliteTable(
     isDouble: integer('is_double', { mode: 'boolean' }).notNull(),
     intendedSegment: integer('intended_segment'),
     intendedMultiplier: integer('intended_multiplier'),
-    source: text('source', { enum: ['tap', 'keypad', 'bot'] }).notNull(),
+    source: text('source', { enum: ['tap', 'keypad', 'bot', 'camera'] }).notNull(),
     precision: text('precision', { enum: ['exact', 'segment'] }).notNull(),
     corrected: integer('corrected', { mode: 'boolean' }).notNull(),
     at: integer('at').notNull(),
@@ -128,4 +128,32 @@ export const diagnosticsLog = sqliteTable(
     context: text('context'),
   },
   (t) => [index('diagnostics_created_idx').on(t.createdAt)],
+);
+
+/**
+ * Snap-to-score photos (ADR 0011): what was detected and what the player confirmed. The photo
+ * itself is kept only with "Keep photos to improve detection" on, in Documents/captures.
+ */
+export const captures = sqliteTable(
+  'captures',
+  {
+    id: text('id').primaryKey(),
+    sessionId: text('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    /** The seq of the first dart this photo scored. */
+    firstSeq: integer('first_seq').notNull(),
+    /** File name in Documents/captures, or null when the photo wasn't kept. */
+    photo: text('photo'),
+    width: integer('width').notNull(),
+    height: integer('height').notNull(),
+    /** The model that read it, or null for marking by hand. */
+    modelVersion: text('model_version'),
+    /** JSON: what the model found. */
+    detected: text('detected'),
+    /** JSON: the confirmed labels (src/domain/camera/labels.ts). */
+    labels: text('labels').notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [index('captures_session_idx').on(t.sessionId)],
 );

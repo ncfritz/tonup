@@ -35,7 +35,7 @@ export interface Target {
   multiplier: 1 | 2 | 3;
 }
 
-export type DartSource = 'tap' | 'keypad' | 'bot';
+export type DartSource = 'tap' | 'keypad' | 'bot' | 'camera';
 
 export interface PlayerRef {
   id: string;
