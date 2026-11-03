@@ -29,8 +29,10 @@ describe('locks open Ton Up Pro', () => {
   it('from a Pro drill', async () => {
     await render(<Practice />);
     await act(async () => {});
-    await fireEvent.press(screen.getByTestId('pro-drill-catch40'));
+    await fireEvent.press(screen.getByTestId('drill-catch40'));
     expect(router.push).toHaveBeenCalledWith('/pro');
+    await fireEvent.press(screen.getByTestId('checkout-trainer'));
+    expect(router.push).toHaveBeenLastCalledWith('/pro');
   });
 
   it('from a Pro theme', async () => {
@@ -44,12 +46,5 @@ describe('locks open Ton Up Pro', () => {
     await render(<RulesPage />);
     await fireEvent.press(screen.getByTestId('see-pro'));
     expect(router.push).toHaveBeenCalledWith('/pro');
-  });
-
-  it('with Pro owned, says what is still to come instead', async () => {
-    usePro.setState({ owned: true });
-    await render(<Practice />);
-    await act(async () => {});
-    expect(screen.getAllByText('Coming in an update').length).toBeGreaterThan(0);
   });
 });

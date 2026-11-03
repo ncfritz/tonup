@@ -2,12 +2,13 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, type LayoutChangeEvent } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { DRILL_IDS, type DrillId } from '@/domain/drills';
 import { parseRegion } from '@/domain/stats';
 import { formatStat, gameName } from '@/features/game/format';
 import { dayLabel } from '@/features/game/when';
+import { useProOwned } from '@/features/pro/pro';
 import {
   bests,
   destination,
@@ -20,7 +21,7 @@ import {
   type HistoryEntry,
   type HistoryFilter,
 } from '@/features/history/history';
-import { Board, LineChart, Pressable, Screen, SegmentedControl, Text } from '@/ui';
+import { Board, Icon, LineChart, Pressable, Screen, SegmentedControl, Text } from '@/ui';
 
 const HEAT_SESSIONS = 30;
 
@@ -29,6 +30,8 @@ export default function History() {
   const { t } = useTranslation('history');
   const { t: tg } = useTranslation('game');
   const { t: tp } = useTranslation('practice');
+  const { theme } = useUnistyles();
+  const proOwned = useProOwned();
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const [drill, setDrill] = useState<DrillId | null>(null);
   const [data, setData] = useState<{
@@ -57,7 +60,10 @@ export default function History() {
   if (!data) return <Screen>{null}</Screen>;
   const { entries, trend, heat } = data;
   const trendTitle = data.drill
-    ? t('trend.drill', { drill: tp(`drills.${data.drill}.name`), count: trend.length })
+    ? t('trend.drill', {
+        drill: tp(`drills.${data.drill}.name` as 'drills.bobs27.name'),
+        count: trend.length,
+      })
     : t('trend.x01', { count: trend.length });
   const latest = trend[trend.length - 1];
   const prev = trend[trend.length - 2];
@@ -73,9 +79,24 @@ export default function History() {
 
   return (
     <Screen scroll>
-      <Text variant="heading" accessibilityRole="header">
-        {t('title')}
-      </Text>
+      <View style={styles.titleRow}>
+        <Text variant="heading" accessibilityRole="header" style={styles.flex}>
+          {t('title')}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={proOwned ? t('analysis.open') : t('analysis.locked')}
+          accessibilityHint={t('analysis.openHint')}
+          style={({ pressed }) => [styles.analysis, pressed && styles.pressed]}
+          onPress={() => router.push(proOwned ? '/analysis' : '/pro')}
+          testID="open-analysis"
+        >
+          {proOwned ? null : <Icon name="lock" color={theme.colors.muted} size={14} />}
+          <Text variant="bodyStrong" tone={proOwned ? 'accent' : 'muted'}>
+            {t('analysis.open')}
+          </Text>
+        </Pressable>
+      </View>
       <SegmentedControl<HistoryFilter>
         accessibilityLabel={t('filter.label')}
         value={filter}
@@ -96,19 +117,21 @@ export default function History() {
         </Text>
         {data.drill ? (
           <View style={styles.chips}>
-            {DRILL_IDS.map((id) => (
-              <Pressable
-                key={id}
-                accessibilityRole="button"
-                accessibilityState={{ selected: id === data.drill }}
-                style={[styles.chip, id === data.drill && styles.chipOn]}
-                onPress={() => setDrill(id)}
-              >
-                <Text variant="caption" tone={id === data.drill ? 'onAccent' : 'text'}>
-                  {tp(`drills.${id}.name`)}
-                </Text>
-              </Pressable>
-            ))}
+            {DRILL_IDS.filter((id) => id === data.drill || data.bests.drills[id] !== undefined).map(
+              (id) => (
+                <Pressable
+                  key={id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: id === data.drill }}
+                  style={[styles.chip, id === data.drill && styles.chipOn]}
+                  onPress={() => setDrill(id)}
+                >
+                  <Text variant="caption" tone={id === data.drill ? 'onAccent' : 'text'}>
+                    {tp(`drills.${id}.name` as 'drills.bobs27.name')}
+                  </Text>
+                </Pressable>
+              ),
+            )}
           </View>
         ) : null}
         {trend.length === 0 ? (
@@ -190,7 +213,7 @@ export default function History() {
       {entries.map((e) => {
         const name =
           e.kind === 'drill'
-            ? tp(`drills.${e.typeId as DrillId}.name`)
+            ? tp(`drills.${e.typeId as DrillId}.name` as 'drills.bobs27.name')
             : gameName(tg, e.typeId, e.settings);
         const title = e.score ? `${name} · ${e.score}` : name;
         const sub = !e.finished
@@ -312,4 +335,14 @@ const styles = StyleSheet.create((theme) => ({
   },
   badgeWon: { backgroundColor: theme.colors.accent },
   pressed: { opacity: 0.85 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
+  analysis: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    minHeight: 40,
+    paddingHorizontal: theme.spacing.m,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.surface,
+  },
 }));

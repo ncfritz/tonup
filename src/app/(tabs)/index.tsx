@@ -304,14 +304,19 @@ function LastPractice({ card, now }: { card: PracticeCard | null; now: number })
         values={card.trend}
         color={theme.colors.accent}
         line={theme.colors.line}
-        label={tp('home.trendA11y', { drill: tp(`drills.${card.drillId}.name`) })}
+        label={tp('home.trendA11y', {
+          drill: tp(`drills.${card.drillId}.name` as 'drills.bobs27.name'),
+        })}
       />
       <View style={styles.flex}>
         <Text variant="overline" tone="muted">
           {tp('home.lastPractice', { when })}
         </Text>
         <Text variant="title">
-          {tp('home.title', { drill: tp(`drills.${card.drillId}.name`), score: card.score })}
+          {tp('home.title', {
+            drill: tp(`drills.${card.drillId}.name` as 'drills.bobs27.name'),
+            score: card.score,
+          })}
         </Text>
         <Text variant="caption" tone="muted">
           {card.costliest !== null

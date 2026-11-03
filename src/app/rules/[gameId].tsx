@@ -84,7 +84,9 @@ export default function RulesPage() {
       {entry.drill ? (
         <Button
           kind="secondary"
-          label={t('page.practise', { name: tp(`drills.${entry.drill}.name`) })}
+          label={t('page.practise', {
+            name: tp(`drills.${entry.drill}.name` as 'drills.bobs27.name'),
+          })}
           onPress={practise}
           testID="rules-practise"
         />

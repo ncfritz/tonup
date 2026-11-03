@@ -11,6 +11,8 @@ import { addDart, checkPlayer, nextPlayer } from '../visits';
 export const HALVE_IT_LISTS = {
   halveIt: [20, 19, ANY_DOUBLE, 18, ANY_TREBLE, 17, BULL],
   bermuda: [12, 13, 14, ANY_DOUBLE, 15, 16, 17, ANY_TREBLE, 18, 19, 20, BULL],
+  /** The Halve-It Sprint drill (docs/research/training.md → Scoring). */
+  sprint: [20, 19, 18, 17, ANY_DOUBLE, ANY_TREBLE, BULL],
 } as const;
 
 export interface HalveItSettings {

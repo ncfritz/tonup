@@ -12,29 +12,70 @@
     "clock": {
       "name": "Around the Clock",
       "short": "1 to 20, then the bull, in as few darts as you can"
+    },
+    "t20": {
+      "name": "100 darts at T20",
+      "short": "Your hit rate on the treble 20"
+    },
+    "halveIt": {
+      "name": "Halve-It Sprint",
+      "short": "A visit at each target; a blank halves your score"
+    },
+    "shanghai": {
+      "name": "Shanghai",
+      "short": "A visit at each number from 1 to 20"
+    },
+    "bullseye": {
+      "name": "Bullseye",
+      "short": "30 darts at the bull"
+    },
+    "checkouts": {
+      "name": "Checkouts Practice",
+      "short": "Three darts at each even double, D20 to D2"
+    },
+    "doublesLock": {
+      "name": "Doubles Lock",
+      "short": "D20 to D1; a blank visit sends you back to the last lock"
+    },
+    "catch40": {
+      "name": "Catch 40",
+      "short": "Finish 61 to 100 with six darts each"
+    },
+    "oneTwentyOne": {
+      "name": "121",
+      "short": "Nine darts to finish; each finish moves the target up"
+    },
+    "hubbe": {
+      "name": "Hubbe",
+      "short": "Finish 101 to 130 in one visit each"
+    },
+    "randomCheckout": {
+      "name": "Random Checkout",
+      "short": "Twenty random finishes, one visit each"
+    },
+    "oneSeventy": {
+      "name": "170 Practice",
+      "short": "T20, T20, bull, in as few darts as you can"
+    },
+    "pressure": {
+      "name": "Pressure",
+      "short": "The bot is on a finish: one visit to take the leg"
+    },
+    "jdc": {
+      "name": "JDC Challenge",
+      "short": "Shanghai 10–15, every double, Shanghai 15–20"
+    },
+    "assessment": {
+      "name": "Skill assessment",
+      "short": "Fifteen minutes that set your levels and your plan"
     }
-  },
-  "pro": {
-    "t20": "100 darts at T20",
-    "halveIt": "Halve-It Sprint",
-    "shanghai": "Shanghai drill",
-    "bullseye": "Bullseye",
-    "checkouts": "Checkouts Practice",
-    "doublesLock": "Doubles Lock",
-    "catch40": "Catch 40",
-    "121": "121",
-    "hubbe": "Hubbe",
-    "randomCheckout": "Random Checkout",
-    "170": "170 Practice",
-    "jdc": "JDC Challenge",
-    "locked": "Ton Up Pro",
-    "lockedA11y": "{name}, part of Ton Up Pro",
-    "soon": "Coming in an update"
   },
   "skills": {
     "scoring": "Scoring",
     "accuracy": "Accuracy",
-    "doubles": "Doubles and checkouts"
+    "doubles": "Doubles",
+    "checkouts": "Checkouts",
+    "assessment": "Assessment"
   },
   "suggested": {
     "title": "Suggested for you",
@@ -68,7 +109,12 @@
     "hitA11y": "Hit {target}",
     "missA11y": "Missed",
     "buttonsMode": "Hit / Miss",
-    "scoreA11y": "{what} {score}"
+    "scoreA11y": "{what} {score}",
+    "finish": "Finish {remaining} · {dartsLeft, plural, one {# dart} other {# darts}} left",
+    "pressure": "{bot} is on {botOn} · you need {remaining}",
+    "pressureLeft": "{dartsLeft, plural, one {# dart} other {# darts}} to take the leg",
+    "part": "{part, select, scoring {Scoring: ten visits at T20} doubles {Doubles: three darts at each} other {Checkouts: one visit to finish {remaining}}}",
+    "route": "Route {route}"
   },
   "result": {
     "done": "Drill complete",
@@ -90,5 +136,53 @@
     "costliest": "{double} missed with all three darts",
     "tryAgain": "Try again",
     "trendA11y": "Your recent {drill} scores"
+  },
+  "locked": {
+    "label": "Ton Up Pro",
+    "a11y": "{name}, part of Ton Up Pro"
+  },
+  "plan": {
+    "title": "Today's plan",
+    "due": "Take the skill assessment",
+    "dueBody": "Fifteen minutes that set your levels for scoring, doubles and checkouts. Your plan picks drills from the weakest.",
+    "redue": "It's been a month: take the assessment again to update your plan.",
+    "focus": "{skill, select, scoring {Scoring} doubles {Doubles} other {Checkouts}} is your weakest area (level {level} of 5).",
+    "levels": "Scoring {scoring} · Doubles {doubles} · Checkouts {checkouts}",
+    "doubles": "{worst} at {worstRate} and {next} at {nextRate} recently.",
+    "doublesOne": "{worst} at {worstRate} recently.",
+    "warmUp": "Warm-up",
+    "main": "Main",
+    "minutes": "About {n} min",
+    "done": "Done today",
+    "start": "Start",
+    "startA11y": "Start {drill}",
+    "assess": "Assessment",
+    "assessA11y": "Take the skill assessment"
+  },
+  "trainer": {
+    "title": "Checkout trainer",
+    "short": "Flashcards for routes, then on the board",
+    "range": "Scores",
+    "low": "2–40",
+    "mid": "41–100",
+    "high": "101–170",
+    "card": "Card {n} of {of}",
+    "finish": "How do you finish {score}?",
+    "show": "Show the route",
+    "knew": "Knew it",
+    "missed": "Didn't",
+    "again": "Comes back at the end",
+    "done": "{right} of {of} first time",
+    "board": "Throw them on the board",
+    "restart": "New deck",
+    "close": "Done",
+    "routeA11y": "Route: {route}",
+    "why": {
+      "one": "One dart: {double}.",
+      "leaves": "{dart} leaves {left}, {finish, select, double {a double} bull {the bull} other {a {darts}-dart finish}}.",
+      "single": "Miss the treble into {single} and {left} is {ok, select, yes {still a finish} other {no finish with what's left}}.",
+      "split": "Miss {double} into {single} and you're on {next}.",
+      "bull": "The bull is the only finish here."
+    }
   }
 }

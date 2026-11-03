@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
-import { botThrow, type Rng } from '@/domain/bot';
+import type { Rng } from '@/domain/bot';
 
 import { botUp, useGame } from './store';
+import { throwFor } from './throwFor';
 
 /** Pause before each bot dart, so players see them land one at a time. */
 const FIRST_DART_MS = 900;
@@ -24,7 +25,10 @@ export function useBotTurns(paused: boolean) {
       () => {
         const current = useGame.getState().game;
         if (!current || botUp(current) === null) return;
-        const t = botThrow(current.def, current.state, level, random);
+        const up = current.def.currentPlayer(current.state);
+        if (!up) return;
+        // Ghosts throw with their own fitted scatter (src/domain/analysis/ghost.ts).
+        const t = throwFor(current.def, current.state, up, random);
         if (t)
           useGame
             .getState()

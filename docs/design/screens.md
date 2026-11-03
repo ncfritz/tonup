@@ -38,15 +38,28 @@ Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (
 
 ## Drill in progress (Bob's 27)
 
-Round x/21, the score and personal best with the gap to beat it, the target double highlighted on a muted board, three dart slots, a strip of 21 rounds coloured by hits, and large Hit and Miss buttons with Undo (Board and Keypad input are a switch away). A result card at the end with the score against your best, the drill's stats (for Bob's 27, the costliest double) and Try again. Count Up uses the board or keypad with Next; the Around the Clock drill has Hit and Miss like Bob's 27.
+Round x/21, the score and personal best with the gap to beat it, the target double highlighted on a muted board, three dart slots, a strip of 21 rounds coloured by hits, and large Hit and Miss buttons with Undo (Board and Keypad input are a switch away). A result card at the end with the score against your best, the drill's stats (for Bob's 27, the costliest double) and Try again. Count Up uses the board or keypad with Next; the Around the Clock drill has Hit and Miss like Bob's 27, as do Checkouts Practice, Doubles Lock, 170 Practice and Bullseye. Checkout drills show a line above the strip with what's left and the darts to do it in ("Finish 87 · 4 darts left") and the route for those darts; Pressure says what the bot is waiting on ("DartBot 4 is on 32 · you need 81"); the assessment says which part you're in. A bust shows in the dart slots.
 
 ## Practice tab
 
-A suggested drill (with the reason, for example low checkout % this week), then drills grouped by skill (Scoring, Accuracy, Doubles and checkouts) with personal bests in `accent`. Pro drills show a lock and open the Pro screen.
+Without Pro, a suggested drill (with the reason, for example low checkout % this week). With Pro, **Today's plan** instead: before your first assessment it asks you to take one; afterwards it names your weakest area and level, your levels for scoring, doubles and checkouts, the two doubles you've hit least recently (when doubles are weakest), about how long the session takes, and a warm-up plus two drills with Start buttons, each marked "Done today" once finished. A month after the last assessment it asks for another. Then the drills grouped by skill (Scoring, Accuracy, Doubles, Checkouts, Assessment) with personal bests in `accent`, and the Checkout trainer under Checkouts. Pro drills and the trainer show a lock and open the Pro screen.
+
+## Checkout trainer
+
+Pro. A deck of ten finishes from a range (2–40, 41–100, 101–170). Each card shows a score; Show the route reveals the three-dart route and why it's the route (what the first dart leaves, what a treble missed into its single leaves, and where a split double leaves you). Knew it or Didn't; a card you didn't know comes back once at the end. The end shows how many you knew first time, with "Throw them on the board" (the same finishes as a Random Checkout), New deck and Done.
 
 ## History tab
 
-All / Matches / Practice filter; a trend chart (3-dart average over your last 20 X01 matches, or a drill's scores for Practice, with a chip per drill); personal bests (best average, high checkout, Bob's 27, plus Count Up and Around the Clock under Practice); a board heatmap of where your darts landed over the last 30 sessions shown, with the busiest region and the share off the board; and a list of recent sessions. A finished session opens its replay; an unfinished one goes back into the game or drill.
+All / Matches / Practice filter; a trend chart (3-dart average over your last 20 X01 matches, or a drill's scores for Practice, with a chip per drill); personal bests (best average, high checkout, Bob's 27, plus Count Up and Around the Clock under Practice); a board heatmap of where your darts landed over the last 30 sessions shown, with the busiest region and the share off the board; and a list of recent sessions. A finished session opens its replay; an unfinished one goes back into the game or drill. An **Analysis** button by the title opens Analysis with Pro (and the Pro screen without).
+
+## Analysis
+
+Pro. From your tapped darts with a known aim (the checkout route, the drill's target, T20 otherwise), pooled across every game and drill; keypad darts have no landing point and are left out.
+
+- **Grouping and drift**, filtered by what the darts were aimed at (All, T20, Trebles, Doubles, Bull): a heatmap of where darts land around the aim with your average landing point and the circle half your darts fall inside, the drift ("Drift: 6 mm low and left", or no clear drift when it's under 3 mm or small next to your spread), and your grouping (σ, and the half-your-darts radius).
+- **Where to aim:** the personal aim map. Your scatter is fitted as a circle from at least 30 tapped darts (darts at the bull when there are enough); the board marks the aim point with the most expected points per dart, with T20 and the bullseye for comparison. A tight grouping is told T20 is the place.
+- **Trends:** the last 12 weeks of X01 average, doubles and trebles hit rates, and grouping, each with this week's figure.
+- **Your ghost:** a bot that throws like you did over the last month: drift, spread and their shape fitted from tapped darts, or from your 501 average when there aren't 60 of them. It shows what the ghost averages (and what you did) and starts 501 against it.
 
 ## Rules tab
 

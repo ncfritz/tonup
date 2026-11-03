@@ -32,5 +32,25 @@ v1 ships Bob's 27, Count Up and Around the Clock; the rest are Pro ([../features
 - **Target practice with zones:** score by distance from the aim point, not only the segment, so grouping shows improvement before hit rates move. Most useful with camera positions.
 - **Personal aim map** (Pro): from about 50 darts at the bull, estimate the player's scatter and show where to aim for the best expected score, per [A Statistician Plays Darts](https://www.stat.cmu.edu/~ryantibs/papers/darts.pdf) (Tibshirani, Price, Taylor).
 - **Checkout trainer** (Pro): flashcards for routes, then on the board, with a "why this route" note.
-- **Pressure mode** (idea): a bot sitting on a finish, so you must check out in one visit.
+- **Pressure mode** (Pro): a bot sitting on a finish, so you must check out in one visit.
 - **Streaks and weekly trends** to make solo practice sticky.
+
+## Rules in the app
+
+Chosen in M12 (`src/domain/drills`); confirm against your own practice before release.
+
+- **100 darts at T20:** exactly 100 darts; the score is trebles hit, with the 3-dart average alongside.
+- **Halve-It Sprint:** one visit each at 20, 19, 18, 17, any double, any treble and the bull; a blank visit halves the score (rounded up).
+- **Shanghai drill:** a visit at each number from 1 to 20, scored number × ring; a Shanghai is counted but doesn't end the drill.
+- **Bullseye:** 30 darts; either bull counts, bullseyes are shown too.
+- **Checkouts Practice:** three darts at each even double from D20 to D2; each hit scores the double's value.
+- **Doubles Lock:** D20 down to D1; a hit moves you down one, a visit with no hit sends you back to the last lock reached (D20, D15, D10, D5). Scored by darts; it stops at 300.
+- **Catch 40:** 61 to 100 with six darts each, double out with busts; 3 points in two darts, 2 in three, 1 in four to six.
+- **121:** ten tries of nine darts; a finish moves the target up one. The score is the highest target finished.
+- **Hubbe:** 101 to 130, one visit each, a point per finish.
+- **Random Checkout:** twenty finishes from 40 to 170 dealt at the start, one visit each.
+- **170 Practice:** T20, T20 and the bull in that order; scored by darts, stops at 150.
+- **JDC Challenge:** Shanghai on 10–15 (number × ring, 100 bonus for a Shanghai), one dart at each double and the bull (50 a hit), then Shanghai on 15–20.
+- **Pressure:** ten legs dealt from 41 to 130 with the bot waiting on a double; one visit to finish each. The score is legs won.
+- **Skill assessment:** ten visits at T20 (level by 3-dart average: under 30, 42, 55, 70), three darts at each of D20, D16, D10, D8, D18, D12, D4, D2 (level by hit rate: under 8%, 16%, 25%, 35%), and one visit at each of 32, 50, 61, 76, 87, 100 (level by finishes: 0, 1, 2, 3–4, 5–6). The score is the sum of the three levels.
+- **Adaptive plan:** the weakest level (ties go to doubles, then checkouts) picks two drills from that area, rotating daily (levels 1–2 stay with the easier three), after a warm-up from Around the Clock, Bullseye and Shanghai. The doubles named are the two lowest hit rates with at least six darts aimed at them in your last 30 sessions.

@@ -1,4 +1,4 @@
-import type { DartEvent } from '../darts';
+import type { DartEvent, Hit, Point, Target } from '../darts';
 import { x01, X01_DEFAULTS } from '../games/x01';
 
 import { throwAt } from './bot';
@@ -12,6 +12,14 @@ const MAX_DARTS = 300;
  * average (points scored per dart × 3, busts scoring nothing). Used to calibrate BOT_LEVELS.
  */
 export function simulateAverage(sigma: number, legs: number, rng: Rng): number {
+  return simulateWith((t) => throwAt(t, sigma, rng), legs);
+}
+
+/** The same, for any way of throwing a dart at a target (the ghost bot's fitted scatter). */
+export function simulateWith(
+  throwDart: (target: Target) => { point: Point; hit: Hit },
+  legs: number,
+): number {
   let points = 0;
   let darts = 0;
   const me = { id: 'bot', name: 'Bot' };
@@ -20,7 +28,7 @@ export function simulateAverage(sigma: number, legs: number, rng: Rng): number {
     let seq = 0;
     while (state.winner === null && seq < MAX_DARTS) {
       const target = x01.targetFor(state)!;
-      const { point, hit } = throwAt(target, sigma, rng);
+      const { point, hit } = throwDart(target);
       const event: DartEvent = {
         id: `${seq}`,
         sessionId: 'sim',

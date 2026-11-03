@@ -291,7 +291,18 @@
     "strokes": "Strokes",
     "strokesPerHole": "Strokes per hole",
     "goals": "Goals",
-    "squares": "Squares"
+    "squares": "Squares",
+    "trebles": "Trebles",
+    "bulls": "Bulls",
+    "bullseyes": "Bullseyes",
+    "fallBacks": "Fall-backs",
+    "finishes": "Finishes",
+    "finishRate": "Finish rate",
+    "dartsPerFinish": "Darts per finish",
+    "doublesHit": "Doubles hit",
+    "scoringLevel": "Scoring level",
+    "doublesLevel": "Doubles level",
+    "checkoutsLevel": "Checkouts level"
   },
   "ticTacToe": {
     "openA11y": "{number}, open",

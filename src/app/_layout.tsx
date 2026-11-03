@@ -60,6 +60,8 @@ export default function RootLayout() {
             <Stack.Screen name="rules/board" />
             <Stack.Screen name="rules/glossary" />
             <Stack.Screen name="pro" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="trainer" />
+            <Stack.Screen name="analysis" />
           </Stack>
           <ProSync />
         </Bootstrap>

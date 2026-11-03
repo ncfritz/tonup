@@ -6,12 +6,12 @@ import { View, type LayoutChangeEvent } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
 import { hitAt } from '@/domain/board';
+import { checkoutRoute } from '@/domain/checkout';
 import { drillFor, type DrillId } from '@/domain/drills';
 import { BULL, hitOf, label, miss, type Point } from '@/domain/darts';
-import { YOU_ID } from '@/features/game/lineup';
-import { startDrill } from '@/features/game/session';
 import { useGame } from '@/features/game/store';
 import { personalBest } from '@/features/practice/bests';
+import { startPractice } from '@/features/practice/start';
 import { DrillResult } from '@/features/practice/components/DrillResult';
 import { StepStrip } from '@/features/practice/components/StepStrip';
 import { haptics } from '@/services/haptics';
@@ -20,7 +20,16 @@ import { Board, Button, DartSlots, Header, Keypad, Screen, SegmentedControl, Tex
 type Input = 'buttons' | 'board' | 'keypad';
 
 /** Drills with one target per dart get big Hit and Miss buttons (docs/design/screens.md). */
-const HIT_MISS: DrillId[] = ['bobs27', 'clock'];
+const HIT_MISS: DrillId[] = [
+  'bobs27',
+  'clock',
+  'checkouts',
+  'doublesLock',
+  'oneSeventy',
+  'bullseye',
+];
+/** Drills whose rounds are visits. */
+const BY_VISIT: DrillId[] = ['countUp', 't20', 'bullseye'];
 
 /** A drill in progress (docs/design/screens.md → Drill in progress). */
 export default function DrillScreen() {
@@ -60,7 +69,7 @@ export default function DrillScreen() {
   const shown = current ?? last ?? null;
   const target = def.targetFor(state);
   const score = def.score(state);
-  const name = t(`drills.${drillId}.name`);
+  const name = t(`drills.${drillId}.name` as 'drills.bobs27.name');
 
   const throwHit = (
     point: Point | null,
@@ -82,18 +91,38 @@ export default function DrillScreen() {
   };
 
   const again = () => {
-    const id = startDrill(drillId, game.session.settings, { id: YOU_ID, name: tg('players.you') });
+    // Drills that deal (Random Checkout, Pressure) deal again.
+    const id = startPractice(drillId, tg('players.you'), game.session.settings);
     router.replace({ pathname: '/drill/[sessionId]', params: { sessionId: id } });
   };
 
+  const prompt = def.prompt?.(state) ?? null;
   const progress = view.round
-    ? t(drillId === 'countUp' ? 'drill.visit' : 'drill.round', {
+    ? t(BY_VISIT.includes(drillId) ? 'drill.visit' : 'drill.round', {
         n: view.round.n,
         of: view.round.of,
       })
     : target
       ? t('drill.target', { target: label(target) })
       : '';
+  const route =
+    prompt && prompt.kind !== 'part'
+      ? checkoutRoute(
+          prompt.remaining,
+          Math.min(3 - (current?.darts.length ?? 0), prompt.dartsLeft),
+        )
+      : null;
+  const promptText = !prompt
+    ? null
+    : prompt.kind === 'finish'
+      ? t('drill.finish', { remaining: prompt.remaining, dartsLeft: prompt.dartsLeft })
+      : prompt.kind === 'pressure'
+        ? `${t('drill.pressure', {
+            bot: tg('players.bot', { level: 4 }),
+            botOn: prompt.botOn,
+            remaining: prompt.remaining,
+          })} · ${t('drill.pressureLeft', { dartsLeft: prompt.dartsLeft })}`
+        : t('drill.part', { part: prompt.part, remaining: prompt.remaining ?? 0 });
   const gap = best ? Math.abs(score - best.score) : 0;
   const vsBest = !best
     ? t('drill.firstGo')
@@ -141,11 +170,21 @@ export default function DrillScreen() {
           <Text variant="score">{score}</Text>
         </View>
       </View>
+      {promptText ? (
+        <View style={styles.prompt} accessibilityLiveRegion="polite" testID="drill-prompt">
+          <Text variant="bodyStrong">{promptText}</Text>
+          {route ? (
+            <Text variant="value" tone="accent">
+              {t('drill.route', { route: route.map(label).join(' · ') })}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
       <StepStrip steps={def.steps(state)} />
       <DartSlots
         darts={(shown?.darts ?? []).map((d) => label(d.hit))}
         total={shown?.total ?? 0}
-        bust={false}
+        bust={!!shown?.bust}
       />
       {over ? null : (
         <SegmentedControl<Input>
@@ -246,6 +285,13 @@ const styles = StyleSheet.create((theme) => ({
   flex: { flex: 1 },
   top: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.m },
   scoreBox: { alignItems: 'flex-end' },
+  prompt: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.m,
+    paddingVertical: theme.spacing.s,
+    paddingHorizontal: theme.spacing.m,
+    gap: 2,
+  },
   input: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   keypad: { flex: 1, alignSelf: 'stretch' },
   bigButtons: {
