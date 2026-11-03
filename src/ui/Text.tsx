@@ -5,6 +5,22 @@ import type { TypeVariant } from '@/theme/tokens';
 
 type Tone = 'text' | 'muted' | 'accent' | 'onAccent' | 'danger' | 'onDanger';
 
+/**
+ * How far each style grows with Dynamic Type. Body text follows the setting up to double; the
+ * big display styles stop earlier so scores and headings still fit their rows (M15).
+ */
+const MAX_SCALE: Record<TypeVariant, number> = {
+  score: 1.3,
+  tab: 1.3,
+  heading: 1.4,
+  title: 1.5,
+  value: 1.5,
+  overline: 1.6,
+  body: 2,
+  bodyStrong: 2,
+  caption: 2,
+};
+
 export function Text({
   variant = 'body',
   tone = 'text',
@@ -13,11 +29,7 @@ export function Text({
 }: TextProps & { variant?: TypeVariant; tone?: Tone }) {
   styles.useVariants({ variant, tone });
   return (
-    <RNText
-      maxFontSizeMultiplier={variant === 'score' || variant === 'tab' ? 1.3 : undefined}
-      style={[styles.text, style]}
-      {...props}
-    />
+    <RNText maxFontSizeMultiplier={MAX_SCALE[variant]} style={[styles.text, style]} {...props} />
   );
 }
 

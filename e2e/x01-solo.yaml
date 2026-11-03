@@ -1,0 +1,33 @@
+# Maestro flow: a solo leg of 501 on the keypad, checked out in nine darts, to the summary.
+appId: app.tonup.ios
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'shortcut-all'
+- tapOn:
+    id: 'pick-x01'
+# The default lineup is You and DartBot 3: take the bot out.
+- tapOn:
+    id: 'remove-1'
+- tapOn:
+    id: 'start-game'
+- tapOn: 'Keypad'
+- repeat:
+    times: 6
+    commands:
+      - tapOn: 'Treble'
+      - tapOn:
+          id: 'key-T20'
+# 141: T20, T19, D12.
+- tapOn: 'Treble'
+- tapOn:
+    id: 'key-T20'
+- tapOn: 'Treble'
+- tapOn:
+    id: 'key-T19'
+- tapOn: 'Double'
+- tapOn:
+    id: 'key-D12'
+- assertVisible:
+    id: 'rematch'

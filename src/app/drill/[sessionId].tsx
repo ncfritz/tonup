@@ -15,7 +15,17 @@ import { startPractice } from '@/features/practice/start';
 import { DrillResult } from '@/features/practice/components/DrillResult';
 import { StepStrip } from '@/features/practice/components/StepStrip';
 import { haptics } from '@/services/haptics';
-import { Board, Button, DartSlots, Header, Keypad, Screen, SegmentedControl, Text } from '@/ui';
+import {
+  Board,
+  Button,
+  DartSlots,
+  Header,
+  Keypad,
+  Screen,
+  SegmentedControl,
+  Text,
+  useScreenReader,
+} from '@/ui';
 
 type Input = 'buttons' | 'board' | 'keypad';
 
@@ -48,7 +58,9 @@ export default function DrillScreen() {
   const drillId = game?.session.typeId as DrillId | undefined;
   const hitMiss = !!drillId && HIT_MISS.includes(drillId);
   const [input, setInput] = useState<Input | null>(null);
-  const mode: Input = input ?? (hitMiss ? 'buttons' : 'board');
+  // With VoiceOver on, Hit and Miss or the keypad come first: the board needs a finger on a point.
+  const screenReader = useScreenReader();
+  const mode: Input = input ?? (hitMiss ? 'buttons' : screenReader ? 'keypad' : 'board');
   // Your best before this go, fixed when the drill opens.
   const best = useMemo(
     () => (drillId ? personalBest(drillId, sessionId) : null),

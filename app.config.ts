@@ -25,6 +25,35 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
+    // Apple's privacy manifest (docs/release/privacy.md): no tracking and no data collected.
+    // The required-reason APIs are the ones React Native, Expo and SQLite use on the phone.
+    privacyManifests: {
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+      NSPrivacyCollectedDataTypes: [],
+      NSPrivacyAccessedAPITypes: [
+        {
+          // Settings and app state in UserDefaults (React Native, Expo modules).
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+        },
+        {
+          // File timestamps for the database, caches and exported files.
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+        },
+        {
+          // Time since boot for measuring elapsed time (React Native).
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+        {
+          // Free disk space before writing files (Expo file system).
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+          NSPrivacyAccessedAPITypeReasons: ['E174.1'],
+        },
+      ],
+    },
   },
   plugins: [
     'expo-router',

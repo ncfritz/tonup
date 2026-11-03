@@ -73,7 +73,7 @@ export default function Checkouts() {
 
 const styles = StyleSheet.create((theme) => ({
   search: {
-    height: 44,
+    minHeight: 44,
     borderRadius: theme.radii.m,
     paddingHorizontal: theme.spacing.m,
     backgroundColor: theme.colors.surface,

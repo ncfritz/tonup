@@ -51,12 +51,14 @@ export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disable
       <View style={styles.grid}>
         {NUMBERS.map((n) => {
           const name = mult === 3 ? `T${n}` : mult === 2 ? `D${n}` : `${n}`;
+          // Spoken in full: "Treble 20", not "T 20".
+          const spoken = t('keypad.keyA11y', { ring: mult, n });
           return (
             <Pressable
               key={n}
               disabled={disabled}
               accessibilityRole="button"
-              accessibilityLabel={name}
+              accessibilityLabel={spoken}
               testID={`key-${name}`}
               style={({ pressed }) => [styles.key, pressed && styles.pressed]}
               onPress={() => enter(hitOf(n, mult))}
@@ -70,6 +72,7 @@ export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disable
         <Pressable
           disabled={disabled}
           accessibilityRole="button"
+          accessibilityLabel={t('keypad.outerBullA11y')}
           testID="key-25"
           style={({ pressed }) => [styles.bull, pressed && styles.pressed]}
           onPress={() => enter(hitOf(BULL, 1))}
@@ -79,6 +82,7 @@ export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disable
         <Pressable
           disabled={disabled}
           accessibilityRole="button"
+          accessibilityLabel={t('keypad.bullA11y')}
           testID="key-Bull"
           style={({ pressed }) => [styles.bull, pressed && styles.pressed]}
           onPress={() => enter(hitOf(BULL, 2))}
@@ -95,7 +99,7 @@ const styles = StyleSheet.create((theme) => ({
   row: { flexDirection: 'row', gap: 6 },
   ring: {
     flex: 1,
-    height: 44,
+    minHeight: 44,
     borderRadius: theme.radii.s,
     backgroundColor: theme.colors.surface,
     alignItems: 'center',
@@ -114,7 +118,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   bull: {
     flex: 1,
-    height: 48,
+    minHeight: 48,
     borderRadius: theme.radii.s,
     backgroundColor: theme.colors.surface,
     alignItems: 'center',

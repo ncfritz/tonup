@@ -13,12 +13,14 @@ import { setSettingsPersistence, useSettings } from '@/features/settings/store';
 import { initI18n } from '@/i18n';
 import { DatabaseProvider } from '@/services/db/DatabaseProvider';
 import { readAllSettings, writeSetting } from '@/services/db/settingsRepo';
-import { log, pruneLog } from '@/services/diagnostics';
+import { installErrorLogging, log, pruneLog } from '@/services/diagnostics';
 import { FONT_ASSETS } from '@/theme/fonts';
 import { ThemeSync } from '@/theme/ThemeSync';
 import { Button, Screen, Text } from '@/ui';
 
 SplashScreen.preventAutoHideAsync();
+// Uncaught errors go to the local diagnostics log, for Report a problem.
+installErrorLogging();
 // Synchronous with bundled resources, so screens can translate on first render.
 initI18n();
 

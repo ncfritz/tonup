@@ -1,0 +1,25 @@
+# Maestro flow: Quick start against the bot; the bot throws its visit after yours, then undo.
+appId: app.tonup.ios
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'quick-start'
+- tapOn: 'Keypad'
+- tapOn: 'Treble'
+- tapOn:
+    id: 'key-T20'
+- tapOn:
+    id: 'miss'
+- tapOn:
+    id: 'miss'
+# The bot's three darts land on their own.
+- extendedWaitUntil:
+    visible: 'Keypad'
+    timeout: 10000
+- tapOn:
+    id: 'undo'
+- tapOn:
+    id: 'header-back'
+- assertVisible:
+    id: 'resume-game'

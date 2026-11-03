@@ -87,7 +87,7 @@ const styles = StyleSheet.create((theme) => ({
   name: { flex: 1 },
   dart: {
     minWidth: 56,
-    height: 40,
+    minHeight: 40,
     borderRadius: theme.radii.s,
     backgroundColor: theme.colors.surface2,
     alignItems: 'center',

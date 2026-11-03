@@ -120,3 +120,16 @@ describe('the scoring screen', () => {
     expect(loadDarts(id)[0]).toMatchObject({ corrected: true, hit: { score: 19 } });
   });
 });
+
+describe('with VoiceOver', () => {
+  it('opens on the keypad, with keys spoken in full', async () => {
+    const { AccessibilityInfo } = jest.requireActual<typeof import('react-native')>('react-native');
+    const spy = jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
+    const id = startX01(X01_DEFAULTS, [YOU]);
+    await open(id);
+    await fireEvent.press(screen.getByText('Treble'));
+    expect(screen.getByLabelText('Treble 20')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Bullseye, 50')).toBeOnTheScreen();
+    spy.mockRestore();
+  });
+});

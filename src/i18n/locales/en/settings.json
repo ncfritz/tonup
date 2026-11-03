@@ -77,5 +77,22 @@
   "about": {
     "version": "Version",
     "versionValue": "{version} ({build})"
+  },
+  "report": {
+    "title": "Report a problem",
+    "rowNote": "Write what happened and send a report",
+    "intro": "Describe what happened. The report is a text file you send yourself, by email to {email} or however you like; Ton Up never sends anything.",
+    "noteLabel": "What happened",
+    "notePlaceholder": "What you were doing, what you expected, what happened instead",
+    "includes": "The report includes",
+    "include1": "The app's version and your iOS version",
+    "include2": "Your settings and whether Pro is unlocked",
+    "include3": "How many games and darts are stored (not the games themselves, and no player names)",
+    "include4": "The app's own log from this phone: errors, purchases, backups ({n} entries)",
+    "preview": "See the report",
+    "hide": "Hide the report",
+    "send": "Send report",
+    "sendA11y": "Send report through the share sheet",
+    "close": "Settings"
   }
 }

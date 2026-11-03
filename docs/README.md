@@ -22,6 +22,9 @@ These docs start high level and get more specific as decisions are made. Each de
 | [design/themes.md](design/themes.md)                     | The five themes, light and dark, and their tokens                                     |
 | [design/screens.md](design/screens.md)                   | Navigation and screen-by-screen notes for v1                                          |
 | [design/mockups/](design/mockups/README.md)              | Reference copy of the design canvas source                                            |
+| [release/app-store.md](release/app-store.md)             | App Store listing, in-app purchase and screenshots                                    |
+| [release/privacy.md](release/privacy.md)                 | Privacy label, privacy manifest, policy text and what a problem report holds          |
+| [release/testflight.md](release/testflight.md)           | Building, uploading and testing a TestFlight build, and the accessibility pass        |
 
 ## Research and mockups
 

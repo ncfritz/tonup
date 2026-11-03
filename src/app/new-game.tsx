@@ -570,6 +570,7 @@ function PlayerRow({
           label="×"
           a11y={t('newGame.remove', { name: player.name })}
           onPress={onRemove}
+          testID={`remove-${index}`}
         />
       ) : null}
     </View>
@@ -580,15 +581,18 @@ function SmallButton({
   label,
   a11y,
   onPress,
+  testID,
 }: {
   label: string;
   a11y: string;
   onPress: () => void;
+  testID?: string;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={a11y}
+      testID={testID}
       style={({ pressed }) => [styles.small, pressed && styles.pressed]}
       onPress={onPress}
     >

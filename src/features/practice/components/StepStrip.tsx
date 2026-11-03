@@ -18,7 +18,11 @@ export function StepStrip({ steps }: { steps: DrillStep[] }) {
           accessibilityLabel={t('drill.stepA11y', { label: s.label, state: s.state })}
         >
           {steps.length <= 12 ? (
-            <Text variant="caption" tone={s.state === 'done' ? 'onAccent' : 'muted'}>
+            <Text
+              variant="caption"
+              tone={s.state === 'done' ? 'onAccent' : 'muted'}
+              maxFontSizeMultiplier={1.2}
+            >
               {s.value ?? s.label}
             </Text>
           ) : null}

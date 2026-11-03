@@ -1,0 +1,23 @@
+# Maestro flow: Bob's 27 with the Hit and Miss buttons, then back to Practice.
+appId: app.tonup.ios
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'tab-practice'
+- tapOn:
+    id: 'drill-bobs27'
+- tapOn:
+    id: 'drill-hit'
+- tapOn:
+    id: 'drill-miss'
+- tapOn:
+    id: 'drill-miss'
+- assertVisible: 'Round 2 of 21'
+- tapOn:
+    id: 'header-back'
+# Pro drills are locked without Pro and open the Pro screen.
+- tapOn:
+    id: 'drill-catch40'
+- assertVisible:
+    id: 'buy-pro'

@@ -1,7 +1,7 @@
-import { desc, lt } from 'drizzle-orm';
+import { count, desc, lt } from 'drizzle-orm';
 
 import { db } from '@/services/db/client';
-import { diagnosticsLog } from '@/services/db/schema';
+import { darts, diagnosticsLog, sessions } from '@/services/db/schema';
 
 type Level = 'error' | 'warn' | 'info';
 
@@ -39,4 +39,51 @@ export function pruneLog() {
     .all();
   const cutoff = rows[0]?.id;
   if (cutoff !== undefined) db.delete(diagnosticsLog).where(lt(diagnosticsLog.id, cutoff)).run();
+}
+
+export interface LogRow {
+  createdAt: number;
+  level: Level;
+  message: string;
+  context: string | null;
+}
+
+/** The newest log rows, newest first, for Report a problem. */
+export function recentLog(limit = 100): LogRow[] {
+  return db
+    .select({
+      createdAt: diagnosticsLog.createdAt,
+      level: diagnosticsLog.level,
+      message: diagnosticsLog.message,
+      context: diagnosticsLog.context,
+    })
+    .from(diagnosticsLog)
+    .orderBy(desc(diagnosticsLog.id))
+    .limit(limit)
+    .all();
+}
+
+/** How much is stored: sessions and darts, for Report a problem. */
+export function storedCounts(): { sessions: number; darts: number } {
+  const s = db.select({ n: count() }).from(sessions).get()?.n ?? 0;
+  const d = db.select({ n: count() }).from(darts).get()?.n ?? 0;
+  return { sessions: s, darts: d };
+}
+
+type ErrorHandler = (error: unknown, isFatal?: boolean) => void;
+declare const ErrorUtils:
+  { getGlobalHandler(): ErrorHandler; setGlobalHandler(h: ErrorHandler): void } | undefined;
+
+/** Logs uncaught JavaScript errors before React Native's own handler runs. */
+export function installErrorLogging() {
+  if (typeof ErrorUtils === 'undefined') return;
+  const previous = ErrorUtils.getGlobalHandler();
+  ErrorUtils.setGlobalHandler((error, isFatal) => {
+    const e = error instanceof Error ? error : new Error(String(error));
+    log('error', isFatal ? 'Fatal error' : 'Uncaught error', {
+      message: e.message,
+      stack: e.stack?.split('\n').slice(0, 8).join('\n'),
+    });
+    previous(error, isFatal);
+  });
 }

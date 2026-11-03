@@ -120,7 +120,7 @@ export default function Rules() {
 
 const styles = StyleSheet.create((theme) => ({
   search: {
-    height: 44,
+    minHeight: 44,
     borderRadius: theme.radii.m,
     paddingHorizontal: theme.spacing.m,
     backgroundColor: theme.colors.surface,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create((theme) => ({
   quick: { flexDirection: 'row', gap: theme.spacing.s },
   quickButton: {
     flex: 1,
-    height: 48,
+    minHeight: 48,
     borderRadius: theme.radii.m,
     backgroundColor: theme.colors.surface,
     alignItems: 'center',
@@ -146,7 +146,7 @@ const styles = StyleSheet.create((theme) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
-    height: 36,
+    minHeight: 36,
     paddingHorizontal: theme.spacing.m,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface,

@@ -29,6 +29,7 @@ import {
   SegmentedControl,
   Text,
   type BoardMarker,
+  useScreenReader,
 } from '@/ui';
 
 type Input = 'board' | 'keypad';
@@ -39,7 +40,10 @@ export default function GameScreen() {
   const { t } = useTranslation('game');
   const game = useGame((s) => s.game);
   const legPause = useGame((s) => s.legPause);
-  const [input, setInput] = useState<Input>(() => useSettings.getState().defaultInput);
+  // With VoiceOver on, the keypad comes first: the board needs a finger on a point.
+  const screenReader = useScreenReader();
+  const [chosen, setInput] = useState<Input | null>(null);
+  const input: Input = chosen ?? (screenReader ? 'keypad' : useSettings.getState().defaultInput);
   const [editing, setEditing] = useState<{ dart: DartEvent; n: number } | null>(null);
   const [visitsOpen, setVisitsOpen] = useState(false);
   const [area, setArea] = useState({ w: 0, h: 0 });
@@ -171,8 +175,14 @@ export default function GameScreen() {
               size={boardSize}
               markers={markers}
               onDart={humanTurn ? (p) => throwHit(p, 'tap') : undefined}
-              accessibilityLabel={t('board.a11y')}
-              accessibilityHint={t('board.hint')}
+              accessibilityLabel={
+                markers.length
+                  ? t('board.a11yDarts', {
+                      darts: (shown?.darts ?? []).map((d) => label(d.hit)).join(', '),
+                    })
+                  : t('board.a11y')
+              }
+              accessibilityHint={screenReader ? t('board.screenReaderHint') : t('board.hint')}
             />
           ) : null
         ) : (
@@ -244,7 +254,7 @@ const styles = StyleSheet.create((theme) => ({
   actions: { flexDirection: 'row', gap: theme.spacing.s },
   flex: { flex: 1 },
   visitsButton: {
-    height: 44,
+    minHeight: 44,
     paddingHorizontal: theme.spacing.m,
     borderRadius: theme.radii.m,
     backgroundColor: theme.colors.surface,

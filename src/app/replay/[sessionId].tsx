@@ -230,7 +230,7 @@ const styles = StyleSheet.create((theme) => ({
   flex: { flex: 1 },
   legRow: { gap: theme.spacing.s },
   legChip: {
-    height: 36,
+    minHeight: 36,
     paddingHorizontal: theme.spacing.m,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface,

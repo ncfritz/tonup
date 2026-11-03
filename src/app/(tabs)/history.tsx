@@ -303,7 +303,7 @@ const styles = StyleSheet.create((theme) => ({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.xs },
   chip: {
     paddingHorizontal: theme.spacing.m,
-    height: 30,
+    minHeight: 30,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface2,
     justifyContent: 'center',

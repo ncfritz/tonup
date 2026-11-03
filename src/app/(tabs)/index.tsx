@@ -57,9 +57,14 @@ export default function Play() {
             key={g}
             label={tg(`home.shortcut.${g}`)}
             onPress={() => router.push({ pathname: '/new-game', params: { game: g } })}
+            testID={`shortcut-${g}`}
           />
         ))}
-        <Shortcut label={tg('home.allGames')} onPress={() => router.push('/new-game')} />
+        <Shortcut
+          label={tg('home.allGames')}
+          onPress={() => router.push('/new-game')}
+          testID="shortcut-all"
+        />
       </View>
       <Text variant="overline" tone="muted">
         {tg('home.pickUp')}
@@ -161,12 +166,21 @@ function QuickStart() {
   );
 }
 
-function Shortcut({ label, onPress }: { label: string; onPress: () => void }) {
+function Shortcut({
+  label,
+  onPress,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  testID?: string;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
       style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}
       onPress={onPress}
+      testID={testID}
     >
       <Text variant="value">{label}</Text>
     </Pressable>
@@ -400,7 +414,7 @@ const styles = StyleSheet.create((theme) => ({
   quickRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.m },
   quickTitle: { fontSize: 28, lineHeight: 30 },
   start: {
-    height: 52,
+    minHeight: 52,
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.radii.m,
     backgroundColor: theme.colors.accent,
@@ -410,7 +424,7 @@ const styles = StyleSheet.create((theme) => ({
   shortcuts: { flexDirection: 'row', gap: theme.spacing.s },
   shortcut: {
     flex: 1,
-    height: 52,
+    minHeight: 52,
     borderRadius: theme.radii.m,
     backgroundColor: theme.colors.surface,
     alignItems: 'center',
@@ -418,7 +432,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   actions: { flexDirection: 'row', gap: theme.spacing.s, marginTop: theme.spacing.xs },
   link: {
-    height: 36,
+    minHeight: 36,
     paddingHorizontal: theme.spacing.m,
     borderRadius: theme.radii.s,
     backgroundColor: theme.colors.surface2,

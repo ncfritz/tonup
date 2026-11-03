@@ -82,7 +82,9 @@
   },
   "board": {
     "a11y": "Dartboard",
-    "hint": "Tap where your dart landed, or hold and drag to place it precisely. Switch to Keypad to enter scores without the board."
+    "hint": "Tap where your dart landed, or hold and drag to place it precisely. Switch to Keypad to enter scores without the board.",
+    "a11yDarts": "Dartboard. This visit: {darts}",
+    "screenReaderHint": "With VoiceOver, enter darts with the keypad."
   },
   "keypad": {
     "ring": "Ring",
@@ -90,7 +92,10 @@
     "double": "Double",
     "treble": "Treble",
     "outerBull": "Outer bull 25",
-    "bull": "Bull 50"
+    "bull": "Bull 50",
+    "keyA11y": "{ring, select, 3 {Treble} 2 {Double} other {Single}} {n}",
+    "outerBullA11y": "Outer bull, 25",
+    "bullA11y": "Bullseye, 50"
   },
   "scoreboard": {
     "rowA11y": "{name}, {score} left, {legs, plural, one {# leg} other {# legs}}{showSets, select, yes {, {sets, plural, one {# set} other {# sets}}} other {}}"

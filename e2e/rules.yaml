@@ -1,0 +1,17 @@
+# Maestro flow: search the rules, open a game's page and play it from there.
+appId: app.tonup.ios
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'tab-rules'
+- tapOn:
+    id: 'rules-search'
+- inputText: 'cut'
+- tapOn:
+    id: 'rules-cutThroat'
+- assertVisible: 'How to play'
+- tapOn:
+    id: 'rules-play'
+- assertVisible:
+    id: 'start-game'

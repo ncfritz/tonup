@@ -134,6 +134,12 @@ export default function Settings() {
       </Section>
       <Section label={t('sections.about')}>
         <ListRow label={t('about.version')} value={t('about.versionValue', { version, build })} />
+        <ListRow
+          label={t('report.title')}
+          note={t('report.rowNote')}
+          onPress={() => router.push('/settings/report')}
+          testID="settings-report"
+        />
       </Section>
       {__DEV__ ? <DevMenu /> : null}
     </Screen>
@@ -144,7 +150,7 @@ const styles = StyleSheet.create((theme) => ({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.xs },
   chip: {
     minWidth: 52,
-    height: 40,
+    minHeight: 40,
     paddingHorizontal: theme.spacing.m,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.surface,

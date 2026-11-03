@@ -67,7 +67,12 @@ Search (games and glossary terms); quick links to Checkouts, Board setup and Glo
 
 ## Settings
 
-Appearance (theme and mode; opens the theme picker: System, Light or Dark, and the five themes with a preview swatch each, Pro selectable and the other four locked with "Ton Up Pro"). Playing: caller on or off, haptics, whether scoring opens on the board or the keypad, and a favourite double for checkout routes (none, D20, D16, D18, D12, D10, D8 or the bull), which new X01 games take. Your data: export everything as a backup file through the share sheet, export games as CSV, and import a backup from Files (games already on the phone are kept; a newer or damaged file is refused with a reason), with a line saying nothing leaves the phone. About: version and build. A Ton Up Pro row at the top opens the Pro screen.
+Appearance (theme and mode; opens the theme picker: System, Light or Dark, and the five themes with a preview swatch in each theme's own colours and font, Pro selectable and the other four locked with "Ton Up Pro" until Pro is owned). Playing: caller on or off, haptics, whether scoring opens on the board or the keypad, and a favourite double for checkout routes (none, D20, D16, D18, D12, D10, D8 or the bull), which new X01 games take. Your data: export everything as a backup file through the share sheet, export games as CSV, and import a backup from Files (games already on the phone are kept; a newer or damaged file is refused with a reason), with a line saying nothing leaves the phone. About: version and build, and **Report a problem**: a box to describe what happened, a list of what the report includes, a preview of the whole report, and Send, which opens the share sheet with a text file (Mail to support@tonup.app, or anywhere). A Ton Up Pro row at the top opens the Pro screen.
+
+## Accessibility
+
+- With VoiceOver on, scoring and drills open on the keypad (or Hit and Miss), since the board needs a finger on a point; the board says which darts are on it and points to the keypad. Keypad keys are read in full ("Treble 20", "Bullseye, 50").
+- Dynamic Type: body text grows up to double; display styles stop earlier (score 1.3×, heading 1.4×, title and value 1.5×, overline 1.6×) so scores still fit. Rows and buttons with text grow with it.
 
 ## Pro upgrade
 

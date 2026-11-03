@@ -1,0 +1,30 @@
+# Maestro flow: Appearance, a locked Pro theme, and Report a problem's preview.
+appId: app.tonup.ios
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'tab-settings'
+- tapOn:
+    id: 'settings-appearance'
+- tapOn: 'Dark'
+- tapOn:
+    id: 'theme-arcade'
+- assertVisible:
+    id: 'buy-pro'
+- tapOn:
+    id: 'header-back'
+- tapOn:
+    id: 'header-back'
+- scrollUntilVisible:
+    element:
+      id: 'settings-report'
+- tapOn:
+    id: 'settings-report'
+- tapOn:
+    id: 'report-note'
+- inputText: 'Maestro test'
+- tapOn:
+    id: 'report-preview'
+- assertVisible:
+    id: 'report-text'
