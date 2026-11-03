@@ -3,14 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { useColorScheme, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { canUseTheme } from '@/domain/pro';
+import { useProOwned } from '@/features/pro/pro';
 import { useSettings, type AppearanceSetting } from '@/features/settings/store';
 import previews from '@/theme/previews.json';
 import { Header, Icon, Pressable, Screen, Section, SegmentedControl, Text } from '@/ui';
 
 type PreviewId = keyof typeof previews;
 const ORDER: PreviewId[] = ['pro', 'chalkboard', 'arcade', 'heritage', 'training'];
-/** Themes with palettes in the app; the rest arrive with Ton Up Pro (ADR 0009, M14). */
-const AVAILABLE = new Set<PreviewId>(['pro']);
+/** Themes with palettes so far; the other four are Pro and arrive in M14. */
+const BUILT = new Set<PreviewId>(['pro']);
 
 /** Settings › Appearance (docs/design/screens.md; the canvas's theme picker). */
 export default function Appearance() {
@@ -19,6 +21,7 @@ export default function Appearance() {
   const appearance = useSettings((s) => s.appearance);
   const current = useSettings((s) => s.theme);
   const set = useSettings((s) => s.set);
+  const proOwned = useProOwned();
   const system = useColorScheme();
   const mode = appearance === 'system' ? (system === 'light' ? 'light' : 'dark') : appearance;
 
@@ -44,18 +47,19 @@ export default function Appearance() {
         {ORDER.map((id) => {
           const p = previews[id][mode];
           const name = t(`appearance.themes.${id}.name`);
-          const open = AVAILABLE.has(id);
+          const unlocked = canUseTheme(id, proOwned);
+          const open = unlocked && BUILT.has(id);
           const selected = current === id;
           return (
             <Pressable
               key={id}
               accessibilityRole="radio"
-              accessibilityState={{ selected, disabled: !open }}
-              accessibilityLabel={open ? name : t('appearance.lockedA11y', { name })}
+              accessibilityState={{ selected, disabled: unlocked && !open }}
+              accessibilityLabel={unlocked ? name : t('appearance.lockedA11y', { name })}
               accessibilityHint={t(`appearance.themes.${id}.blurb`)}
-              disabled={!open}
+              disabled={unlocked && !open}
               style={[styles.row, selected && styles.rowOn]}
-              onPress={() => open && set('theme', id as 'pro')}
+              onPress={() => (open ? set('theme', id as 'pro') : router.push('/pro'))}
               testID={`theme-${id}`}
             >
               {/* A swatch drawn in the theme's own colours (data, not this theme's tokens). */}
@@ -75,7 +79,11 @@ export default function Appearance() {
               </View>
               {selected ? (
                 <Icon name="check" color={theme.colors.accent} />
-              ) : open ? null : (
+              ) : open ? null : unlocked ? (
+                <Text variant="caption" tone="muted">
+                  {t('appearance.soon')}
+                </Text>
+              ) : (
                 <View style={styles.lock}>
                   <Icon name="lock" color={theme.colors.muted} size={16} />
                   <Text variant="caption" tone="muted">

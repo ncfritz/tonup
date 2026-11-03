@@ -2,7 +2,7 @@
 
 Status key: **v1** = planned for the first release · **Pro** = v1, behind the one-time Ton Up Pro upgrade (ADR 0009) · **Pro, later** = part of Pro, shipping in an update after v1 · **Later** = agreed direction, not scheduled · **Idea** = worth exploring.
 
-The app is a $9.99 paid download; Ton Up Pro is a one-time $9.99 or $19.99 upgrade (price to decide). Pro unlocks the other games, practice modes and themes, the analysis features, and camera scoring when it ships.
+The app is a $9.99 paid download; Ton Up Pro is a one-time $19.99 upgrade. Pro unlocks the other games, practice modes and themes, the analysis features, and camera scoring when it ships.
 
 The bet: the best darts coach on iPhone, built on per-dart positions, offline-first, with a one-time price. Camera scoring is the input that will make coaching effortless, not the headline (see [research/competitors.md](research/competitors.md)).
 
@@ -85,5 +85,4 @@ The bet: the best darts coach on iPhone, built on per-dart positions, offline-fi
 
 ## Open questions
 
-- Pro price: $9.99 or $19.99?
 - Default theme on first launch: Pro is the only base theme, so Pro dark (or following the system) is assumed.

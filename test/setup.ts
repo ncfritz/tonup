@@ -32,3 +32,15 @@ jest.mock('@/services/db/client', () => ({ db: {}, sqlite: {}, DATABASE_NAME: 't
 // Native modules with nothing to do in tests.
 jest.mock('expo-speech', () => ({ speak: jest.fn(), stop: jest.fn() }));
 jest.mock('expo-keep-awake', () => ({ useKeepAwake: () => {} }));
+
+// StoreKit isn't available in tests: no products, nothing owned (src/services/purchases).
+jest.mock('expo-iap', () => ({
+  initConnection: async () => true,
+  endConnection: async () => true,
+  fetchProducts: async () => [],
+  getAvailablePurchases: async () => [],
+  requestPurchase: async () => null,
+  finishTransaction: async () => undefined,
+  restorePurchases: async () => undefined,
+  purchaseUpdatedListener: () => ({ remove: () => {} }),
+}));

@@ -1,6 +1,6 @@
 # 0009: Paid app; Ton Up Pro holds the extra games, drills, themes, analysis and camera scoring
 
-- Status: Accepted (Pro price still open: $9.99 or $19.99)
+- Status: Accepted; Pro price set at $19.99 on 2026-11-02 (the open point below)
 - Date: 2026-11-02
 - Amends: [0004](0004-pricing-and-pro.md) (settles the paid-vs-free question and Pro's contents)
 
@@ -11,7 +11,7 @@ ADR 0004 set a $9.99 app with a one-time Pro upgrade but left open whether the d
 ## Decision
 
 1. **Paid download** at $9.99. No free tier.
-2. **Ton Up Pro** is a one-time non-consumable in-app purchase at **$9.99 or $19.99** (to decide before App Store setup; product ID `app.tonup.pro`).
+2. **Ton Up Pro** is a one-time non-consumable in-app purchase at **$9.99 or $19.99** (to decide before App Store setup; product ID `app.tonup.pro`). _Settled 2026-11-02: $19.99, Family Sharing on._
 3. **Base app:** X01, Cricket (Standard, Cut-Throat), Around the Clock, Shanghai, Killer; pass-and-play and the five bot levels; tap and keypad input; Bob's 27, Count Up and the Around the Clock drill; averages, checkout %, history, replay and the board heatmap; rules for every game; the Pro theme in light and dark.
 4. **Pro unlocks:**
    - every other game (the remaining 21 in [../../data/game-rules.md](../../data/game-rules.md));

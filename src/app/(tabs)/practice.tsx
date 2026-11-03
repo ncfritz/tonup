@@ -8,6 +8,7 @@ import { drills, type DrillId, type Skill } from '@/domain/drills';
 import { YOU_ID } from '@/features/game/lineup';
 import { startDrill } from '@/features/game/session';
 import { allBests, suggestedDrill, type DrillScore } from '@/features/practice/bests';
+import { useProOwned } from '@/features/pro/pro';
 import { useSettings } from '@/features/settings/store';
 import { Button, Icon, Pressable, Screen, Section, Text } from '@/ui';
 
@@ -25,6 +26,7 @@ export default function Practice() {
   const { t: tg } = useTranslation('game');
   const { theme } = useUnistyles();
   const saved = useSettings((s) => s.gameSettings);
+  const proOwned = useProOwned();
   const [bests, setBests] = useState<Partial<Record<DrillId, DrillScore>>>({});
   const [suggested, setSuggested] = useState<ReturnType<typeof suggestedDrill> | null>(null);
   useFocusEffect(
@@ -93,21 +95,25 @@ export default function Practice() {
             ))}
           {PRO[skill].map((key) => {
             const name = t(`pro.${key}` as 'pro.t20');
+            // With Pro owned these arrive in an update (M12); until then they open Pro.
             return (
-              <View
+              <Pressable
                 key={key}
-                style={[styles.row, styles.locked]}
-                accessible
-                accessibilityLabel={t('pro.lockedA11y', { name })}
+                disabled={proOwned}
+                accessibilityRole="button"
+                accessibilityLabel={proOwned ? name : t('pro.lockedA11y', { name })}
+                style={({ pressed }) => [styles.row, styles.locked, pressed && styles.pressed]}
+                onPress={() => router.push('/pro')}
+                testID={`pro-drill-${key}`}
               >
                 <Text variant="bodyStrong" style={styles.flex} tone="muted">
                   {name}
                 </Text>
-                <Icon name="lock" color={theme.colors.muted} size={16} />
+                {proOwned ? null : <Icon name="lock" color={theme.colors.muted} size={16} />}
                 <Text variant="caption" tone="muted">
-                  {t('pro.locked')}
+                  {proOwned ? t('pro.soon') : t('pro.locked')}
                 </Text>
-              </View>
+              </Pressable>
             );
           })}
         </Section>

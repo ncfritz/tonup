@@ -30,6 +30,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-router',
     'expo-font',
     'expo-sqlite',
+    // StoreKit 2 for Ton Up Pro (ADR 0009); the plugin adds the OpenIAP pod's source.
+    'expo-iap',
+    // Xcode runs buy Pro against storekit/TonUp.storekit.
+    './plugins/with-storekit-config',
     ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
     [
       'expo-splash-screen',

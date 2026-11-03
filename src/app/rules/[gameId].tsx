@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import { rulesEntry, useRulesT } from '@/content/rules';
 import { YOU_ID } from '@/features/game/lineup';
+import { useProOwned } from '@/features/pro/pro';
 import { startDrill } from '@/features/game/session';
 import { COUNT_UP_DEFAULTS } from '@/domain/drills';
 import { Button, Header, Screen, Section, Text } from '@/ui';
@@ -15,6 +16,7 @@ export default function RulesPage() {
   const { t, list } = useRulesT();
   const { t: tg } = useTranslation('game');
   const entry = rulesEntry(gameId);
+  const proOwned = useProOwned();
   if (!entry) {
     return (
       <Screen edges={['top', 'bottom']}>
@@ -75,11 +77,19 @@ export default function RulesPage() {
           testID="rules-play"
         />
       ) : (
-        <View style={styles.locked} accessible>
+        <View style={styles.locked}>
           <Text variant="bodyStrong">{t('page.locked')}</Text>
           <Text variant="caption" tone="muted">
-            {t('page.lockedBody')}
+            {proOwned ? t('page.soon') : t('page.lockedBody')}
           </Text>
+          {proOwned ? null : (
+            <Button
+              kind="secondary"
+              label={t('page.seePro')}
+              onPress={() => router.push('/pro')}
+              testID="see-pro"
+            />
+          )}
         </View>
       )}
     </Screen>

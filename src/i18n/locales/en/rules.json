@@ -27,7 +27,9 @@
     "play": "Play {name}",
     "practise": "Practise {name}",
     "locked": "Part of Ton Up Pro",
-    "lockedBody": "You can read the rules now. Playing it comes with Ton Up Pro."
+    "lockedBody": "You can read the rules now. Playing it comes with Ton Up Pro.",
+    "soon": "Coming in an update. Pro includes it.",
+    "seePro": "See Ton Up Pro"
   },
   "games": {
     "x01": {
@@ -361,20 +363,50 @@
   "glossary": {
     "title": "Glossary",
     "terms": [
-      { "term": "Oche", "def": "The throw line. Your toes stay behind it." },
-      { "term": "Visit", "def": "One turn: three darts." },
-      { "term": "Leg", "def": "One game of 501 or another X01, from the start score to zero." },
-      { "term": "Set", "def": "A group of legs; win enough legs to win the set." },
+      {
+        "term": "Oche",
+        "def": "The throw line. Your toes stay behind it."
+      },
+      {
+        "term": "Visit",
+        "def": "One turn: three darts."
+      },
+      {
+        "term": "Leg",
+        "def": "One game of 501 or another X01, from the start score to zero."
+      },
+      {
+        "term": "Set",
+        "def": "A group of legs; win enough legs to win the set."
+      },
       {
         "term": "Bust",
         "def": "In X01, going below zero, leaving 1 or reaching zero without a double. The visit counts for nothing."
       },
-      { "term": "Checkout", "def": "The darts that finish a leg, ending on a double." },
-      { "term": "Ton", "def": "A visit of 100 or more." },
-      { "term": "Ton-80", "def": "180, the most three darts can score: three treble 20s." },
-      { "term": "Madhouse", "def": "Double 1, the lowest finish." },
-      { "term": "Bed", "def": "A segment of the board, such as the treble 20 bed." },
-      { "term": "Shanghai", "def": "A single, double and treble of the same number in one visit." },
+      {
+        "term": "Checkout",
+        "def": "The darts that finish a leg, ending on a double."
+      },
+      {
+        "term": "Ton",
+        "def": "A visit of 100 or more."
+      },
+      {
+        "term": "Ton-80",
+        "def": "180, the most three darts can score: three treble 20s."
+      },
+      {
+        "term": "Madhouse",
+        "def": "Double 1, the lowest finish."
+      },
+      {
+        "term": "Bed",
+        "def": "A segment of the board, such as the treble 20 bed."
+      },
+      {
+        "term": "Shanghai",
+        "def": "A single, double and treble of the same number in one visit."
+      },
       {
         "term": "Bogey number",
         "def": "A score with no three-dart finish: 159, 162, 163, 165, 166, 168 and 169."
@@ -383,7 +415,10 @@
         "term": "Three-dart average",
         "def": "Points scored per three darts thrown, the usual measure of a player's level."
       },
-      { "term": "Marks per round", "def": "Cricket's measure: marks scored per three darts." }
+      {
+        "term": "Marks per round",
+        "def": "Cricket's measure: marks scored per three darts."
+      }
     ]
   }
 }

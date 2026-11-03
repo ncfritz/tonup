@@ -54,7 +54,11 @@ Search (games and glossary terms); quick links to Checkouts, Board setup and Glo
 
 ## Settings
 
-Appearance (theme and mode; opens the theme picker: System, Light or Dark, and the five themes with a preview swatch each, Pro selectable and the other four locked with "Ton Up Pro"). Playing: caller on or off, haptics, whether scoring opens on the board or the keypad, and a favourite double for checkout routes (none, D20, D16, D18, D12, D10, D8 or the bull), which new X01 games take. Your data: export everything as a backup file through the share sheet, export games as CSV, and import a backup from Files (games already on the phone are kept; a newer or damaged file is refused with a reason), with a line saying nothing leaves the phone. About: version and build. The Pro row joins in M10.
+Appearance (theme and mode; opens the theme picker: System, Light or Dark, and the five themes with a preview swatch each, Pro selectable and the other four locked with "Ton Up Pro"). Playing: caller on or off, haptics, whether scoring opens on the board or the keypad, and a favourite double for checkout routes (none, D20, D16, D18, D12, D10, D8 or the bull), which new X01 games take. Your data: export everything as a backup file through the share sheet, export games as CSV, and import a backup from Files (games already on the phone are kept; a newer or damaged file is refused with a reason), with a line saying nothing leaves the phone. About: version and build. A Ton Up Pro row at the top opens the Pro screen.
+
+## Pro upgrade
+
+What Pro includes (21 more games, the full practice library, deeper analysis, four more themes, camera scoring when it arrives), the App Store's own price on the Buy button ("Get Ton Up Pro · $19.99"), a note that it's a one-time purchase (and shared with Family Sharing), Restore, and a message for each outcome: unlocked, waiting for approval (Ask to Buy), failed, nothing to restore, or the store unreachable. Every lock opens it: Pro drills, Pro themes, and Pro games' rules pages. With Pro owned, things that arrive in later milestones say "Coming in an update". If Pro is refunded, the locks come back and a Pro theme falls back to Pro.
 
 New game has a "How to play …" link under the game picker that opens that game's rules page (Cut-Throat when that variant is picked).
 

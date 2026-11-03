@@ -58,9 +58,11 @@ describe('Appearance', () => {
     await render(<Appearance />);
     await fireEvent.press(screen.getByText('Dark'));
     expect(useSettings.getState().appearance).toBe('dark');
-    expect(screen.getByLabelText('Arcade, part of Ton Up Pro')).toBeDisabled();
+    expect(screen.getByLabelText('Arcade, part of Ton Up Pro')).toBeOnTheScreen();
+    // A locked theme opens Ton Up Pro rather than switching.
     await fireEvent.press(screen.getByTestId('theme-arcade'));
     expect(useSettings.getState().theme).toBe('pro');
+    expect(router.push).toHaveBeenCalledWith('/pro');
   });
 });
 

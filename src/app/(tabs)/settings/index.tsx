@@ -7,6 +7,7 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import { DevMenu } from '@/dev/DevMenu';
 import { exportBackup, exportCsv, importBackup } from '@/features/backup/backup';
+import { useProOwned } from '@/features/pro/pro';
 import { useSettings } from '@/features/settings/store';
 import { ListRow, Pressable, Screen, Section, SegmentedControl, Text, ToggleRow } from '@/ui';
 
@@ -15,7 +16,9 @@ const DOUBLES = [20, 16, 18, 12, 10, 8, 25] as const;
 /** Settings (docs/design/screens.md → Settings). */
 export default function Settings() {
   const { t } = useTranslation('settings');
+  const { t: tp } = useTranslation('pro');
   const s = useSettings();
+  const proOwned = useProOwned();
   const [message, setMessage] = useState<string | null>(null);
 
   const doImport = async () => {
@@ -38,6 +41,15 @@ export default function Settings() {
       <Text variant="heading" accessibilityRole="header">
         {t('title')}
       </Text>
+      <Section label={tp('title')}>
+        <ListRow
+          label={tp('settingsRow')}
+          value={proOwned ? tp('settingsOwned') : undefined}
+          note={proOwned ? undefined : tp('settingsGet')}
+          onPress={() => router.push('/pro')}
+          testID="settings-pro"
+        />
+      </Section>
       <Section label={t('sections.appearance')}>
         <ListRow
           label={t('appearance.row')}

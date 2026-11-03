@@ -1,6 +1,6 @@
 # v1 implementation plan
 
-- Status: Accepted; M0–M9 in place, the base app is complete (2026-11-02)
+- Status: Accepted; M0–M10 in place, the base app is complete (2026-11-02)
 - Date: 2026-11-02
 
 v1 is the camera-free release (ADR 0005) and includes all of Ton Up Pro except camera scoring (ADR 0009): all 26 games, the full practice library with assessment and adaptive plan, the analysis features, and all five themes, on a $9.99 paid app with a one-time Pro upgrade. The base app is built and checked first, then Pro. This plan sets the stack, the code layout, the core domain design, and sixteen milestones, each ending in something that runs on a phone. Scope comes from [../features.md](../features.md); screens from [../design/screens.md](../design/screens.md).
@@ -184,11 +184,10 @@ M1 and M2 can run alongside M0's UI work; M5–M8 are largely independent once M
 
 ## 8. Decisions
 
-Settled 2026-11-02 (ADR 0009): $9.99 paid app; one-time Ton Up Pro upgrade holding the other games, practice modes, themes, analysis and camera scoring; all of Pro except the camera ships in v1.
+Settled 2026-11-02 (ADR 0009): $9.99 paid app; one-time Ton Up Pro upgrade at $19.99 (Family Sharing on) holding the other games, practice modes, themes, analysis and camera scoring; all of Pro except the camera ships in v1.
 
 Still open:
 
-- **Pro price:** $9.99 or $19.99 (needed by M10 for the StoreKit file, and for the store listing).
 - **Base theme:** this plan assumes Pro (light and dark) is the free theme and the default, following the system appearance.
 - **Languages at launch:** English only, with i18n in place (assumed).
 - **Seller account:** individual or LLC before the first external TestFlight build.
@@ -202,4 +201,5 @@ Still open:
 4. Review the checkout table against a published chart (`src/domain/checkout`, overrides at the top).
 5. Play a best-of-5 against the bot on a phone with a few corrections, then replay it (the M3 and M4 done-whens).
 6. Base checkpoint: run through the whole app on a phone, then make an internal TestFlight build (`pnpm ios:release` for a device build; archive in Xcode for TestFlight).
-7. Start M10 (Pro purchase and gating) once the Pro price is settled.
+7. Check Pro against the local StoreKit file: run from Xcode (⌘R), buy, then refund in Debug › StoreKit › Manage Transactions and come back to the app; restore after deleting and reinstalling.
+8. Start M11 (the 21 Pro games).

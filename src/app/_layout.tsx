@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { configurePro, hydratePro } from '@/features/pro/pro';
+import { ProSync } from '@/features/pro/ProSync';
 import { setSettingsPersistence, useSettings } from '@/features/settings/store';
 import { initI18n } from '@/i18n';
 import { DatabaseProvider } from '@/services/db/DatabaseProvider';
@@ -57,7 +59,9 @@ export default function RootLayout() {
             <Stack.Screen name="rules/checkouts" />
             <Stack.Screen name="rules/board" />
             <Stack.Screen name="rules/glossary" />
+            <Stack.Screen name="pro" options={{ presentation: 'modal' }} />
           </Stack>
+          <ProSync />
         </Bootstrap>
       </DatabaseProvider>
     </GestureHandlerRootView>
@@ -67,8 +71,11 @@ export default function RootLayout() {
 /** Runs once after migrations: settings from SQLite with write-through, then log pruning. */
 function Bootstrap({ children }: { children: ReactNode }) {
   const [ready] = useState(() => {
-    useSettings.getState().hydrate(readAllSettings());
+    const stored = readAllSettings();
+    useSettings.getState().hydrate(stored);
     setSettingsPersistence(writeSetting);
+    hydratePro(stored);
+    configurePro({ persist: writeSetting });
     try {
       pruneLog();
     } catch (e) {

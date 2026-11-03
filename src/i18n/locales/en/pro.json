@@ -1,0 +1,50 @@
+{
+  "title": "Ton Up Pro",
+  "tagline": "One purchase. Everything in the app, and camera scoring when it arrives.",
+  "close": "Close",
+  "includes": "What you get",
+  "items": [
+    {
+      "title": "21 more games",
+      "body": "Tactics, Mickey Mouse, Halve-It, Baseball, Golf and the rest of the rules library, with bots."
+    },
+    {
+      "title": "The full practice library",
+      "body": "12 more drills, a skill assessment, a plan that adapts to your weak spots, a checkout trainer and pressure mode."
+    },
+    {
+      "title": "Deeper analysis",
+      "body": "Where you miss relative to your aim, drift and grouping, your personal aim map, trends, and a ghost bot that throws like you."
+    },
+    {
+      "title": "Four more themes",
+      "body": "Chalkboard, Arcade, Heritage and Training, each in light and dark."
+    },
+    {
+      "title": "Camera scoring, when it arrives",
+      "body": "Snap to score and the fixed camera come to Pro as free updates."
+    }
+  ],
+  "buy": "Get Ton Up Pro · {price}",
+  "buyNoPrice": "Get Ton Up Pro",
+  "restore": "Restore purchase",
+  "unavailable": "The App Store can't be reached right now. Try again in a moment.",
+  "owned": "You have Ton Up Pro",
+  "ownedBody": "Everything is unlocked. Thanks for supporting Ton Up.",
+  "family": "Shared with your Family Sharing group.",
+  "once": "A one-time purchase, not a subscription.",
+  "results": {
+    "purchased": "Ton Up Pro is unlocked.",
+    "pending": "Waiting for approval. Pro unlocks as soon as it's approved.",
+    "cancelled": "",
+    "failed": "The purchase didn't go through. You haven't been charged.",
+    "restored": "Ton Up Pro is restored.",
+    "notFound": "No Ton Up Pro purchase was found for this Apple Account.",
+    "restoreFailed": "Couldn't reach the App Store to restore. Try again in a moment."
+  },
+  "lock": "Ton Up Pro",
+  "lockedA11y": "{name}, part of Ton Up Pro. Opens Ton Up Pro.",
+  "settingsRow": "Ton Up Pro",
+  "settingsOwned": "Unlocked",
+  "settingsGet": "Every game, drill and theme"
+}
