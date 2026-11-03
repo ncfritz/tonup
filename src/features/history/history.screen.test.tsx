@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import { hitOf, miss } from '@/domain/darts';
 import { X01_DEFAULTS } from '@/domain/games/x01';
+import { getSession, loadDarts } from '@/services/db/sessionsRepo';
 
 import { resetTestDb } from '../../../test/sqlite';
 import History from '../../app/(tabs)/history';
@@ -99,4 +100,44 @@ describe('History tab', () => {
       params: { sessionId: match },
     });
   });
+});
+
+describe('deleting from History', () => {
+  it('asks first, then removes the game, its darts and what it counted for', async () => {
+    const { Alert } = jest.requireActual<typeof import('react-native')>('react-native');
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const id = winX01();
+    await render(<History />);
+    await act(async () => {});
+    const row = screen.getByTestId(`history-${id}`);
+    await fireEvent(row, 'accessibilityAction', { nativeEvent: { actionName: 'delete' } });
+    const buttons = alert.mock.calls[0]![2] as { text: string; onPress?: () => void }[];
+    expect(alert.mock.calls[0]![0]).toBe('Delete this?');
+    // Cancel keeps it.
+    buttons.find((b) => b.text === 'Cancel')?.onPress?.();
+    expect(getSession(id)).not.toBeNull();
+    await act(async () => {
+      buttons.find((b) => b.text === 'Delete')!.onPress!();
+    });
+    expect(getSession(id)).toBeNull();
+    expect(loadDarts(id)).toEqual([]);
+    expect(screen.queryByTestId(`history-${id}`)).toBeNull();
+    expect(bests().highCheckout).toBeNull();
+    alert.mockRestore();
+  });
+});
+
+it('deletes from the swipe action too', async () => {
+  const { Alert } = jest.requireActual<typeof import('react-native')>('react-native');
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const id = countUp([20, 20, 20]);
+  await render(<History />);
+  await act(async () => {});
+  await fireEvent.press(screen.getByTestId(`history-${id}-delete`));
+  const buttons = alert.mock.calls[0]![2] as { text: string; onPress?: () => void }[];
+  await act(async () => {
+    buttons.find((b) => b.text === 'Delete')!.onPress!();
+  });
+  expect(getSession(id)).toBeNull();
+  alert.mockRestore();
 });

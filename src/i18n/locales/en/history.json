@@ -91,5 +91,15 @@
     "ghostEmpty": "Play some 501 this month and your ghost appears here.",
     "ghostPlay": "Play 501 against your ghost",
     "ghostName": "You · last month"
+  },
+  "delete": {
+    "action": "Delete",
+    "a11y": "Delete {name}",
+    "hint": "Swipe left or hold to delete",
+    "title": "Delete this?",
+    "body": "{name} and all its darts will be removed from your history, stats and personal bests. This can't be undone.",
+    "bodyInProgress": "{name} hasn't finished. It and its darts will be removed and can't be resumed. This can't be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
   }
 }

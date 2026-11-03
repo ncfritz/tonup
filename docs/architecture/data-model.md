@@ -16,7 +16,7 @@ Draft from research; the v1 implementation plan turns this into tables. The core
 
 ## Other records
 
-- **Session:** game or drill type, rules settings (start score, in/out rules, legs or sets, variants), board type (steel tip in v1; ADR 0003), players and bots, start and end time, result. A ghost bot (Pro analysis) is a bot player whose id carries its fitted scatter (`ghost:<month>:dx,dy,sx,sy,rho`, src/domain/analysis/ghost.ts), so a stored game can keep throwing like it without another table; its level is the nearest bot level.
+- **Session:** game or drill type, rules settings (start score, in/out rules, legs or sets, variants), board type (steel tip in v1; ADR 0003), players and bots, start and end time, result. A ghost bot (Pro analysis) is a bot player whose id carries its fitted scatter (`ghost:<month>:dx,dy,sx,sy,rho`, src/domain/analysis/ghost.ts), so a stored game can keep throwing like it without another table; its level is the nearest bot level. Deleting a session from History removes it and its darts together (the darts table cascades); everything derived is recomputed from what's left, so nothing else needs updating.
 - **Player:** local profiles for pass-and-play (name, colour); no accounts.
 - **Bot:** level and, for the ghost bot, the fitted scatter.
 - **Derived and cached:** per-target hit rates, heatmap bins, personal bests per drill, trend points for the History tab. All rebuildable from events.

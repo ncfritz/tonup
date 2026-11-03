@@ -3,7 +3,14 @@
 import { DRILL_IDS, type DrillId } from '@/domain/drills';
 import type { GameResult } from '@/domain/games';
 import { heatmap } from '@/domain/stats';
-import { dartsOf, finishedOfType, getSession, recentSessions } from '@/services/db/sessionsRepo';
+import { log } from '@/services/diagnostics';
+import {
+  dartsOf,
+  deleteSession,
+  finishedOfType,
+  getSession,
+  recentSessions,
+} from '@/services/db/sessionsRepo';
 
 import { YOU_ID } from '../game/lineup';
 import { loadGame, sessionStats, sessionX01Stats, type LoadedGame } from '../game/session';
@@ -147,4 +154,10 @@ export function destination(sessionId: string): {
     };
   }
   return { pathname: '/replay/[sessionId]', params: { sessionId } };
+}
+
+/** Deletes a game or drill and its darts for good; stats, bests and trends follow from what's left. */
+export function removeSession(sessionId: string) {
+  deleteSession(sessionId);
+  log('info', 'deleted session');
 }

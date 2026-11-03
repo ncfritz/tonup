@@ -50,7 +50,7 @@ Pro. A deck of ten finishes from a range (2–40, 41–100, 101–170). Each car
 
 ## History tab
 
-All / Matches / Practice filter; a trend chart (3-dart average over your last 20 X01 matches, or a drill's scores for Practice, with a chip per drill); personal bests (best average, high checkout, Bob's 27, plus Count Up and Around the Clock under Practice); a board heatmap of where your darts landed over the last 30 sessions shown, with the busiest region and the share off the board; and a list of recent sessions. A finished session opens its replay; an unfinished one goes back into the game or drill. An **Analysis** button by the title opens Analysis with Pro (and the Pro screen without).
+All / Matches / Practice filter; a trend chart (3-dart average over your last 20 X01 matches, or a drill's scores for Practice, with a chip per drill); personal bests (best average, high checkout, Bob's 27, plus Count Up and Around the Clock under Practice); a board heatmap of where your darts landed over the last 30 sessions shown, with the busiest region and the share off the board; and a list of recent sessions. A finished session opens its replay; an unfinished one goes back into the game or drill. Swipe a session left for Delete, or hold it (VoiceOver offers Delete as an action); a confirm says it goes for good, with its darts, and that stats and personal bests follow from what's left. An **Analysis** button by the title opens Analysis with Pro (and the Pro screen without).
 
 ## Analysis
 

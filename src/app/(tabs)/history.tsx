@@ -8,6 +8,7 @@ import { DRILL_IDS, type DrillId } from '@/domain/drills';
 import { parseRegion } from '@/domain/stats';
 import { formatStat, gameName } from '@/features/game/format';
 import { dayLabel } from '@/features/game/when';
+import { HistoryRow } from '@/features/history/HistoryRow';
 import { useProOwned } from '@/features/pro/pro';
 import {
   bests,
@@ -16,6 +17,7 @@ import {
   historyEntries,
   historyHeatmap,
   latestDrill,
+  removeSession,
   x01Trend,
   type Bests,
   type HistoryEntry,
@@ -239,14 +241,18 @@ export default function History() {
           yesterday: tg('home.yesterday'),
         });
         return (
-          <Pressable
+          <HistoryRow
             key={e.sessionId}
-            accessibilityRole="button"
-            accessibilityLabel={t('list.a11y', { title, sub, day })}
-            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-            onPress={() => {
+            label={t('list.a11y', { title, sub, day })}
+            name={title}
+            inProgress={!e.finished}
+            onOpen={() => {
               const to = destination(e.sessionId);
               if (to) router.push(to);
+            }}
+            onDelete={() => {
+              removeSession(e.sessionId);
+              refresh();
             }}
             testID={`history-${e.sessionId}`}
           >
@@ -266,7 +272,7 @@ export default function History() {
             <Text variant="caption" tone="muted">
               {day}
             </Text>
-          </Pressable>
+          </HistoryRow>
         );
       })}
     </Screen>
@@ -317,14 +323,6 @@ const styles = StyleSheet.create((theme) => ({
     padding: theme.spacing.m,
   },
   heatRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.m },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.m,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radii.m,
-    padding: theme.spacing.m,
-  },
   badge: {
     width: 36,
     height: 36,

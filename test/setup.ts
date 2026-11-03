@@ -44,3 +44,26 @@ jest.mock('expo-iap', () => ({
   restorePurchases: async () => undefined,
   purchaseUpdatedListener: () => ({ remove: () => {} }),
 }));
+
+// Reanimated can't start under Jest: the swipeable row renders its content with its actions
+// already showing, so tests can press them.
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
+  const { createElement, Fragment } = jest.requireActual<typeof import('react')>('react');
+  const close = () => {};
+  return {
+    __esModule: true,
+    default: ({
+      children,
+      renderRightActions,
+    }: {
+      children: unknown;
+      renderRightActions?: (p: unknown, t: unknown, m: { close: () => void }) => unknown;
+    }) =>
+      createElement(
+        Fragment,
+        null,
+        children as never,
+        (renderRightActions?.(null, null, { close }) ?? null) as never,
+      ),
+  };
+});
