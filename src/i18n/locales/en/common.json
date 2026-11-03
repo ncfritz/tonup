@@ -32,7 +32,8 @@
     "haptics": "Haptics",
     "on": "On",
     "off": "Off",
-    "caller": "Caller"
+    "caller": "Caller",
+    "note": "Development build."
   },
   "error": {
     "title": "Something went wrong",
@@ -44,5 +45,15 @@
   "notFound": {
     "title": "Nothing here",
     "goHome": "Go to Play"
+  },
+  "data": {
+    "csv": {
+      "date": "Date",
+      "kind": "Kind",
+      "type": "Game",
+      "players": "Players",
+      "winner": "Winner",
+      "darts": "Darts"
+    }
   }
 }

@@ -1,0 +1,81 @@
+{
+  "title": "Settings",
+  "sections": {
+    "appearance": "Appearance",
+    "playing": "Playing",
+    "data": "Your data",
+    "about": "About"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "row": "Theme and mode",
+    "value": "{theme} · {mode}",
+    "mode": "Mode",
+    "modeNote": "System follows your iPhone's light or dark setting.",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "theme": "Theme",
+    "selected": "Selected",
+    "locked": "Ton Up Pro",
+    "lockedA11y": "{name}, part of Ton Up Pro",
+    "themes": {
+      "pro": {
+        "name": "Pro",
+        "blurb": "A TV scoreboard: gold for the player at the oche."
+      },
+      "chalkboard": {
+        "name": "Chalkboard",
+        "blurb": "A slate in the pub, or a whiteboard in daylight."
+      },
+      "arcade": {
+        "name": "Arcade",
+        "blurb": "Neon pink and cyan on a dark cabinet."
+      },
+      "heritage": {
+        "name": "Heritage",
+        "blurb": "A cream scorecard and bottle-green felt."
+      },
+      "training": {
+        "name": "Training",
+        "blurb": "A data view in charcoal and teal."
+      }
+    }
+  },
+  "playing": {
+    "caller": "Caller",
+    "callerNote": "Reads out each visit, on the phone.",
+    "haptics": "Haptics",
+    "input": "Scoring opens on",
+    "board": "Board",
+    "keypad": "Keypad",
+    "double": "Favourite double",
+    "doubleNote": "Checkout routes lean toward it when there's a choice.",
+    "doubleNone": "None",
+    "doubleTitle": "Favourite double",
+    "doubleBull": "Bull"
+  },
+  "data": {
+    "export": "Export everything",
+    "exportNote": "A backup file of every game and dart, to keep in Files or send to another phone.",
+    "csv": "Export games as CSV",
+    "csvNote": "One row per game or drill, for a spreadsheet.",
+    "csvEmpty": "There's nothing to export yet.",
+    "import": "Import a backup",
+    "importNote": "Adds games from a Ton Up backup. Games already here are kept.",
+    "imported": "Added {sessions, plural, one {# game} other {# games}}{skipped, plural, =0 {} one {; # was already here} other {; # were already here}}.",
+    "errors": {
+      "notJson": "That file isn't a Ton Up backup.",
+      "notTonUp": "That file isn't a Ton Up backup.",
+      "newerVersion": "That backup is from a newer version of Ton Up. Update the app, then try again.",
+      "malformed": "That backup is damaged, so nothing was imported.",
+      "tooBig": "That file is too big to be a Ton Up backup.",
+      "failed": "Something went wrong, so nothing was imported."
+    },
+    "privacy": "Everything stays on this phone. Ton Up has no accounts and sends nothing anywhere."
+  },
+  "about": {
+    "version": "Version",
+    "versionValue": "{version} ({build})"
+  }
+}

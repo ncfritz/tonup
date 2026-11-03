@@ -15,6 +15,7 @@ import { bestOf } from '@/features/game/lineup';
 import { x01State } from '@/features/game/session';
 import { botUp, dartsText, useGame } from '@/features/game/store';
 import { useBotTurns } from '@/features/game/useBotTurns';
+import { useSettings } from '@/features/settings/store';
 import { haptics } from '@/services/haptics';
 import {
   Board,
@@ -38,7 +39,7 @@ export default function GameScreen() {
   const { t } = useTranslation('game');
   const game = useGame((s) => s.game);
   const legPause = useGame((s) => s.legPause);
-  const [input, setInput] = useState<Input>('board');
+  const [input, setInput] = useState<Input>(() => useSettings.getState().defaultInput);
   const [editing, setEditing] = useState<{ dart: DartEvent; n: number } | null>(null);
   const [visitsOpen, setVisitsOpen] = useState(false);
   const [area, setArea] = useState({ w: 0, h: 0 });

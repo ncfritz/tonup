@@ -45,5 +45,22 @@ for (const [theme, modes] of Object.entries(palettes)) {
   }
 }
 
+// The theme picker's previews of the Pro themes (src/theme/previews.json), until their full
+// palettes arrive in M14.
+const previews = JSON.parse(readFileSync(new URL('../src/theme/previews.json', import.meta.url)));
+for (const [theme, modes] of Object.entries(previews)) {
+  for (const [mode, c] of Object.entries(modes)) {
+    for (const [fg, bg] of [['text', 'bg'], ['text', 'surface']]) {
+      const r = ratio(c[fg], c[bg]);
+      if (r < 4.5) {
+        failures++;
+        console.error(`✗ preview ${theme}-${mode}: ${fg} on ${bg} = ${r.toFixed(2)} (needs 4.5)`);
+      }
+    }
+  }
+}
+
 if (failures) process.exit(1);
-console.log(`Contrast OK for ${Object.keys(palettes).length} theme(s)`);
+console.log(
+  `Contrast OK for ${Object.keys(palettes).length} theme(s) and ${Object.keys(previews).length} previews`,
+);

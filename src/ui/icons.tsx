@@ -14,6 +14,9 @@ const paths = {
     ],
   ],
   lock: ['M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3', []],
+  info: ['M12 11v6M12 7.5v.5', [[12, 12, 9]]],
+  chevron: ['M9 5l7 7-7 7', []],
+  check: ['M5 12l4 4 10-10', []],
 } as const satisfies Record<string, readonly [string, readonly (readonly number[])[]]>;
 
 export type IconName = keyof typeof paths;

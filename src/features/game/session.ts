@@ -15,6 +15,7 @@ import {
 import { drillFor, type DrillId } from '@/domain/drills';
 import type { X01Settings, X01State } from '@/domain/games/x01';
 import { x01Stats, type X01Stats } from '@/domain/stats';
+import { useSettings } from '@/features/settings/store';
 import {
   appendDart,
   createSession,
@@ -48,7 +49,13 @@ export interface DartInput {
 
 const now = () => Date.now();
 
-export function startGame(typeId: GameId, settings: unknown, players: PlayerRef[]): string {
+export function startGame(typeId: GameId, given: unknown, players: PlayerRef[]): string {
+  // X01 takes your favourite double from Settings for its checkout routes.
+  const pref = useSettings.getState().preferredDouble;
+  const settings =
+    typeId === 'x01' && pref !== null && (given as X01Settings).preferredDouble === undefined
+      ? { ...(given as X01Settings), preferredDouble: pref }
+      : given;
   // Check the settings and line-up before anything is stored.
   gameFor(typeId).init(settings, players);
   const id = randomUUID();

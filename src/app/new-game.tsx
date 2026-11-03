@@ -24,7 +24,7 @@ import {
 } from '@/features/game/lineup';
 import { startGame } from '@/features/game/session';
 import { useSettings } from '@/features/settings/store';
-import { Button, Header, Pressable, Screen, Section, SegmentedControl, Text } from '@/ui';
+import { Button, Header, Icon, Pressable, Screen, Section, SegmentedControl, Text } from '@/ui';
 
 const GAMES: GameId[] = ['x01', 'cricket', 'clock', 'shanghai', 'killer'];
 const STARTS = ['301', '501', '701'] as const;
@@ -33,6 +33,7 @@ const SETS = ['1', '3', '5'] as const;
 
 export default function NewGame() {
   const { t } = useTranslation('game');
+  const { theme } = useUnistyles();
   const lastGameId = useSettings((s) => s.lastGameId);
   const saved = useSettings((s) => s.gameSettings);
   const lastLineup = useSettings((s) => s.lastLineup);
@@ -106,6 +107,9 @@ export default function NewGame() {
     }
   };
   const tooFew = gameId === 'killer' && players.length < 2;
+  // The rules page for the game (and Cricket variant) picked.
+  const rulesIdFor = (g: GameId) =>
+    g === 'cricket' && cricketSettings.variant === 'cutThroat' ? 'cutThroat' : g;
 
   const start = () => {
     const lineup = players.map((p, i) => ({
@@ -135,6 +139,20 @@ export default function NewGame() {
           onChange={setGameId}
           segments={GAMES.map((g) => ({ value: g, label: t(`newGame.gameShort.${g}`) }))}
         />
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel={t('newGame.rulesA11y', { game: t(`newGame.gameShort.${gameId}`) })}
+          style={({ pressed }) => [styles.rulesLink, pressed && styles.pressed]}
+          onPress={() =>
+            router.push({ pathname: '/rules/[gameId]', params: { gameId: rulesIdFor(gameId) } })
+          }
+          testID="game-rules"
+        >
+          <Icon name="info" color={theme.colors.accent} size={18} />
+          <Text variant="bodyStrong" tone="accent">
+            {t('newGame.rules', { game: t(`newGame.gameShort.${gameId}`) })}
+          </Text>
+        </Pressable>
         {gameId === 'x01' ? (
           <SegmentedControl
             accessibilityLabel={t('newGame.start')}
@@ -447,4 +465,11 @@ const styles = StyleSheet.create((theme) => ({
     justifyContent: 'center',
   },
   pressed: { opacity: 0.7 },
+  rulesLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    alignSelf: 'flex-start',
+    minHeight: 44,
+  },
 }));

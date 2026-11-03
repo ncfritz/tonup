@@ -52,7 +52,12 @@ All / Matches / Practice filter; a trend chart (3-dart average over your last 20
 
 Search (games and glossary terms); quick links to Checkouts, Board setup and Glossary; the games in the app with one-line summaries, each opening its rules page (How to play, Scoring, Winning, Variants, and a Play button that opens New game on that game and variant, or the Count Up drill); then the other games' rules by family, with a lock, readable but not playable until Ton Up Pro. Checkouts lists the three-dart route for every score from 170 down, with a score search and the bogey numbers.
 
+## Settings
+
+Appearance (theme and mode; opens the theme picker: System, Light or Dark, and the five themes with a preview swatch each, Pro selectable and the other four locked with "Ton Up Pro"). Playing: caller on or off, haptics, whether scoring opens on the board or the keypad, and a favourite double for checkout routes (none, D20, D16, D18, D12, D10, D8 or the bull), which new X01 games take. Your data: export everything as a backup file through the share sheet, export games as CSV, and import a backup from Files (games already on the phone are kept; a newer or damaged file is refused with a reason), with a line saying nothing leaves the phone. About: version and build. The Pro row joins in M10.
+
+New game has a "How to play …" link under the game picker that opens that game's rules page (Cut-Throat when that variant is picked).
+
 ## Open questions
 
 - Snap-to-score screens: capture with coaching, result with markers, the missed-dart prompt.
-- Settings beyond Appearance (caller voice, preferred doubles, input defaults, data export, Pro).

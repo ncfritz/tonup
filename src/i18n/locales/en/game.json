@@ -59,7 +59,9 @@
       "clock": "Clock",
       "shanghai": "Shanghai",
       "killer": "Killer"
-    }
+    },
+    "rules": "How to play {game}",
+    "rulesA11y": "Rules for {game}"
   },
   "header": {
     "pause": "Pause and go to Play",
