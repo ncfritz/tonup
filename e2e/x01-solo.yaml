@@ -9,7 +9,9 @@ appId: app.tonup.ios
     id: 'pick-x01'
 # The default lineup is You and DartBot 3: take the bot out.
 - tapOn:
-    id: 'remove-1'
+    id: 'player-1'
+- tapOn:
+    id: 'player-remove'
 - tapOn:
     id: 'start-game'
 - tapOn: 'Keypad'

@@ -87,6 +87,11 @@ Appearance (theme and mode; opens the theme picker: System, Light or Dark, and t
 
 What Pro includes (21 more games, the full practice library, deeper analysis, four more themes, camera scoring when it arrives), the App Store's own price on the Buy button ("Get Ton Up Pro · $19.99"), a note that it's a one-time purchase (and shared with Family Sharing), Restore, and a message for each outcome: unlocked, waiting for approval (Ask to Buy), failed, nothing to restore, or the store unreachable. Every lock opens it: Pro games in New game, Pro drills, Pro themes, and Pro games' rules pages. With Pro owned, things that arrive in later milestones say "Coming in an update". If Pro is refunded, the locks come back and a Pro theme falls back to Pro.
 
-New game picks any of the 26 games, grouped by family as on the Rules tab; Pro games carry a lock and open the Pro screen until Pro is owned. Under the picker, a "How to play …" link opens that game's rules page. Each game shows only its own settings (X01's start, format and in/out; Cricket's round limit; Killer's lives; Gotcha's and Fives' target; Count Up's visits; Golf's holes; Football's goals; what claims a Tic-Tac-Toe square), and Start stays off until the player count suits the game (Hare and Hounds, Scam and Tic-Tac-Toe are for two). Quick start and Rematch replay the same game, dealing Killer numbers and Random Cricket's six afresh.
+New game is two steps.
+
+- **Choose a game:** a search box, **Play again** (your last two distinct set-ups: the game, its settings and the line-up, opening step 2 ready to start), then all 26 games as full-width buttons grouped by family, each with its one-line summary and how many players it takes ("1+", "2"). Pro games carry a Pro tag and open the Pro screen until Pro is owned.
+- **Set up:** a card naming the game with its family and summary, "How to play" and "Change game"; a players card with an avatar per player in throwing order (tap one to rename a guest, change a bot's level, move them earlier or remove them) and dashed avatars to add a player or a bot, up to six or the game's limit; then each of the game's settings in its own card as a row of buttons, with a line under it where one helps ("Best of 5 legs"), and **Start {game}**, off until the player count suits the game (Hare and Hounds, Scam and Tic-Tac-Toe are for two). Back returns to step 1. Home's shortcuts and the rules pages' Play button open on step 2.
+
+Quick start and Rematch replay the same game, dealing Killer numbers and Random Cricket's six afresh.
 
 ## Open questions
