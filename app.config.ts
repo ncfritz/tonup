@@ -1,7 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-import palettes from './src/theme/palettes.json';
-
 // Bundle ID and Pro product ID: ADR 0009, docs/plan/v1-implementation.md §1.
 const BUNDLE_ID = 'app.tonup.ios';
 // Signing team for local builds (Neil's individual account, as Tippytoe); written into the
@@ -16,6 +14,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   scheme: 'tonup',
   userInterfaceStyle: 'automatic',
+  // Icon and launch art: docs/design/brand.md (sources in assets/brand).
+  icon: './assets/icon.png',
   ios: {
     bundleIdentifier: BUNDLE_ID,
     appleTeamId: APPLE_TEAM_ID,
@@ -38,9 +38,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        // Plain Pro background until the launch artwork exists (M15).
-        backgroundColor: palettes.pro.light.bg,
-        dark: { backgroundColor: palettes.pro.dark.bg },
+        // Full-screen Training-lab board art, same in light and dark (docs/design/brand.md).
+        image: './assets/splash.png',
+        resizeMode: 'cover',
+        enableFullScreenImage_legacy: true,
+        backgroundColor: '#0E1217',
       },
     ],
   ],
