@@ -63,7 +63,18 @@ jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
         Fragment,
         null,
         children as never,
-        (renderRightActions?.(null, null, { close }) ?? null) as never,
+        (renderRightActions?.({ value: 0 }, { value: 0 }, { close }) ?? null) as never,
       ),
+  };
+});
+
+// Reanimated's own mock still starts its native side, so a small stand-in for what the app uses.
+jest.mock('react-native-reanimated', () => {
+  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    __esModule: true,
+    default: { View, createAnimatedComponent: <T>(c: T) => c },
+    useAnimatedReaction: () => {},
+    useAnimatedStyle: () => ({}),
   };
 });

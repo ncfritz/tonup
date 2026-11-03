@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react-native';
 
 import { hitOf, miss } from '@/domain/darts';
 import { X01_DEFAULTS } from '@/domain/games/x01';
@@ -9,6 +9,7 @@ import History from '../../app/(tabs)/history';
 import { loadGame, recordDart, startDrill, startX01 } from '../game/session';
 
 import { bests, destination, historyHeatmap, x01Trend } from './history';
+import { UNDO_MS, usePendingDelete } from './usePendingDelete';
 
 jest.mock('@/services/db/client', () => jest.requireActual('../../../test/sqlite').testClient());
 jest.mock('expo-router', () => {
@@ -140,4 +141,37 @@ it('deletes from the swipe action too', async () => {
   });
   expect(getSession(id)).toBeNull();
   alert.mockRestore();
+});
+
+describe('full swipe with Undo', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('waits for Undo, then deletes; Undo keeps the game; leaving finishes it', async () => {
+    const a = winX01();
+    const b = winX01();
+    const c = winX01();
+    const onDeleted = jest.fn();
+    const hook = await renderHook(() => usePendingDelete(onDeleted));
+
+    // Undo in time keeps it.
+    await act(async () => hook.result.current.start({ sessionId: a, name: '81' }));
+    expect(hook.result.current.pending?.sessionId).toBe(a);
+    await act(async () => hook.result.current.undo());
+    await act(async () => jest.advanceTimersByTime(UNDO_MS));
+    expect(getSession(a)).not.toBeNull();
+
+    // Left alone, it goes when the time is up.
+    await act(async () => hook.result.current.start({ sessionId: b, name: '81' }));
+    expect(getSession(b)).not.toBeNull();
+    await act(async () => jest.advanceTimersByTime(UNDO_MS));
+    expect(getSession(b)).toBeNull();
+    expect(hook.result.current.pending).toBeNull();
+    expect(onDeleted).toHaveBeenCalledTimes(1);
+
+    // Leaving History finishes a delete still waiting.
+    await act(async () => hook.result.current.start({ sessionId: c, name: '81' }));
+    await hook.unmount();
+    expect(getSession(c)).toBeNull();
+  });
 });

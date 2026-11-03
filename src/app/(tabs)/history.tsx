@@ -9,6 +9,7 @@ import { parseRegion } from '@/domain/stats';
 import { formatStat, gameName } from '@/features/game/format';
 import { dayLabel } from '@/features/game/when';
 import { HistoryRow } from '@/features/history/HistoryRow';
+import { usePendingDelete } from '@/features/history/usePendingDelete';
 import { useProOwned } from '@/features/pro/pro';
 import {
   bests,
@@ -23,7 +24,16 @@ import {
   type HistoryEntry,
   type HistoryFilter,
 } from '@/features/history/history';
-import { Board, Icon, LineChart, Pressable, Screen, SegmentedControl, Text } from '@/ui';
+import {
+  Board,
+  Icon,
+  LineChart,
+  Pressable,
+  Screen,
+  SegmentedControl,
+  TAB_BAR_SPACE,
+  Text,
+} from '@/ui';
 
 const HEAT_SESSIONS = 30;
 
@@ -58,9 +68,12 @@ export default function History() {
     });
   }, [filter, drill]);
   useFocusEffect(refresh);
+  const { pending, start: deleteWithUndo, undo } = usePendingDelete(refresh);
 
   if (!data) return <Screen>{null}</Screen>;
-  const { entries, trend, heat } = data;
+  const { trend, heat } = data;
+  // A full-swiped row hides at once while Undo is up.
+  const entries = data.entries.filter((e) => e.sessionId !== pending?.sessionId);
   const trendTitle = data.drill
     ? t('trend.drill', {
         drill: tp(`drills.${data.drill}.name` as 'drills.bobs27.name'),
@@ -80,47 +93,49 @@ export default function History() {
   }
 
   return (
-    <Screen scroll>
-      <View style={styles.titleRow}>
-        <Text variant="heading" accessibilityRole="header" style={styles.flex}>
-          {t('title')}
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={proOwned ? t('analysis.open') : t('analysis.locked')}
-          accessibilityHint={t('analysis.openHint')}
-          style={({ pressed }) => [styles.analysis, pressed && styles.pressed]}
-          onPress={() => router.push(proOwned ? '/analysis' : '/pro')}
-          testID="open-analysis"
-        >
-          {proOwned ? null : <Icon name="lock" color={theme.colors.muted} size={14} />}
-          <Text variant="bodyStrong" tone={proOwned ? 'accent' : 'muted'}>
-            {t('analysis.open')}
+    <View style={styles.flex}>
+      <Screen scroll>
+        <View style={styles.titleRow}>
+          <Text variant="heading" accessibilityRole="header" style={styles.flex}>
+            {t('title')}
           </Text>
-        </Pressable>
-      </View>
-      <SegmentedControl<HistoryFilter>
-        accessibilityLabel={t('filter.label')}
-        value={filter}
-        onChange={setFilter}
-        segments={[
-          { value: 'all', label: t('filter.all') },
-          { value: 'matches', label: t('filter.matches') },
-          { value: 'practice', label: t('filter.practice') },
-        ]}
-      />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={proOwned ? t('analysis.open') : t('analysis.locked')}
+            accessibilityHint={t('analysis.openHint')}
+            style={({ pressed }) => [styles.analysis, pressed && styles.pressed]}
+            onPress={() => router.push(proOwned ? '/analysis' : '/pro')}
+            testID="open-analysis"
+          >
+            {proOwned ? null : <Icon name="lock" color={theme.colors.muted} size={14} />}
+            <Text variant="bodyStrong" tone={proOwned ? 'accent' : 'muted'}>
+              {t('analysis.open')}
+            </Text>
+          </Pressable>
+        </View>
+        <SegmentedControl<HistoryFilter>
+          accessibilityLabel={t('filter.label')}
+          value={filter}
+          onChange={setFilter}
+          segments={[
+            { value: 'all', label: t('filter.all') },
+            { value: 'matches', label: t('filter.matches') },
+            { value: 'practice', label: t('filter.practice') },
+          ]}
+        />
 
-      <View
-        style={styles.card}
-        onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width - 32)}
-      >
-        <Text variant="overline" tone="muted">
-          {trendTitle}
-        </Text>
-        {data.drill ? (
-          <View style={styles.chips}>
-            {DRILL_IDS.filter((id) => id === data.drill || data.bests.drills[id] !== undefined).map(
-              (id) => (
+        <View
+          style={styles.card}
+          onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width - 32)}
+        >
+          <Text variant="overline" tone="muted">
+            {trendTitle}
+          </Text>
+          {data.drill ? (
+            <View style={styles.chips}>
+              {DRILL_IDS.filter(
+                (id) => id === data.drill || data.bests.drills[id] !== undefined,
+              ).map((id) => (
                 <Pressable
                   key={id}
                   accessibilityRole="button"
@@ -132,150 +147,174 @@ export default function History() {
                     {tp(`drills.${id}.name` as 'drills.bobs27.name')}
                   </Text>
                 </Pressable>
-              ),
-            )}
+              ))}
+            </View>
+          ) : null}
+          {trend.length === 0 ? (
+            <Text tone="muted">{data.drill ? t('trend.emptyDrill') : t('trend.empty')}</Text>
+          ) : (
+            <>
+              <View style={styles.trendHead}>
+                <Text variant="heading">{fmt(latest!)}</Text>
+                {delta !== null ? (
+                  <Text variant="caption" tone="muted">
+                    {t('trend.delta', {
+                      sign: delta >= 0 ? '+' : '−',
+                      delta: fmt(Math.abs(delta)),
+                    })}
+                  </Text>
+                ) : null}
+              </View>
+              <LineChart
+                values={trend}
+                width={width}
+                accessibilityLabel={t('trend.a11y', {
+                  title: trendTitle,
+                  latest: fmt(latest!),
+                  min: fmt(Math.min(...trend)),
+                  max: fmt(Math.max(...trend)),
+                })}
+              />
+            </>
+          )}
+        </View>
+
+        <View style={styles.bests}>
+          <Best label={t('bests.bestAverage')} value={data.bests.bestAverage?.value.toFixed(1)} />
+          <Best label={t('bests.highCheckout')} value={data.bests.highCheckout?.value} />
+          <Best label={tp('drills.bobs27.name')} value={data.bests.drills.bobs27} />
+        </View>
+        {filter === 'practice' ? (
+          <View style={styles.bests}>
+            <Best label={tp('drills.countUp.name')} value={data.bests.drills.countUp} />
+            <Best
+              label={tp('drills.clock.name')}
+              value={
+                data.bests.drills.clock === undefined
+                  ? undefined
+                  : tp('lowerBetter', { score: data.bests.drills.clock })
+              }
+            />
           </View>
         ) : null}
-        {trend.length === 0 ? (
-          <Text tone="muted">{data.drill ? t('trend.emptyDrill') : t('trend.empty')}</Text>
-        ) : (
-          <>
-            <View style={styles.trendHead}>
-              <Text variant="heading">{fmt(latest!)}</Text>
-              {delta !== null ? (
-                <Text variant="caption" tone="muted">
-                  {t('trend.delta', { sign: delta >= 0 ? '+' : '−', delta: fmt(Math.abs(delta)) })}
-                </Text>
-              ) : null}
-            </View>
-            <LineChart
-              values={trend}
-              width={width}
-              accessibilityLabel={t('trend.a11y', {
-                title: trendTitle,
-                latest: fmt(latest!),
-                min: fmt(Math.min(...trend)),
-                max: fmt(Math.max(...trend)),
-              })}
-            />
-          </>
-        )}
-      </View>
 
-      <View style={styles.bests}>
-        <Best label={t('bests.bestAverage')} value={data.bests.bestAverage?.value.toFixed(1)} />
-        <Best label={t('bests.highCheckout')} value={data.bests.highCheckout?.value} />
-        <Best label={tp('drills.bobs27.name')} value={data.bests.drills.bobs27} />
-      </View>
-      {filter === 'practice' ? (
-        <View style={styles.bests}>
-          <Best label={tp('drills.countUp.name')} value={data.bests.drills.countUp} />
-          <Best
-            label={tp('drills.clock.name')}
-            value={
-              data.bests.drills.clock === undefined
-                ? undefined
-                : tp('lowerBetter', { score: data.bests.drills.clock })
-            }
-          />
+        <View style={styles.card}>
+          <Text variant="overline" tone="muted">
+            {t('heat.title')}
+          </Text>
+          {heat.total === 0 ? (
+            <Text tone="muted">{t('heat.empty')}</Text>
+          ) : (
+            <View style={styles.heatRow}>
+              <Board
+                size={150}
+                muted
+                heat={heat.regions}
+                accessibilityLabel={t('heat.a11y', { region: topRegion })}
+              />
+              <Text variant="caption" tone="muted" style={styles.flex}>
+                {t('heat.caption', {
+                  sessions: Math.min(HEAT_SESSIONS, entries.length || HEAT_SESSIONS),
+                  darts: heat.total,
+                  region: topRegion,
+                  pct: top ? Math.round((top.count / heat.total) * 100) : 0,
+                  misses: Math.round((heat.misses / heat.total) * 100),
+                })}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <Text variant="overline" tone="muted">
+          {t('list.title')}
+        </Text>
+        {entries.length === 0 ? <Text tone="muted">{t('list.empty')}</Text> : null}
+        {entries.map((e) => {
+          const name =
+            e.kind === 'drill'
+              ? tp(`drills.${e.typeId as DrillId}.name` as 'drills.bobs27.name')
+              : gameName(tg, e.typeId, e.settings);
+          const title = e.score ? `${name} · ${e.score}` : name;
+          const sub = !e.finished
+            ? t('list.inProgress')
+            : [
+                e.opponents.length
+                  ? t('list.vs', { names: e.opponents.join(', ') })
+                  : t('list.solo'),
+                e.stat ? `${tg(`stats.${e.stat.key}` as 'stats.mpr')} ${formatStat(e.stat)}` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ');
+          const badge =
+            e.kind === 'drill'
+              ? null
+              : e.draw
+                ? t('list.drew')
+                : e.won === null
+                  ? null
+                  : e.won
+                    ? t('list.won')
+                    : t('list.lost');
+          const day = dayLabel(e.at, data.now, {
+            today: tg('home.today'),
+            yesterday: tg('home.yesterday'),
+          });
+          return (
+            <HistoryRow
+              key={e.sessionId}
+              label={t('list.a11y', { title, sub, day })}
+              name={title}
+              inProgress={!e.finished}
+              onOpen={() => {
+                const to = destination(e.sessionId);
+                if (to) router.push(to);
+              }}
+              onDelete={() => {
+                removeSession(e.sessionId);
+                refresh();
+              }}
+              onFullSwipe={() => deleteWithUndo({ sessionId: e.sessionId, name: title })}
+              testID={`history-${e.sessionId}`}
+            >
+              <View style={[styles.badge, e.won && styles.badgeWon]}>
+                <Text variant="bodyStrong" tone={e.won ? 'onAccent' : 'text'}>
+                  {badge ?? (e.kind === 'drill' ? t('list.drillBadge') : t('list.soloBadge'))}
+                </Text>
+              </View>
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" numberOfLines={1}>
+                  {title}
+                </Text>
+                <Text variant="caption" tone="muted" numberOfLines={1}>
+                  {sub}
+                </Text>
+              </View>
+              <Text variant="caption" tone="muted">
+                {day}
+              </Text>
+            </HistoryRow>
+          );
+        })}
+      </Screen>
+      {pending ? (
+        <View style={styles.undo} accessibilityLiveRegion="polite" testID="undo-delete-bar">
+          <Text tone="onAccent" style={styles.flex} numberOfLines={2}>
+            {t('delete.deleted', { name: pending.name })}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('delete.undoA11y', { name: pending.name })}
+            style={({ pressed }) => [styles.undoButton, pressed && styles.pressed]}
+            onPress={undo}
+            testID="undo-delete"
+          >
+            <Text variant="bodyStrong" tone="onAccent">
+              {t('delete.undo')}
+            </Text>
+          </Pressable>
         </View>
       ) : null}
-
-      <View style={styles.card}>
-        <Text variant="overline" tone="muted">
-          {t('heat.title')}
-        </Text>
-        {heat.total === 0 ? (
-          <Text tone="muted">{t('heat.empty')}</Text>
-        ) : (
-          <View style={styles.heatRow}>
-            <Board
-              size={150}
-              muted
-              heat={heat.regions}
-              accessibilityLabel={t('heat.a11y', { region: topRegion })}
-            />
-            <Text variant="caption" tone="muted" style={styles.flex}>
-              {t('heat.caption', {
-                sessions: Math.min(HEAT_SESSIONS, entries.length || HEAT_SESSIONS),
-                darts: heat.total,
-                region: topRegion,
-                pct: top ? Math.round((top.count / heat.total) * 100) : 0,
-                misses: Math.round((heat.misses / heat.total) * 100),
-              })}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      <Text variant="overline" tone="muted">
-        {t('list.title')}
-      </Text>
-      {entries.length === 0 ? <Text tone="muted">{t('list.empty')}</Text> : null}
-      {entries.map((e) => {
-        const name =
-          e.kind === 'drill'
-            ? tp(`drills.${e.typeId as DrillId}.name` as 'drills.bobs27.name')
-            : gameName(tg, e.typeId, e.settings);
-        const title = e.score ? `${name} · ${e.score}` : name;
-        const sub = !e.finished
-          ? t('list.inProgress')
-          : [
-              e.opponents.length ? t('list.vs', { names: e.opponents.join(', ') }) : t('list.solo'),
-              e.stat ? `${tg(`stats.${e.stat.key}` as 'stats.mpr')} ${formatStat(e.stat)}` : null,
-            ]
-              .filter(Boolean)
-              .join(' · ');
-        const badge =
-          e.kind === 'drill'
-            ? null
-            : e.draw
-              ? t('list.drew')
-              : e.won === null
-                ? null
-                : e.won
-                  ? t('list.won')
-                  : t('list.lost');
-        const day = dayLabel(e.at, data.now, {
-          today: tg('home.today'),
-          yesterday: tg('home.yesterday'),
-        });
-        return (
-          <HistoryRow
-            key={e.sessionId}
-            label={t('list.a11y', { title, sub, day })}
-            name={title}
-            inProgress={!e.finished}
-            onOpen={() => {
-              const to = destination(e.sessionId);
-              if (to) router.push(to);
-            }}
-            onDelete={() => {
-              removeSession(e.sessionId);
-              refresh();
-            }}
-            testID={`history-${e.sessionId}`}
-          >
-            <View style={[styles.badge, e.won && styles.badgeWon]}>
-              <Text variant="bodyStrong" tone={e.won ? 'onAccent' : 'text'}>
-                {badge ?? (e.kind === 'drill' ? t('list.drillBadge') : t('list.soloBadge'))}
-              </Text>
-            </View>
-            <View style={styles.flex}>
-              <Text variant="bodyStrong" numberOfLines={1}>
-                {title}
-              </Text>
-              <Text variant="caption" tone="muted" numberOfLines={1}>
-                {sub}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted">
-              {day}
-            </Text>
-          </HistoryRow>
-        );
-      })}
-    </Screen>
+    </View>
   );
 }
 
@@ -333,6 +372,21 @@ const styles = StyleSheet.create((theme) => ({
   },
   badgeWon: { backgroundColor: theme.colors.accent },
   pressed: { opacity: 0.85 },
+  undo: {
+    position: 'absolute',
+    left: theme.spacing.l,
+    right: theme.spacing.l,
+    bottom: TAB_BAR_SPACE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.m,
+    paddingVertical: theme.spacing.s,
+    paddingLeft: theme.spacing.l,
+    paddingRight: theme.spacing.s,
+    borderRadius: theme.radii.m,
+    backgroundColor: theme.colors.accent,
+  },
+  undoButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: theme.spacing.m },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
   analysis: {
     flexDirection: 'row',
