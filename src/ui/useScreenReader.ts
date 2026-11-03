@@ -6,8 +6,8 @@ export function useScreenReader(): boolean {
   const [on, setOn] = useState(false);
   useEffect(() => {
     let live = true;
-    void AccessibilityInfo.isScreenReaderEnabled().then((v) => {
-      if (live) setOn(v);
+    void Promise.resolve(AccessibilityInfo.isScreenReaderEnabled()).then((v) => {
+      if (live) setOn(!!v);
     });
     const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setOn);
     return () => {

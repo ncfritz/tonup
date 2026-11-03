@@ -16,6 +16,8 @@ appId: app.tonup.ios
 - assertVisible: 'Round 2 of 21'
 - tapOn:
     id: 'header-back'
+# Discarding leaves no trace in History.
+- tapOn: 'Discard'
 # Pro drills are locked without Pro and open the Pro screen.
 - tapOn:
     id: 'drill-catch40'

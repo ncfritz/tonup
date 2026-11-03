@@ -20,7 +20,7 @@ Navigation is option E from the canvas's Home navigation page: a floating tab ba
 
 ## Tab bar
 
-A pill floating 22 pt above the bottom edge on `surface`, with a soft shadow. Practice and History on the left, Rules and Settings on the right, icon over label; the selected tab's icon and label use `accent`. The Play button (84 pt circle with a 6 pt `bg` border, rising 34 pt above the pill) shows a miniature board; on the Play tab it gets a 2 pt `accent` ring. Screens under the tab bar end their content above it.
+A pill floating 22 pt above the bottom edge on `surface`, with a soft shadow. Practice and History on the left, Rules and Settings on the right, icon over label; the selected tab's icon and label use `accent`. The Play button (84 pt circle with a 6 pt `bg` border, centred on the pill so it overhangs its top and bottom edges a little) shows a miniature board; on the Play tab it gets a 2 pt `accent` ring. Screens under the tab bar end their content above it.
 
 On the Play tab, tapping Play again does nothing; Quick start's Start button plays your usual game and the X01 and All games buttons open New game.
 
@@ -30,7 +30,8 @@ Top to bottom: the TON UP wordmark and "Play" title with a "Camera ready" chip (
 
 ## Scoring (phone)
 
-- Header: pause, game and leg, and a Board / Keypad switch.
+- Header: leave (the pause icon), game and leg, and a Board / Keypad switch.
+- Leaving before the end: with nothing thrown yet, the game simply goes and leaves nothing in History. Once darts are in, a choice: Keep for later (resume it from Play), Discard (deleted with its darts, never in History), or Cancel. Drills work the same way, back to Practice. Bots wait while the choice is up.
 - Scoreboard: one row per player with legs and remaining score; the player at the oche has the accent bar. Below it, a strip that reads "You require 140 · T20 · T20 · D10" (a curated checkout route for the darts left), or Bust, Game shot, or No finish yet.
 - Visit: three dart slots and the visit total (or BUST).
 - Input: the board (tap where the dart landed; numbered markers appear) or the keypad (Single/Double/Treble, 1–20, outer bull, bull).

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import { hitOf, miss } from '@/domain/darts';
-import { latestFinished } from '@/services/db/sessionsRepo';
+import { getSession, latestFinished } from '@/services/db/sessionsRepo';
 
 import { resetTestDb } from '../../../test/sqlite';
 import Play from '../../app/(tabs)/index';
@@ -22,9 +22,9 @@ jest.mock('expo-router', () => {
     useFocusEffect: (cb: () => void) => useEffect(cb, [cb]),
   };
 });
-const router = jest.requireMock<{ router: { push: jest.Mock; replace: jest.Mock } }>(
-  'expo-router',
-).router;
+const router = jest.requireMock<{
+  router: { push: jest.Mock; replace: jest.Mock; navigate: jest.Mock };
+}>('expo-router').router;
 
 const YOU = { id: 'you', name: 'You' };
 
@@ -119,5 +119,35 @@ describe('Last practice on Play', () => {
     expect(
       screen.getByText('500 short of your best (497) · D5 missed with all three darts'),
     ).toBeOnTheScreen();
+  });
+});
+
+describe('leaving a drill', () => {
+  it('goes without a trace before any dart, and asks once darts are in', async () => {
+    const empty = startDrill('bobs27', {}, YOU);
+    mockParams = { sessionId: empty };
+    const view = await render(<DrillScreen />);
+    await act(async () => {});
+    await fireEvent.press(screen.getByTestId('header-back'));
+    expect(getSession(empty)).toBeNull();
+    expect(router.navigate).toHaveBeenCalledWith('/practice');
+    await view.unmount();
+
+    const { Alert } = jest.requireActual<typeof import('react-native')>('react-native');
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const id = startDrill('bobs27', {}, YOU);
+    mockParams = { sessionId: id };
+    await render(<DrillScreen />);
+    await act(async () => {});
+    await fireEvent.press(screen.getByTestId('drill-hit'));
+    await fireEvent.press(screen.getByTestId('header-back'));
+    expect(alert.mock.calls[0]![0]).toBe('Leave this drill?');
+    await act(async () => {
+      (alert.mock.calls[0]![2] as { text: string; onPress?: () => void }[]).find(
+        (b) => b.text === 'Discard',
+      )!.onPress!();
+    });
+    expect(getSession(id)).toBeNull();
+    alert.mockRestore();
   });
 });

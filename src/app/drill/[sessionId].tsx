@@ -12,6 +12,7 @@ import { BULL, hitOf, label, miss, type Point } from '@/domain/darts';
 import { useGame } from '@/features/game/store';
 import { personalBest } from '@/features/practice/bests';
 import { startPractice } from '@/features/practice/start';
+import { useLeave } from '@/features/game/useLeave';
 import { DrillResult } from '@/features/practice/components/DrillResult';
 import { StepStrip } from '@/features/practice/components/StepStrip';
 import { haptics } from '@/services/haptics';
@@ -49,6 +50,7 @@ export default function DrillScreen() {
   const { t: tg } = useTranslation('game');
   const game = useGame((s) => s.game);
   const [area, setArea] = useState({ w: 0, h: 0 });
+  const { leave } = useLeave('drill', '/practice');
 
   useEffect(() => {
     useGame.getState().open(sessionId);
@@ -153,12 +155,7 @@ export default function DrillScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <Header
-        title={name}
-        icon="pause"
-        backLabel={t('drill.pause')}
-        onBack={() => router.navigate('/practice')}
-      />
+      <Header title={name} icon="pause" backLabel={t('drill.leave')} onBack={leave} />
       <View style={styles.top}>
         <View style={styles.flex}>
           <Text variant="overline" tone="muted">

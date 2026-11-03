@@ -70,7 +70,6 @@
     "claim": "What claims a square"
   },
   "header": {
-    "pause": "Pause and go to Play",
     "title": "{start} · {format} · Leg {leg}",
     "titleSets": "{start} · Set {set} · Leg {leg}",
     "input": "Input method",
@@ -78,7 +77,8 @@
     "keypad": "Keypad",
     "visits": "Visits",
     "titleGame": "{game}",
-    "titleRound": "{game} · Round {n} of {of}"
+    "titleRound": "{game} · Round {n} of {of}",
+    "leave": "Leave the game"
   },
   "board": {
     "a11y": "Dartboard",
@@ -312,5 +312,13 @@
   "ticTacToe": {
     "openA11y": "{number}, open",
     "takenA11y": "{number}, claimed by {name}"
+  },
+  "leave": {
+    "gameTitle": "Leave this game?",
+    "drillTitle": "Leave this drill?",
+    "body": "Keep it to finish later from Play, or discard it so it isn't saved.",
+    "keep": "Keep for later",
+    "discard": "Discard",
+    "cancel": "Cancel"
   }
 }

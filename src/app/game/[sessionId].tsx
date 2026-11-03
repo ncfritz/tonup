@@ -15,6 +15,7 @@ import { bestOf } from '@/features/game/lineup';
 import { x01State } from '@/features/game/session';
 import { botUp, dartsText, useGame } from '@/features/game/store';
 import { useBotTurns } from '@/features/game/useBotTurns';
+import { useLeave } from '@/features/game/useLeave';
 import { useSettings } from '@/features/settings/store';
 import { haptics } from '@/services/haptics';
 import {
@@ -60,7 +61,8 @@ export default function GameScreen() {
     }
   }, [finished, sessionId]);
 
-  useBotTurns(!!editing || visitsOpen);
+  const { leave, asking } = useLeave('game', '/');
+  useBotTurns(!!editing || visitsOpen || asking);
 
   if (!game || game.session.id !== sessionId)
     return <Screen edges={['top', 'bottom']}>{null}</Screen>;
@@ -124,8 +126,8 @@ export default function GameScreen() {
       <Header
         title={title}
         icon="pause"
-        backLabel={t('header.pause')}
-        onBack={() => router.navigate('/')}
+        backLabel={t('header.leave')}
+        onBack={leave}
         right={
           <Pressable
             accessibilityRole="button"

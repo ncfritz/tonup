@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as Speech from 'expo-speech';
 
 import { X01_DEFAULTS } from '@/domain/games/x01';
-import { latestUnfinished, loadDarts } from '@/services/db/sessionsRepo';
+import { getSession, latestUnfinished, loadDarts } from '@/services/db/sessionsRepo';
 
 import { resetTestDb } from '../../../test/sqlite';
 import GameScreen from '../../app/game/[sessionId]';
@@ -18,7 +18,9 @@ jest.mock('expo-router', () => ({
   router: { replace: jest.fn(), navigate: jest.fn(), back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: () => mockParams,
 }));
-const mockRouter = jest.requireMock<{ router: { replace: jest.Mock } }>('expo-router').router;
+const mockRouter = jest.requireMock<{ router: { replace: jest.Mock; navigate: jest.Mock } }>(
+  'expo-router',
+).router;
 
 const YOU = { id: YOU_ID, name: 'You' };
 const BOT = { id: botId(5), name: 'DartBot 5', botLevel: 5 };
@@ -130,6 +132,51 @@ describe('with VoiceOver', () => {
     await fireEvent.press(screen.getByText('Treble'));
     expect(screen.getByLabelText('Treble 20')).toBeOnTheScreen();
     expect(screen.getByLabelText('Bullseye, 50')).toBeOnTheScreen();
+    spy.mockRestore();
+  });
+});
+
+describe('leaving before the end', () => {
+  const alertSpy = () =>
+    jest
+      .spyOn(jest.requireActual<typeof import('react-native')>('react-native').Alert, 'alert')
+      .mockImplementation(() => {});
+  const press = (spy: jest.SpyInstance, text: string) =>
+    act(async () => {
+      (spy.mock.calls[0]![2] as { text: string; onPress?: () => void }[]).find(
+        (b) => b.text === text,
+      )!.onPress!();
+    });
+
+  it('leaves no trace when nothing was thrown', async () => {
+    const id = startX01(X01_DEFAULTS, [YOU]);
+    await open(id);
+    await fireEvent.press(screen.getByTestId('header-back'));
+    expect(getSession(id)).toBeNull();
+    expect(mockRouter.navigate).toHaveBeenCalledWith('/');
+  });
+
+  it('asks, then discards the game and its darts, or keeps it for later', async () => {
+    const spy = alertSpy();
+    const kept = startX01(X01_DEFAULTS, [YOU]);
+    await open(kept);
+    await keypad('T20');
+    await fireEvent.press(screen.getByTestId('header-back'));
+    expect(spy.mock.calls[0]![0]).toBe('Leave this game?');
+    await press(spy, 'Keep for later');
+    expect(getSession(kept)).not.toBeNull();
+    expect(latestUnfinished()).toBe(kept);
+    await screen.unmount();
+
+    spy.mockClear();
+    const id = startX01(X01_DEFAULTS, [YOU]);
+    await open(id);
+    await keypad('T20');
+    await fireEvent.press(screen.getByTestId('header-back'));
+    await press(spy, 'Discard');
+    expect(getSession(id)).toBeNull();
+    expect(loadDarts(id)).toEqual([]);
+    expect(mockRouter.navigate).toHaveBeenLastCalledWith('/');
     spy.mockRestore();
   });
 });

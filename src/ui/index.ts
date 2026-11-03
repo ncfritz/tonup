@@ -1,7 +1,7 @@
 export { Button } from './Button';
 export { Icon, type IconName } from './icons';
 export { PlaceholderScreen } from './PlaceholderScreen';
-export { PLAY_RISE, PLAY_SIZE, PlayButton } from './PlayButton';
+export { PLAY_SIZE, PlayButton } from './PlayButton';
 export { Pressable } from './Pressable';
 export { Screen } from './Screen';
 export { SegmentedControl, type Segment } from './SegmentedControl';

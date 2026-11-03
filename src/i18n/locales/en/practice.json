@@ -89,7 +89,6 @@
   "noBest": "No score yet",
   "lowerBetter": "{score} darts",
   "drill": {
-    "pause": "Pause and go to Practice",
     "round": "Round {n} of {of}",
     "visit": "Visit {n} of {of}",
     "score": "Score",
@@ -114,7 +113,8 @@
     "pressure": "{bot} is on {botOn} · you need {remaining}",
     "pressureLeft": "{dartsLeft, plural, one {# dart} other {# darts}} to take the leg",
     "part": "{part, select, scoring {Scoring: ten visits at T20} doubles {Doubles: three darts at each} other {Checkouts: one visit to finish {remaining}}}",
-    "route": "Route {route}"
+    "route": "Route {route}",
+    "leave": "Leave the drill"
   },
   "result": {
     "done": "Drill complete",

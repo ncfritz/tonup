@@ -5,7 +5,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { haptics } from '@/services/haptics';
 
 import { Icon, type IconName } from './icons';
-import { PLAY_RISE, PLAY_SIZE, PlayButton } from './PlayButton';
+import { PLAY_SIZE, PlayButton } from './PlayButton';
 import { Pressable } from './Pressable';
 import { Text } from './Text';
 
@@ -23,11 +23,13 @@ export const TAB_BAR_BOTTOM = 22;
 export const TAB_BAR_SPACE = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM + 16;
 
 const PLAY_COLUMN = 96;
+/** How far the Play button reaches past the bar's top and bottom edges. */
+const OVERHANG = Math.max(0, (PLAY_SIZE + 4 - TAB_BAR_HEIGHT) / 2);
 
 /**
  * Our own tab bar (docs/design/screens.md → Tab bar): a pill floating above the bottom edge,
  * Practice and History on the left, Rules and Settings on the right, and the dartboard Play
- * button rising out of the middle. Play is the home screen (the `index` route).
+ * button centred in the middle, a little larger than the bar. Play is the home screen (the `index` route).
  */
 export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const { theme } = useUnistyles();
@@ -61,6 +63,8 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
                 accessibilityState={{ selected: focused }}
                 accessibilityLabel={label}
                 style={styles.playColumn}
+                // The button overhangs the bar a little; all of it is tappable.
+                hitSlop={{ top: OVERHANG, bottom: OVERHANG }}
                 onPress={onPress}
               >
                 <View style={styles.playButton}>
@@ -117,12 +121,12 @@ const styles = StyleSheet.create((theme) => ({
     gap: theme.spacing.xxs,
     minHeight: TAB_BAR_HEIGHT,
   },
-  // The Play column reaches up so the whole raised button is tappable.
+  // Centred on the bar: the button's middle is the bar's middle.
   playColumn: {
     width: PLAY_COLUMN,
-    height: TAB_BAR_HEIGHT + PLAY_RISE,
-    marginTop: -PLAY_RISE,
+    height: TAB_BAR_HEIGHT,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  playButton: { marginTop: -2, width: PLAY_SIZE + 4, height: PLAY_SIZE + 4 },
+  playButton: { width: PLAY_SIZE + 4, height: PLAY_SIZE + 4 },
 }));

@@ -6,10 +6,9 @@ import Svg, { Circle, G, Path } from 'react-native-svg';
 import { ringWedges } from './boardPaths';
 import { Text } from './Text';
 
-/** The Play button's diameter, its border, and how far it rises above the tab bar. */
+/** The Play button's diameter and its border. */
 export const PLAY_SIZE = 84;
 export const PLAY_BORDER = 6;
-export const PLAY_RISE = 34;
 
 // Drawn in a 400-unit box: the board's millimetre radii, with the trebles, doubles and bull
 // enlarged so they read at this size (as in the design canvas).

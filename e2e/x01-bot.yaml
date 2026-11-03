@@ -21,5 +21,6 @@ appId: app.tonup.ios
     id: 'undo'
 - tapOn:
     id: 'header-back'
+- tapOn: 'Keep for later'
 - assertVisible:
     id: 'resume-game'
