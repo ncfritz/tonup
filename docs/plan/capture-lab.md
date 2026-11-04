@@ -26,15 +26,17 @@ iPhone: Ton Up Capture                    M1 Pro laptop: Ton Up Lab (lab/, Next.
 
 ### Screens (`src/capture-app`, logic in `src/features/capture-lab`)
 
-| Screen   | What                                                                                                                                                                                   |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Home     | Lab status (reachable, active model), sessions, outbox count with a Sync button                                                                                                        |
-| Session  | Start a session with optional tags (board light on or off, standing left, centre or right, notes); snap loop with the same capture screen and coaching as snap to score                |
-| Values   | Keypad (reusing `@/ui` Keypad) for up to three darts: segment and ring, Miss, Bounce-out                                                                                               |
-| Board    | The four calibration points and the bull: pre-filled by the active model when there is one, otherwise tapped by hand with the existing diagram and magnifier (`PhotoMarkup`)           |
-| Tips     | Tap each dart tip in order. Each tap shows the value it scores; one that doesn't match its entered value turns red until it's moved or marked "on the wire" (kept, flagged for review) |
-| Review   | Rings drawn over the photo, numbered darts, entered and scored values; Save, Retake, or Save values only                                                                               |
-| Settings | Lab address (default `http://<laptop>.local:3100`), Pull model, clear sent photos                                                                                                      |
+| Screen   | What                                                                                                                                                                                                                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Home     | Lab status (reachable, active model), sessions, outbox count with a Sync button                                                                                                                                                                                                                  |
+| Session  | Start a session with optional tags (board light on or off, standing left, centre or right, notes); snap loop with a square viewfinder the width of the screen: the photo kept is that square (`square.ts`), so the board fills the labelling screens and the model's square input isn't squeezed |
+| Values   | Keypad (reusing `@/ui` Keypad) for up to three darts, filling the screen's width and height: segment and ring, Miss, Bounce-out, Undo                                                                                                                                                            |
+| Board    | The four calibration points and the bull: pre-filled by the active model when there is one, otherwise tapped by hand with the existing diagram and magnifier (`PhotoMarkup`), on the photo edge to edge and zoomable (pinch, or the + and − buttons; `ZoomPan`)                                  |
+| Tips     | Tap each dart tip in order on the zoomable photo; the darts sit in a row of chips under it. Each tap shows the value it scores; one that doesn't match its entered value turns red until it's moved or marked "on the wire" (kept, flagged for review)                                           |
+| Review   | Rings drawn over the photo, numbered darts, entered and scored values; Save, Retake, or Save values only                                                                                                                                                                                         |
+| Settings | Lab address (default `http://<laptop>.local:3100`), Pull model, clear sent photos                                                                                                                                                                                                                |
+
+Every step fits the screen without scrolling: a compact top bar with the step (1 of 4 to 4 of 4), the step's content, and its buttons pinned at the bottom.
 
 Rules:
 

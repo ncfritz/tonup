@@ -2,9 +2,10 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Redirect, router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Linking, View } from 'react-native';
+import { ActivityIndicator, Linking, useWindowDimensions, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { cropToSquare } from '@/features/capture-lab/square';
 import { useCapture, useShot } from '@/features/capture-lab/store';
 import { log } from '@/services/diagnostics';
 import { haptics } from '@/services/haptics';
@@ -28,6 +29,7 @@ export default function CaptureSession() {
   const session = useCapture((s) => s.session);
   const visits = useCapture((s) => s.visits);
   const prefill = useCapture((s) => s.prefill);
+  const { width } = useWindowDimensions();
 
   const tagText = (k: TagKey) => t(`session.tags.${k}`);
   const toggleTag = (k: TagKey) => {
@@ -44,12 +46,13 @@ export default function CaptureSession() {
     setReading(true);
     haptics.light();
     try {
-      const shot = await camera.current.takePictureAsync({ quality: 0.92, shutterSound: false });
-      const photo = { uri: shot.uri, width: shot.width, height: shot.height };
+      const shot = await camera.current.takePictureAsync({ quality: 0.95, shutterSound: false });
+      // The square the viewfinder showed.
+      const photo = await cropToSquare(shot.uri);
       let detected = null;
       if (prefill) {
         try {
-          const d = await detect(shot.uri, photo);
+          const d = await detect(photo.uri, photo);
           detected = d.modelVersion ? d : null;
         } catch (e) {
           log('warn', 'capture detection failed', { error: String(e) });
@@ -89,51 +92,56 @@ export default function CaptureSession() {
 
   return (
     <View style={styles.wrap}>
-      <CameraView ref={camera} style={styles.camera} facing="back" animateShutter={false} />
-      <View style={styles.overlay} pointerEvents="box-none">
-        <View style={styles.topBar}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('label.back')}
-            style={styles.round}
-            onPress={() => router.back()}
-            testID="session-back"
-          >
-            <Icon name="close" color={theme.colors.text} />
-          </Pressable>
-          <Text variant="bodyStrong" style={styles.title}>
-            {t('session.title', { n: visits + 1 })}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('session.end')}
-            style={styles.endButton}
-            onPress={end}
-            testID="session-end"
-          >
-            <Text variant="caption">{t('session.end')}</Text>
-          </Pressable>
+      <View style={styles.topBar}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('label.back')}
+          style={styles.round}
+          onPress={() => router.back()}
+          testID="session-back"
+        >
+          <Icon name="close" color={theme.colors.text} />
+        </Pressable>
+        <Text variant="bodyStrong" style={styles.title}>
+          {t('session.title', { n: visits + 1 })}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('session.end')}
+          style={styles.endButton}
+          onPress={end}
+          testID="session-end"
+        >
+          <Text variant="caption">{t('session.end')}</Text>
+        </Pressable>
+      </View>
+      <View accessibilityLabel={t('session.tagsA11y')} style={styles.tags}>
+        {TAG_GROUPS.flat().map((k) => {
+          const on = session.tags.includes(tagText(k));
+          return (
+            <Pressable
+              key={k}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              style={[styles.tag, on && styles.tagOn]}
+              onPress={() => toggleTag(k)}
+              testID={`tag-${k}`}
+            >
+              <Text variant="caption" tone={on ? 'onAccent' : 'text'}>
+                {tagText(k)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {/* The square viewfinder: exactly what the photo keeps (square.ts). */}
+      <View style={{ width, height: width }} testID="session-viewfinder">
+        <CameraView ref={camera} style={styles.fill} facing="back" animateShutter={false} />
+        <View style={styles.guideWrap} pointerEvents="none">
+          <View style={styles.guide} />
         </View>
-        <View accessibilityLabel={t('session.tagsA11y')} style={styles.tags}>
-          {TAG_GROUPS.flat().map((k) => {
-            const on = session.tags.includes(tagText(k));
-            return (
-              <Pressable
-                key={k}
-                accessibilityRole="button"
-                accessibilityState={{ selected: on }}
-                style={[styles.tag, on && styles.tagOn]}
-                onPress={() => toggleTag(k)}
-                testID={`tag-${k}`}
-              >
-                <Text variant="caption" tone={on ? 'onAccent' : 'text'}>
-                  {tagText(k)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <View style={styles.guide} pointerEvents="none" />
+      </View>
+      <View style={styles.bottom}>
         <View style={styles.coach}>
           <Text variant="caption" style={styles.center}>
             {reading ? t('session.reading') : t('session.coach')}
@@ -159,22 +167,19 @@ export default function CaptureSession() {
 }
 
 const styles = StyleSheet.create((theme) => ({
-  wrap: { flex: 1, backgroundColor: theme.colors.bg },
-  camera: { flex: 1 },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  wrap: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
     paddingTop: 60,
     paddingBottom: 40,
-    paddingHorizontal: theme.spacing.l,
     gap: theme.spacing.s,
   },
+  fill: { flex: 1 },
   topBar: {
-    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.s,
+    paddingHorizontal: theme.spacing.l,
   },
   title: { flex: 1, textAlign: 'center' },
   round: {
@@ -192,7 +197,12 @@ const styles = StyleSheet.create((theme) => ({
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
   },
-  tags: { alignSelf: 'stretch', flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.xs },
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.l,
+  },
   tag: {
     minHeight: 32,
     paddingHorizontal: theme.spacing.m,
@@ -201,15 +211,17 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.surface,
   },
   tagOn: { backgroundColor: theme.colors.accent },
+  guideWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   // The board should fill about this circle.
   guide: {
-    width: '86%',
+    width: '92%',
     aspectRatio: 1,
     borderRadius: 999,
     borderWidth: 2,
     borderColor: theme.colors.accent,
     borderStyle: 'dashed',
   },
+  bottom: { flex: 1, alignItems: 'center', justifyContent: 'space-evenly' },
   coach: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radii.m,

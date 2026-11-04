@@ -43,6 +43,7 @@ export function PhotoMarkup({
   selectNear,
   onTap,
   onSelect,
+  scale = 1,
 }: {
   photo: Photo;
   fit: BoardFit | null;
@@ -54,6 +55,8 @@ export function PhotoMarkup({
   selectNear: boolean;
   onTap: (p: ImagePoint) => void;
   onSelect: (i: number) => void;
+  /** How far the photo is zoomed (ZoomPan): marks and the magnifier keep their size on screen. */
+  scale?: number;
 }) {
   const { t } = useTranslation('game');
   const { theme } = useUnistyles();
@@ -61,6 +64,9 @@ export function PhotoMarkup({
   const [touch, setTouch] = useState<{ x: number; y: number } | null>(null);
   const h = w * (photo.height / photo.width);
   const toPx = (p: ImagePoint) => ({ x: p.x * w, y: p.y * h });
+  // Sizes in the photo's own (unzoomed) points that come out the same on screen at any zoom.
+  const k = 1 / scale;
+  const loupe = LOUPE * k;
 
   const at = (e: GestureResponderEvent) => ({
     x: Math.min(w, Math.max(0, e.nativeEvent.locationX)),
@@ -73,7 +79,7 @@ export function PhotoMarkup({
     if (selectNear) {
       const near = darts
         .map((d, i) => ({ i, d: Math.hypot(toPx(d.image).x - p.x, toPx(d.image).y - p.y) }))
-        .filter((n) => n.d < HIT_PT)
+        .filter((n) => n.d < HIT_PT * k)
         .sort((a, b) => a.d - b.d)[0];
       if (near) {
         onSelect(near.i);
@@ -119,19 +125,19 @@ export function PhotoMarkup({
                   points={ring(R.doubleOuter)}
                   fill="none"
                   stroke={theme.colors.accent}
-                  strokeWidth={1.5}
+                  strokeWidth={1.5 * k}
                 />
                 <Polyline
                   points={ring(R.trebleOuter)}
                   fill="none"
                   stroke={theme.colors.accent}
-                  strokeWidth={1}
+                  strokeWidth={k}
                 />
                 <Polyline
                   points={ring(R.outerBull)}
                   fill="none"
                   stroke={theme.colors.accent}
-                  strokeWidth={1}
+                  strokeWidth={k}
                 />
               </>
             ) : null}
@@ -144,10 +150,10 @@ export function PhotoMarkup({
                   key={id}
                   cx={q.x}
                   cy={q.y}
-                  r={5}
+                  r={5 * k}
                   fill="none"
                   stroke={theme.colors.accent}
-                  strokeWidth={2}
+                  strokeWidth={2 * k}
                 />
               );
             })}
@@ -159,10 +165,10 @@ export function PhotoMarkup({
                   key={`d${i}`}
                   cx={q.x}
                   cy={q.y}
-                  r={sel ? 14 : 11}
+                  r={(sel ? 14 : 11) * k}
                   fill={theme.colors.dart}
                   stroke={d.flagged ? theme.colors.danger : theme.colors.dartStroke}
-                  strokeWidth={sel ? 4 : 2.5}
+                  strokeWidth={(sel ? 4 : 2.5) * k}
                 />
               );
             })}
@@ -172,8 +178,8 @@ export function PhotoMarkup({
                 <SvgText
                   key={`n${i}`}
                   x={q.x}
-                  y={q.y + 4.5}
-                  fontSize={13}
+                  y={q.y + 4.5 * k}
+                  fontSize={13 * k}
                   fontWeight="800"
                   fill={theme.colors.dartStroke}
                   textAnchor="middle"
@@ -188,7 +194,14 @@ export function PhotoMarkup({
               pointerEvents="none"
               style={[
                 styles.loupe,
-                { left: touch.x - LOUPE / 2, top: Math.max(0, touch.y - LIFT - LOUPE / 2) },
+                {
+                  width: loupe,
+                  height: loupe,
+                  borderRadius: loupe / 2,
+                  borderWidth: 3 * k,
+                  left: touch.x - loupe / 2,
+                  top: Math.max(0, touch.y - (LIFT + LOUPE / 2) * k),
+                },
               ]}
             >
               <Image
@@ -197,26 +210,26 @@ export function PhotoMarkup({
                   position: 'absolute',
                   width: w * ZOOM,
                   height: h * ZOOM,
-                  left: LOUPE / 2 - touch.x * ZOOM,
-                  top: LOUPE / 2 - touch.y * ZOOM,
+                  left: loupe / 2 - touch.x * ZOOM,
+                  top: loupe / 2 - touch.y * ZOOM,
                 }}
               />
-              <Svg width={LOUPE} height={LOUPE} style={StyleSheet.absoluteFill}>
+              <Svg width={loupe} height={loupe} style={StyleSheet.absoluteFill}>
                 <Line
-                  x1={LOUPE / 2 - 10}
-                  x2={LOUPE / 2 + 10}
-                  y1={LOUPE / 2}
-                  y2={LOUPE / 2}
+                  x1={loupe / 2 - 10 * k}
+                  x2={loupe / 2 + 10 * k}
+                  y1={loupe / 2}
+                  y2={loupe / 2}
                   stroke={theme.colors.accent}
-                  strokeWidth={1.5}
+                  strokeWidth={1.5 * k}
                 />
                 <Line
-                  x1={LOUPE / 2}
-                  x2={LOUPE / 2}
-                  y1={LOUPE / 2 - 10}
-                  y2={LOUPE / 2 + 10}
+                  x1={loupe / 2}
+                  x2={loupe / 2}
+                  y1={loupe / 2 - 10 * k}
+                  y2={loupe / 2 + 10 * k}
                   stroke={theme.colors.accent}
-                  strokeWidth={1.5}
+                  strokeWidth={1.5 * k}
                 />
               </Svg>
             </View>
@@ -231,11 +244,7 @@ const styles = StyleSheet.create((theme) => ({
   wrap: { alignSelf: 'stretch', borderRadius: theme.radii.m, overflow: 'hidden' },
   loupe: {
     position: 'absolute',
-    width: LOUPE,
-    height: LOUPE,
-    borderRadius: LOUPE / 2,
     overflow: 'hidden',
-    borderWidth: 3,
     borderColor: theme.colors.accent,
     backgroundColor: theme.colors.bg,
   },

@@ -54,6 +54,13 @@ jest.mock('./lab', () => ({
       return { kind: 'sent', split: 'test' };
     },
 }));
+// Gesture Handler 3's gestures need Reanimated, which doesn't run under Jest: the photo's pinch
+// is inert here (its zoom buttons still work).
+jest.mock('react-native-gesture-handler', () => ({
+  ...jest.requireActual('react-native-gesture-handler'),
+  GestureDetector: ({ children }: { children: unknown }) => children,
+  usePinchGesture: () => ({}),
+}));
 jest.mock('expo-file-system', () => ({
   File: class {},
   Directory: class {},
@@ -170,6 +177,21 @@ it('won’t review a tip that disagrees with its value until it’s flagged on t
     fireEvent.press(screen.getByTestId('save'));
   });
   expect([...mockBox.values()][0]!.label.darts[1]).toMatchObject({ value: '20', onWire: true });
+});
+
+it('zooms the photo with the buttons and still marks where tapped', async () => {
+  await render(<LabelVisit />);
+  await enterValues(['T20']);
+  await fireEvent.press(screen.getByTestId('to-board'));
+  await showPhoto();
+  expect(screen.queryByTestId('zoom-fit')).toBeNull();
+  await fireEvent.press(screen.getByTestId('zoom-in'));
+  expect(screen.getByTestId('zoom-fit')).toHaveTextContent('1.8×');
+  // Taps arrive in the photo's own coordinates, zoomed or not.
+  for (const k of CALIBRATION_IDS) await tapAt(boardPointOf(k));
+  expect(screen.getByTestId('label-board-done')).toBeOnTheScreen();
+  await fireEvent.press(screen.getByTestId('zoom-fit'));
+  expect(screen.queryByTestId('zoom-fit')).toBeNull();
 });
 
 it('shows Lab’s status, sends what’s waiting, and lists sessions with their set', async () => {

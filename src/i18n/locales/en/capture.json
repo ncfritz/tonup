@@ -41,7 +41,7 @@
       "centre": "Standing centre",
       "right": "Standing right"
     },
-    "coach": "Board in the circle · snap, then pull",
+    "coach": "Board in the circle · snap, then pull the darts",
     "shutter": "Take photo",
     "permission": "Capture needs the camera to photograph the board.",
     "allow": "Allow the camera",
@@ -52,7 +52,7 @@
     "retake": "Retake",
     "back": "Back",
     "valuesTitle": "What did they score?",
-    "valuesHint": "Step 1 of 3 · read them off the board, in throwing order",
+    "valuesHint": "In throwing order",
     "dart": "Dart {n}",
     "dartEmpty": "Dart {n}, not entered",
     "dartA11y": "Dart {n}, {value}",
@@ -61,14 +61,14 @@
     "undo": "Undo",
     "toBoard": "Next: mark the board",
     "boardTitle": "Mark the board",
-    "boardHint": "Step 2 of 3 · {values}",
+    "boardHint": "{values} · pinch or use + to zoom",
     "boardFromModel": "The model placed the board. Check the rings sit on the board; mark it by hand if not.",
     "boardDone": "The rings should sit on the board. Mark it again if they don't.",
     "markByHand": "Mark by hand",
     "toTips": "Next: tap the tips",
     "tipsTitle": "Tap the tips",
-    "tipsHint": "Step 3 of 3 · where each dart enters the board. Hold to magnify.",
-    "tipsFromModel": "{count, plural, one {The model placed # tip} other {The model placed # tips}}. Tap a dart below to move it.",
+    "tipsHint": "Tap where each dart enters the board. Hold to magnify, pinch to zoom.",
+    "tipsFromModel": "{count, plural, one {The model placed # tip} other {The model placed # tips}}. Tap a dart to move it.",
     "tapTip": "Tap its tip",
     "noTip": "No tip needed",
     "scores": "Tip scores {scored}",
@@ -85,7 +85,13 @@
     "fromModel": "Pre-filled by {model}",
     "save": "Save and snap next",
     "saveValuesOnly": "Save values only",
-    "saved": "Saved"
+    "saved": "Saved",
+    "step": "{n} of 4",
+    "matchShort": "Match",
+    "noMatchShort": "Scores {scored}",
+    "wire": "Wire",
+    "reviewHint": "Check the marks, then save",
+    "chip": "{n} · {value}"
   },
   "settings": {
     "title": "Settings",
@@ -117,5 +123,10 @@
     "sentNote": "{count, plural, =0 {None kept} one {# photo, already in Lab} other {# photos, already in Lab}}",
     "clear": "Clear sent photos",
     "about": "TU Capture · internal build, not for the App Store"
+  },
+  "zoom": {
+    "in": "Zoom in",
+    "out": "Zoom out",
+    "fit": "Back to the whole photo"
   }
 }
