@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
 
+import { hydrateCapture } from '@/features/capture-lab/store';
 import i18next, { initI18n } from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
 import { FONT_ASSETS } from '@/theme/fonts';
@@ -20,6 +21,7 @@ initI18n();
 i18next.addResourceBundle('en', 'capture', capture);
 // One fixed look for an internal tool: the Training theme, dark (docs/design/themes.md).
 UnistylesRuntime.setTheme(themeName('training', 'dark'));
+hydrateCapture();
 
 export default function CaptureLayout() {
   const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
@@ -32,7 +34,12 @@ export default function CaptureLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="session" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="label" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="settings" />
+      </Stack>
     </GestureHandlerRootView>
   );
 }

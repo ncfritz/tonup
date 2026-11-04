@@ -1,6 +1,6 @@
 # Capture and Lab: implementation plan
 
-- Status: In progress (2026-11-03): L0 and L1 done
+- Status: In progress (2026-11-03): L0 to L2 done; L2 needs a build on the iPhone
 - Decisions: [ADR 0012](../architecture/decisions/0012-capture-and-lab.md); builds on [snap-to-score.md](snap-to-score.md) (milestone S4)
 
 Ton Up Capture is an internal iPhone app for photographing visits and labelling them carefully. Ton Up Lab is a web app on the laptop that collects the captures, keeps the training and verification sets apart, runs training and verification, and manages models. Together they turn "copy a folder and run a script" into a loop: capture, label, train, verify, pull the new model into Capture to pre-fill the next labels.
@@ -196,6 +196,15 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 ## Built so far
 
 - **L1 (Lab data):** the schema above; `POST /api/captures` (multipart `photo` + `label`, idempotent by ID); photos stored upright (EXIF orientation applied, since training's PIL ignores it) with thumbnails; each label measured on save (tip scores through the shared geometry, camera angle and board size from the board outline, brightness, tight groups); review reasons: board not marked, board marks disagree (fit residual over 8 mm), value mismatch, on the wire. Pages: Overview counts, Captures gallery (sets, review queue, session and status filters), the label editor (drag points and tips, edit values and flags, rings drawn through the fit, versions, leave out of training) and Sessions (import a folder, the DeepDarts folder).
+
+- **L2 (Capture):** `src/capture-app` (Home, Session, Label, Settings) over `src/features/capture-lab`: the visit as plain state (`visit.ts`: values, board, tips, review; a tip must score its value or be flagged on the wire), the label file, the outbox as files in Documents (`outboxFiles.ts`), sync (`outbox.ts`, `lab.ts`: multipart upload with `expo-file-system`'s `File.upload`) and the settings and session store (`store.ts`, saved to Documents/capture-state.json). The photo markup from snap to score (`PhotoMarkup`) now takes plain props so both apps use it. An installed model pre-fills the board and matches its tips to the values entered.
+
+### Trying Capture
+
+1. `pnpm capture:sync`, then `pnpm capture:ios` with the iPhone connected (or open `ios/` in Xcode and run). `pnpm ios:sync` switches back to Ton Up.
+2. On the Mac: `cd lab && pnpm dev:lan`. Find the Mac's name in System Settings › General › Sharing (Local hostname, for example `my-mac.local`).
+3. In Capture: Settings › Lab address `my-mac.local:3100`, Test. iOS asks for local-network access the first time.
+4. Start a session, snap, label, save. The visit goes to Lab straight away, or waits in the outbox until Lab is back.
 
 ## Risks and findings
 

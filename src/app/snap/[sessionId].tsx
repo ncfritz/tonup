@@ -217,8 +217,12 @@ export default function Snap() {
         </Text>
       )}
       <PhotoMarkup
-        state={snap}
-        darts={found}
+        photo={snap.photo}
+        fit={snap.fit}
+        calibration={snap.calibration}
+        darts={found.map((d, i) => ({ image: d.image, n: i + 1, flagged: needsLook(d) }))}
+        selected={snap.selected}
+        selectNear={snap.phase.kind === 'review' && snap.selected === null}
         onTap={(p) => {
           haptics.light();
           setSnap(tap(snap, p));

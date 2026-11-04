@@ -1,0 +1,183 @@
+import { centreOf } from '@/domain/board';
+import { applyHomography, boardPointOf, CALIBRATION_IDS, fitHomography } from '@/domain/camera';
+import type { Point } from '@/domain/darts';
+import type { DetectResult } from '@/services/vision';
+
+import {
+  back,
+  BOUNCE_OUT,
+  canReview,
+  checks,
+  enter,
+  labelFile,
+  MISS,
+  remark,
+  selectDart,
+  start,
+  tapBoard,
+  tapTip,
+  toBoard,
+  toggleWire,
+  toReview,
+  toTips,
+  undoEnter,
+  visitTotal,
+  type VisitState,
+} from './visit';
+
+// The board seen a little from the left, as in the snap-to-score tests.
+const CAMERA = fitHomography([
+  { from: { x: -170, y: 170 }, to: { x: 0.25, y: 0.1 } },
+  { from: { x: 170, y: 170 }, to: { x: 0.78, y: 0.12 } },
+  { from: { x: 170, y: -170 }, to: { x: 0.75, y: 0.9 } },
+  { from: { x: -170, y: -170 }, to: { x: 0.28, y: 0.88 } },
+])!;
+const img = (p: Point) => applyHomography(CAMERA, p);
+const photo = { uri: 'file:///p.jpg', width: 400, height: 300 };
+const T20 = centreOf({ segment: 20, multiplier: 3 });
+const S5 = centreOf({ segment: 5, multiplier: 1 });
+
+function markBoard(s: VisitState) {
+  return CALIBRATION_IDS.reduce((acc, id) => tapBoard(acc, img(boardPointOf(id))), s);
+}
+
+describe('labelling a visit', () => {
+  it('goes values → board → tips → review when every tip matches', () => {
+    let s = start(photo, null);
+    s = enter(enter(enter(s, 'T20'), '5'), MISS);
+    expect(s.entered).toEqual(['T20', '5', MISS]);
+    s = toBoard(s);
+    expect(s.step).toBe('board');
+    s = markBoard(s);
+    expect(s.fit).not.toBeNull();
+    s = toTips(s);
+    expect(s.selected).toBe(0);
+    s = tapTip(s, img(T20));
+    expect(s.selected).toBe(1);
+    s = tapTip(s, img(S5));
+    // The miss needs no tip.
+    expect(s.selected).toBeNull();
+    expect(checks(s).map((c) => [c.scored, c.ok])).toEqual([
+      ['T20', true],
+      ['5', true],
+      [null, true],
+    ]);
+    expect(canReview(s)).toBe(true);
+    expect(toReview(s).step).toBe('review');
+  });
+
+  it('holds a visit whose tip disagrees until it moves or is flagged on the wire', () => {
+    let s = toTips(markBoard(toBoard(enter(enter(start(photo, null), 'T20'), '20'))));
+    s = tapTip(tapTip(s, img(T20)), img(S5));
+    expect(checks(s)[1]).toMatchObject({ entered: '20', scored: '5', match: false, ok: false });
+    expect(canReview(s)).toBe(false);
+    expect(toReview(s).step).toBe('tips');
+    // Flag it…
+    expect(canReview(toggleWire(s, 1))).toBe(true);
+    // …or move it.
+    s = tapTip(selectDart(s, 1), img(centreOf({ segment: 20, multiplier: 1 })));
+    expect(checks(s)[1]!.match).toBe(true);
+  });
+
+  it('caps a visit at three darts and undoes the last value', () => {
+    let s = start(photo, null);
+    for (const v of ['1', '2', '3', '4']) s = enter(s, v);
+    expect(s.entered).toEqual(['1', '2', '3']);
+    expect(undoEnter(s).entered).toEqual(['1', '2']);
+  });
+
+  it('starts marking again when the points don’t make a board', () => {
+    let s = toBoard(enter(start(photo, null), 'T20'));
+    for (let i = 0; i < 5; i++) s = tapBoard(s, { x: 0.5, y: 0.5 });
+    expect(s.markFailed).toBe(true);
+    expect(s.marking).toBe(0);
+    expect(s.fit).toBeNull();
+  });
+
+  it('keeps work when stepping back', () => {
+    let s = toTips(markBoard(toBoard(enter(start(photo, null), 'T20'))));
+    s = tapTip(s, img(T20));
+    const b = back(back(s));
+    expect(b.step).toBe('values');
+    expect(toTips(toBoard(b)).tips[0]).toEqual(img(T20));
+  });
+});
+
+describe('with a model', () => {
+  const detected: DetectResult = {
+    width: 400,
+    height: 300,
+    sharpness: 1,
+    modelVersion: 'v3',
+    keypoints: Object.fromEntries(
+      CALIBRATION_IDS.map((id) => [id, { ...img(boardPointOf(id)), c: 0.9 }]),
+    ),
+    tips: [
+      { ...img(S5), c: 0.8 },
+      { ...img(T20), c: 0.95 },
+    ],
+  };
+
+  it('pre-fills the board and matches the model’s tips to the values entered', () => {
+    let s = start(photo, detected);
+    expect(s.boardFromModel).toBe(true);
+    s = toTips(toBoard(enter(enter(s, '5'), 'T20')));
+    expect(s.tips).toEqual([img(S5), img(T20)].map((p) => ({ x: p.x, y: p.y })));
+    expect(s.tipsFromModel).toBe(2);
+    expect(canReview(s)).toBe(true);
+    expect(labelFile(s, meta).prefillModel).toBe('v3');
+  });
+
+  it('drops the model’s board when re-marked', () => {
+    const s = remark(toBoard(enter(start(photo, detected), '5')));
+    expect(s.boardFromModel).toBe(false);
+    expect(s.marking).toBe(0);
+  });
+});
+
+const meta = {
+  id: 'cap-1',
+  createdAt: '2026-11-04T05:10:00.000Z',
+  session: { id: 'sess-1', startedAt: '2026-11-04T05:00:00.000Z', tags: ['light on'] },
+  zoom: 1,
+};
+
+describe('labelFile', () => {
+  it('writes Lab’s format: DeepDarts point order, one entry per dart, flags', () => {
+    let s = toTips(
+      markBoard(toBoard(enter(enter(enter(start(photo, null), 'T20'), '20'), BOUNCE_OUT))),
+    );
+    s = toggleWire(tapTip(tapTip(s, img(T20)), img(S5)), 1);
+    const f = labelFile(s, meta);
+    expect(f).toMatchObject({
+      id: 'cap-1',
+      image: 'cap-1.jpg',
+      width: 400,
+      height: 300,
+      sessionId: 'sess-1',
+      tags: ['light on'],
+      valuesOnly: false,
+      prefillModel: null,
+      zoom: 1,
+    });
+    expect(f.calibration).toHaveLength(5);
+    expect(f.calibration.every((p) => p !== null)).toBe(true);
+    expect(f.darts.map((d) => [d.value, d.x !== null, d.onWire ?? false])).toEqual([
+      ['T20', true, false],
+      ['20', true, true],
+      [BOUNCE_OUT, false, false],
+    ]);
+  });
+
+  it('drops the tips for a values-only save', () => {
+    const s = toTips(markBoard(toBoard(enter(start(photo, null), 'T20'))));
+    const f = labelFile(tapTip(s, img(T20)), meta, true);
+    expect(f.valuesOnly).toBe(true);
+    expect(f.darts).toEqual([{ x: null, y: null, value: 'T20' }]);
+  });
+});
+
+it('adds up a visit from its values', () => {
+  expect(visitTotal(['T20', '5', MISS])).toBe(65);
+  expect(visitTotal(['Bull', '25', 'D16'])).toBe(107);
+});

@@ -8,11 +8,19 @@ import { STEEL_TIP_RADII_MM as R, polar } from '@/domain/board';
 import {
   applyHomography,
   CALIBRATION_IDS,
-  type DartProposal,
+  type BoardFit,
+  type CalibrationId,
   type ImagePoint,
 } from '@/domain/camera';
 
-import { needsLook, type SnapState } from './snap';
+import type { Photo } from './snap';
+
+/** A dart drawn on the photo: where, its number, and whether it needs a look. */
+export interface MarkupDart {
+  image: ImagePoint;
+  n: number;
+  flagged: boolean;
+}
 
 /** The loupe's size, how much it magnifies, and how far above the finger it sits. */
 const LOUPE = 120;
@@ -23,16 +31,27 @@ const HIT_PT = 22;
 
 /**
  * The photo with what was read drawn on it: the board's rings as found, the calibration points,
- * and numbered darts. Touch shows a magnifier; letting go marks, adds, selects or moves.
+ * and numbered darts. Touch shows a magnifier; letting go marks, adds, selects or moves. Used by
+ * snap to score and by Ton Up Capture's labelling.
  */
 export function PhotoMarkup({
-  state,
+  photo,
+  fit,
+  calibration,
   darts,
+  selected,
+  selectNear,
   onTap,
   onSelect,
 }: {
-  state: SnapState;
-  darts: DartProposal[];
+  photo: Photo;
+  fit: BoardFit | null;
+  calibration: Partial<Record<CalibrationId, ImagePoint>>;
+  darts: MarkupDart[];
+  /** Index into `darts` of the one being moved. */
+  selected: number | null;
+  /** A tap near a dart selects it instead of passing the tap on. */
+  selectNear: boolean;
   onTap: (p: ImagePoint) => void;
   onSelect: (i: number) => void;
 }) {
@@ -40,7 +59,7 @@ export function PhotoMarkup({
   const { theme } = useUnistyles();
   const [w, setW] = useState(0);
   const [touch, setTouch] = useState<{ x: number; y: number } | null>(null);
-  const h = w * (state.photo.height / state.photo.width);
+  const h = w * (photo.height / photo.width);
   const toPx = (p: ImagePoint) => ({ x: p.x * w, y: p.y * h });
 
   const at = (e: GestureResponderEvent) => ({
@@ -51,7 +70,7 @@ export function PhotoMarkup({
     const p = at(e);
     setTouch(null);
     const image = { x: p.x / w, y: p.y / h };
-    if (state.phase.kind === 'review' && state.selected === null) {
+    if (selectNear) {
       const near = darts
         .map((d, i) => ({ i, d: Math.hypot(toPx(d.image).x - p.x, toPx(d.image).y - p.y) }))
         .filter((n) => n.d < HIT_PT)
@@ -66,10 +85,8 @@ export function PhotoMarkup({
 
   // The double and treble rings as the fit sees them, drawn back onto the photo.
   const ring = (r: number) =>
-    state.fit
-      ? Array.from({ length: 73 }, (_, i) =>
-          toPx(applyHomography(state.fit!.toImage, polar(r, i * 5))),
-        )
+    fit
+      ? Array.from({ length: 73 }, (_, i) => toPx(applyHomography(fit.toImage, polar(r, i * 5))))
           .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
           .join(' ')
       : '';
@@ -94,9 +111,9 @@ export function PhotoMarkup({
           onResponderTerminate={() => setTouch(null)}
           testID="snap-photo"
         >
-          <Image source={{ uri: state.photo.uri }} style={{ width: w, height: h }} />
+          <Image source={{ uri: photo.uri }} style={{ width: w, height: h }} />
           <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
-            {state.fit ? (
+            {fit ? (
               <>
                 <Polyline
                   points={ring(R.doubleOuter)}
@@ -119,7 +136,7 @@ export function PhotoMarkup({
               </>
             ) : null}
             {CALIBRATION_IDS.map((id) => {
-              const p = state.calibration[id];
+              const p = calibration[id];
               if (!p) return null;
               const q = toPx(p);
               return (
@@ -136,7 +153,7 @@ export function PhotoMarkup({
             })}
             {darts.map((d, i) => {
               const q = toPx(d.image);
-              const sel = state.selected === i;
+              const sel = selected === i;
               return (
                 <Circle
                   key={`d${i}`}
@@ -144,7 +161,7 @@ export function PhotoMarkup({
                   cy={q.y}
                   r={sel ? 14 : 11}
                   fill={theme.colors.dart}
-                  stroke={needsLook(d) ? theme.colors.danger : theme.colors.dartStroke}
+                  stroke={d.flagged ? theme.colors.danger : theme.colors.dartStroke}
                   strokeWidth={sel ? 4 : 2.5}
                 />
               );
@@ -161,7 +178,7 @@ export function PhotoMarkup({
                   fill={theme.colors.dartStroke}
                   textAnchor="middle"
                 >
-                  {i + 1}
+                  {d.n}
                 </SvgText>
               );
             })}
@@ -175,7 +192,7 @@ export function PhotoMarkup({
               ]}
             >
               <Image
-                source={{ uri: state.photo.uri }}
+                source={{ uri: photo.uri }}
                 style={{
                   position: 'absolute',
                   width: w * ZOOM,
