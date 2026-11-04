@@ -1,0 +1,178 @@
+'use client';
+
+import { Card, Empty, Flex, Pagination, Segmented, Select, Typography } from 'antd';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+
+import type { CaptureCard, CaptureFilter } from '~/lib/queries';
+
+import { ReviewTags, SplitTag, StaticOverlay, StatusTag } from './CaptureBits';
+import { PageBody, PageHeader } from './PageHeader';
+
+const VIEWS = [
+  { label: 'All', value: 'all' },
+  { label: 'Train', value: 'train' },
+  { label: 'Val', value: 'val' },
+  { label: 'Verify', value: 'test' },
+  { label: 'To review', value: 'review' },
+];
+
+export function CaptureGallery({
+  filter,
+  result,
+  sessions,
+}: {
+  filter: CaptureFilter;
+  result: { cards: CaptureCard[]; total: number; page: number; pageSize: number };
+  sessions: { id: string; startedAt: number }[];
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const go = (change: Record<string, string | undefined>) => {
+    const next = new URLSearchParams();
+    const merged = {
+      split: filter.split,
+      session: filter.sessionId,
+      review: filter.review ? '1' : undefined,
+      status: filter.status,
+      page: undefined as string | undefined,
+      ...change,
+    };
+    for (const [k, v] of Object.entries(merged)) if (v) next.set(k, v);
+    router.push(`${pathname}?${next.toString()}`);
+  };
+  const view = filter.review ? 'review' : (filter.split ?? 'all');
+
+  return (
+    <>
+      <PageHeader
+        title="Captures"
+        subtitle={`${result.total.toLocaleString()} photo${result.total === 1 ? '' : 's'} shown`}
+      />
+      <PageBody>
+        <Card size="small" style={{ marginBottom: 16 }}>
+          <Flex wrap gap={12} align="center">
+            <Segmented
+              options={VIEWS}
+              value={view}
+              onChange={(v) =>
+                go(
+                  v === 'review'
+                    ? { review: '1', split: undefined }
+                    : { review: undefined, split: v === 'all' ? undefined : String(v) },
+                )
+              }
+            />
+            <Select
+              allowClear
+              placeholder="All sessions"
+              style={{ minWidth: 220 }}
+              value={filter.sessionId}
+              onChange={(v?: string) => go({ session: v })}
+              options={sessions.map((s) => ({
+                value: s.id,
+                label: `${new Date(s.startedAt).toLocaleString()} · ${s.id}`,
+              }))}
+            />
+            <Select
+              allowClear
+              placeholder="Any status"
+              style={{ minWidth: 160 }}
+              value={filter.status}
+              onChange={(v?: string) => go({ status: v })}
+              options={[
+                { value: 'labelled', label: 'Labelled' },
+                { value: 'values-only', label: 'Values only' },
+                { value: 'rejected', label: 'Left out' },
+              ]}
+            />
+          </Flex>
+        </Card>
+
+        {result.cards.length === 0 ? (
+          <Card>
+            <Empty
+              description={
+                <>
+                  No captures here yet. Import a folder on <Link href="/sessions">Sessions</Link>,
+                  or sync from TU Capture.
+                </>
+              }
+            />
+          </Card>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {result.cards.map((c) => (
+              <Link key={c.id} href={`/captures/${c.id}`} style={{ color: 'inherit' }}>
+                <Card
+                  hoverable
+                  size="small"
+                  cover={
+                    <div
+                      style={{
+                        position: 'relative',
+                        aspectRatio: `${c.width} / ${c.height}`,
+                        background: '#222',
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- local thumbnails */}
+                      <img
+                        src={`/api/captures/${c.id}/thumb`}
+                        alt={`Capture ${c.id}`}
+                        loading="lazy"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                      />
+                      <StaticOverlay
+                        width={c.width}
+                        height={c.height}
+                        points={c.points}
+                        darts={c.darts}
+                      />
+                    </div>
+                  }
+                >
+                  <Flex justify="space-between" align="center" gap={8}>
+                    <Typography.Text strong ellipsis>
+                      {c.darts.some((d) => d.entered ?? d.scored)
+                        ? c.darts.map((d) => d.entered ?? d.scored ?? '?').join(' · ')
+                        : c.darts.length
+                          ? `${c.darts.length} dart${c.darts.length === 1 ? '' : 's'}`
+                          : 'No darts'}
+                    </Typography.Text>
+                    <SplitTag split={c.split} />
+                  </Flex>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    {new Date(c.takenAt).toLocaleString()}
+                    {c.angleDeg !== null ? ` · ${Math.round(c.angleDeg)}°` : ''}
+                  </Typography.Text>
+                  <div style={{ marginTop: 6 }}>
+                    <StatusTag status={c.status} />
+                    <ReviewTags review={c.review} />
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {result.total > result.pageSize ? (
+          <Flex justify="center" style={{ marginTop: 24 }}>
+            <Pagination
+              current={result.page}
+              pageSize={result.pageSize}
+              total={result.total}
+              showSizeChanger={false}
+              onChange={(p) => go({ page: String(p) })}
+            />
+          </Flex>
+        ) : null}
+      </PageBody>
+    </>
+  );
+}

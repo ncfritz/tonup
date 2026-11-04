@@ -1,0 +1,348 @@
+// Reads for Lab's pages: counts for the Overview, the Captures gallery, one capture for the
+// label editor, and sessions.
+import { and, asc, count, desc, eq, gt, inArray, isNotNull, lt, ne, sql } from 'drizzle-orm';
+
+import { db } from './db/client';
+import {
+  captures,
+  conditions,
+  labelDarts,
+  labelPoints,
+  labels,
+  sessions,
+  sessionTags,
+  type SPLITS,
+} from './db/schema';
+
+export type SplitName = (typeof SPLITS)[number];
+
+export interface OverviewCounts {
+  captures: number;
+  sessions: number;
+  toReview: number;
+  valuesOnly: number;
+  rejected: number;
+  bySplit: Record<SplitName, number>;
+}
+
+export function overviewCounts(): OverviewCounts {
+  const d = db();
+  const total = d.select({ n: count() }).from(captures).get()?.n ?? 0;
+  const nSessions = d.select({ n: count() }).from(sessions).get()?.n ?? 0;
+  const byStatus = d
+    .select({ status: captures.status, n: count() })
+    .from(captures)
+    .groupBy(captures.status)
+    .all();
+  const toReview =
+    d
+      .select({ n: count() })
+      .from(captures)
+      .where(and(isNotNull(captures.review), ne(captures.status, 'rejected')))
+      .get()?.n ?? 0;
+  const bySplitRows = d
+    .select({ split: sessions.split, n: count() })
+    .from(captures)
+    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+    .where(ne(captures.status, 'rejected'))
+    .groupBy(sessions.split)
+    .all();
+  const bySplit = { train: 0, val: 0, test: 0 };
+  for (const r of bySplitRows) bySplit[r.split] = r.n;
+  return {
+    captures: total,
+    sessions: nSessions,
+    toReview,
+    valuesOnly: byStatus.find((r) => r.status === 'values-only')?.n ?? 0,
+    rejected: byStatus.find((r) => r.status === 'rejected')?.n ?? 0,
+    bySplit,
+  };
+}
+
+export interface OverlayPoint {
+  kind: string;
+  x: number;
+  y: number;
+}
+export interface OverlayDart {
+  idx: number;
+  entered: string | null;
+  scored: string | null;
+  x: number | null;
+  y: number | null;
+  onWire: boolean;
+}
+
+function overlaysFor(labelIds: number[]) {
+  const d = db();
+  const points = new Map<number, OverlayPoint[]>();
+  const darts = new Map<number, OverlayDart[]>();
+  if (!labelIds.length) return { points, darts };
+  for (const p of d
+    .select()
+    .from(labelPoints)
+    .where(inArray(labelPoints.labelId, labelIds))
+    .all()) {
+    points.set(p.labelId, [...(points.get(p.labelId) ?? []), { kind: p.kind, x: p.x, y: p.y }]);
+  }
+  for (const r of d
+    .select()
+    .from(labelDarts)
+    .where(inArray(labelDarts.labelId, labelIds))
+    .orderBy(asc(labelDarts.idx))
+    .all()) {
+    darts.set(r.labelId, [
+      ...(darts.get(r.labelId) ?? []),
+      { idx: r.idx, entered: r.entered, scored: r.scored, x: r.x, y: r.y, onWire: r.onWire },
+    ]);
+  }
+  return { points, darts };
+}
+
+export interface CaptureFilter {
+  split?: SplitName;
+  sessionId?: string;
+  /** Only captures whose label needs a look. */
+  review?: boolean;
+  status?: 'labelled' | 'values-only' | 'rejected';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface CaptureCard {
+  id: string;
+  sessionId: string;
+  split: SplitName;
+  width: number;
+  height: number;
+  takenAt: number;
+  status: string;
+  review: string | null;
+  angleDeg: number | null;
+  dartCount: number;
+  points: OverlayPoint[];
+  darts: OverlayDart[];
+}
+
+function where(f: CaptureFilter) {
+  return and(
+    f.split ? eq(sessions.split, f.split) : undefined,
+    f.sessionId ? eq(captures.sessionId, f.sessionId) : undefined,
+    f.review ? and(isNotNull(captures.review), ne(captures.status, 'rejected')) : undefined,
+    f.status ? eq(captures.status, f.status) : undefined,
+  );
+}
+
+export function listCaptures(f: CaptureFilter = {}) {
+  const d = db();
+  const pageSize = f.pageSize ?? 24;
+  const page = Math.max(1, f.page ?? 1);
+  const base = d
+    .select({
+      id: captures.id,
+      sessionId: captures.sessionId,
+      split: sessions.split,
+      width: captures.width,
+      height: captures.height,
+      takenAt: captures.takenAt,
+      status: captures.status,
+      review: captures.review,
+      labelId: captures.labelId,
+      angleDeg: conditions.angleDeg,
+      dartCount: conditions.dartCount,
+    })
+    .from(captures)
+    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+    .leftJoin(conditions, eq(conditions.captureId, captures.id))
+    .where(where(f));
+  const total =
+    d
+      .select({ n: count() })
+      .from(captures)
+      .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+      .where(where(f))
+      .get()?.n ?? 0;
+  const rows = base
+    .orderBy(desc(captures.takenAt), asc(captures.id))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
+    .all();
+  const { points, darts } = overlaysFor(rows.flatMap((r) => (r.labelId ? [r.labelId] : [])));
+  const cards: CaptureCard[] = rows.map((r) => ({
+    id: r.id,
+    sessionId: r.sessionId,
+    split: r.split,
+    width: r.width,
+    height: r.height,
+    takenAt: r.takenAt.getTime(),
+    status: r.status,
+    review: r.review,
+    angleDeg: r.angleDeg,
+    dartCount: r.dartCount ?? 0,
+    points: r.labelId ? (points.get(r.labelId) ?? []) : [],
+    darts: r.labelId ? (darts.get(r.labelId) ?? []) : [],
+  }));
+  return { cards, total, page, pageSize };
+}
+
+export interface CaptureDetail extends CaptureCard {
+  photo: string;
+  zoom: number | null;
+  deviceModel: string | null;
+  typeId: string | null;
+  prefillModel: string | null;
+  missed: number;
+  sessionStartedAt: number;
+  tags: string[];
+  conditions: {
+    angleDeg: number | null;
+    boardPx: number | null;
+    brightness: number | null;
+    tightGroup: boolean;
+    fitResidualMm: number | null;
+  } | null;
+  history: { version: number; source: string; createdAt: number; current: boolean }[];
+  /** The neighbouring captures in the same session, by time. */
+  prevId: string | null;
+  nextId: string | null;
+  /** The next capture that needs a look, after this one. */
+  nextReviewId: string | null;
+}
+
+export function getCapture(id: string): CaptureDetail | null {
+  const d = db();
+  const r = d
+    .select({ c: captures, s: sessions, k: conditions })
+    .from(captures)
+    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+    .leftJoin(conditions, eq(conditions.captureId, captures.id))
+    .where(eq(captures.id, id))
+    .get();
+  if (!r) return null;
+  const { c, s, k } = r;
+  const { points, darts } = overlaysFor(c.labelId ? [c.labelId] : []);
+  const current = c.labelId
+    ? d.select().from(labels).where(eq(labels.id, c.labelId)).get()
+    : undefined;
+  const history = d
+    .select()
+    .from(labels)
+    .where(eq(labels.captureId, id))
+    .orderBy(desc(labels.version))
+    .all()
+    .map((l) => ({
+      version: l.version,
+      source: l.source,
+      createdAt: l.createdAt.getTime(),
+      current: l.id === c.labelId,
+    }));
+  const tags = d
+    .select({ tag: sessionTags.tag })
+    .from(sessionTags)
+    .where(eq(sessionTags.sessionId, s.id))
+    .all()
+    .map((t) => t.tag);
+  const neighbour = (dir: 'prev' | 'next') =>
+    d
+      .select({ id: captures.id })
+      .from(captures)
+      .where(
+        and(
+          eq(captures.sessionId, s.id),
+          dir === 'prev' ? lt(captures.takenAt, c.takenAt) : gt(captures.takenAt, c.takenAt),
+        ),
+      )
+      .orderBy(dir === 'prev' ? desc(captures.takenAt) : asc(captures.takenAt))
+      .limit(1)
+      .get()?.id ?? null;
+  const nextReview =
+    d
+      .select({ id: captures.id })
+      .from(captures)
+      .where(
+        and(
+          isNotNull(captures.review),
+          ne(captures.status, 'rejected'),
+          ne(captures.id, id),
+          sql`(${captures.takenAt} < ${c.takenAt.getTime()} or (${captures.takenAt} = ${c.takenAt.getTime()} and ${captures.id} > ${id}))`,
+        ),
+      )
+      .orderBy(desc(captures.takenAt), asc(captures.id))
+      .limit(1)
+      .get()?.id ?? null;
+  return {
+    id: c.id,
+    sessionId: s.id,
+    split: s.split,
+    width: c.width,
+    height: c.height,
+    takenAt: c.takenAt.getTime(),
+    status: c.status,
+    review: c.review,
+    angleDeg: k?.angleDeg ?? null,
+    dartCount: k?.dartCount ?? 0,
+    points: c.labelId ? (points.get(c.labelId) ?? []) : [],
+    darts: c.labelId ? (darts.get(c.labelId) ?? []) : [],
+    photo: c.photo,
+    zoom: c.zoom,
+    deviceModel: c.deviceModel,
+    typeId: c.typeId,
+    prefillModel: c.prefillModel,
+    missed: current?.missed ?? 0,
+    sessionStartedAt: s.startedAt.getTime(),
+    tags,
+    conditions: k
+      ? {
+          angleDeg: k.angleDeg,
+          boardPx: k.boardPx,
+          brightness: k.brightness,
+          tightGroup: k.tightGroup,
+          fitResidualMm: k.fitResidualMm,
+        }
+      : null,
+    history,
+    prevId: neighbour('prev'),
+    nextId: neighbour('next'),
+    nextReviewId: nextReview,
+  };
+}
+
+export interface SessionRow {
+  id: string;
+  startedAt: number;
+  split: SplitName;
+  source: string;
+  device: string | null;
+  captures: number;
+  toReview: number;
+  tags: string[];
+}
+
+export function listSessions(): SessionRow[] {
+  const d = db();
+  const rows = d
+    .select({
+      id: sessions.id,
+      startedAt: sessions.startedAt,
+      split: sessions.split,
+      source: sessions.source,
+      device: sessions.device,
+      captures: count(captures.id),
+      toReview: sql<number>`sum(case when ${captures.review} is not null and ${captures.status} != 'rejected' then 1 else 0 end)`,
+    })
+    .from(sessions)
+    .leftJoin(captures, eq(captures.sessionId, sessions.id))
+    .groupBy(sessions.id)
+    .orderBy(desc(sessions.startedAt))
+    .all();
+  const tags = new Map<string, string[]>();
+  for (const t of d.select().from(sessionTags).all()) {
+    tags.set(t.sessionId, [...(tags.get(t.sessionId) ?? []), t.tag]);
+  }
+  return rows.map((r) => ({
+    ...r,
+    startedAt: r.startedAt.getTime(),
+    toReview: Number(r.toReview ?? 0),
+    tags: tags.get(r.id) ?? [],
+  }));
+}

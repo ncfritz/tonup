@@ -1,6 +1,6 @@
 # Capture and Lab: implementation plan
 
-- Status: In progress (2026-11-03): L0 done
+- Status: In progress (2026-11-03): L0 and L1 done
 - Decisions: [ADR 0012](../architecture/decisions/0012-capture-and-lab.md); builds on [snap-to-score.md](snap-to-score.md) (milestone S4)
 
 Ton Up Capture is an internal iPhone app for photographing visits and labelling them carefully. Ton Up Lab is a web app on the laptop that collects the captures, keeps the training and verification sets apart, runs training and verification, and manages models. Together they turn "copy a folder and run a script" into a loop: capture, label, train, verify, pull the new model into Capture to pre-fill the next labels.
@@ -46,7 +46,38 @@ Rules:
 
 - No database: a saved capture is `Documents/outbox/<id>.jpg` and `<id>.json`. Upload moves them to `Documents/sent/` (kept until cleared from Settings).
 - Sync runs on save, on opening Home, and from the button; failures stay in the outbox. Uploads are idempotent by capture ID.
-- The label JSON is the existing capture format (`src/domain/camera/labels.ts`) plus: `sessionId`, `entered` (per dart: value, or Miss or Bounce-out), `flags` (per dart: on the wire), `valuesOnly`, `prefillModel`, `tags`, and camera details (zoom, device model). Lab adds `split`.
+- The label JSON is the existing capture format (`src/domain/camera/labels.ts`) with Capture's additions. Lab parses it in `lab/src/lib/labels.ts`:
+
+  ```json
+  {
+    "id": "cap-0001",
+    "image": "cap-0001.jpg",
+    "width": 4032,
+    "height": 3024,
+    "createdAt": "2026-11-04T05:10:00.000Z",
+    "sessionId": "sess-20261103-2102",
+    "sessionStartedAt": "2026-11-04T05:02:00.000Z",
+    "tags": ["light on", "left"],
+    "calibration": [
+      { "x": 0.48, "y": 0.06 },
+      null,
+      { "x": 0.52, "y": 0.94 },
+      { "x": 0.17, "y": 0.55 },
+      { "x": 0.5, "y": 0.5 }
+    ],
+    "darts": [
+      { "x": 0.5, "y": 0.27, "value": "T20" },
+      { "x": 0.45, "y": 0.2, "value": "5", "onWire": true },
+      { "x": null, "y": null, "value": "Miss" }
+    ],
+    "valuesOnly": false,
+    "prefillModel": "v3",
+    "zoom": 1,
+    "deviceModel": "iPhone 16 Pro"
+  }
+  ```
+
+  `calibration` is in DeepDarts order (5/20, 13/6, 17/3, 8/11, then the bull), null where a point isn't visible. Each dart is one thrown dart in order; a Miss or Bounce-out has no tip. Ton Up's own files have plain `{x, y}` darts and no session, and Lab groups them into one session per day (`tonup-YYYY-MM-DD`).
 
 ### Model pull
 
@@ -161,6 +192,10 @@ Before L3, time a short run on the M1 Pro (`--limit 2000 --epochs 1`) to set the
 ## Shipping a model in Ton Up
 
 Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/dart-vision/ios/Models`, add the DeepDarts credit to the acknowledgements, and build. The bar is in [snap-to-score.md](snap-to-score.md#accuracy-bar), measured by a Lab verification run.
+
+## Built so far
+
+- **L1 (Lab data):** the schema above; `POST /api/captures` (multipart `photo` + `label`, idempotent by ID); photos stored upright (EXIF orientation applied, since training's PIL ignores it) with thumbnails; each label measured on save (tip scores through the shared geometry, camera angle and board size from the board outline, brightness, tight groups); review reasons: board not marked, board marks disagree (fit residual over 8 mm), value mismatch, on the wire. Pages: Overview counts, Captures gallery (sets, review queue, session and status filters), the label editor (drag points and tips, edit values and flags, rings drawn through the fit, versions, leave out of training) and Sessions (import a folder, the DeepDarts folder).
 
 ## Risks and findings
 

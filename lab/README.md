@@ -14,7 +14,15 @@ pnpm dev:lan      # also reachable from the phone at http://<this-mac>.local:310
 pnpm build && pnpm start      # or start:lan
 ```
 
-Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db` now, photos, snapshots, runs and models as the milestones land. The database is created and migrated on startup.
+Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db`, `photos/` and `thumbs/`, with snapshots, runs and models as the milestones land. The database is created and migrated on startup.
+
+## Getting captures in
+
+- **From TU Capture:** it uploads to `POST /api/captures` (multipart: `photo` and `label`, the JSON in docs/plan/capture-lab.md). Start Lab with a LAN script so the phone can reach it.
+- **Ton Up's kept photos:** copy Files › On My iPhone › Ton Up › captures to the Mac and import the folder on the Sessions page (or `POST /api/import` with `{ "folder": "..." }`). Each day becomes a session.
+- **DeepDarts:** set its folder on the Sessions page; Lab checks it and training reads it in place.
+
+Every session gets its set (train, val or verify) the first time Lab sees it. The label editor saves each change as a new version; the review queue collects labels whose tips disagree with their values, darts flagged on the wire and board marks that don't fit.
 
 macOS asks once whether Node may accept incoming connections when you first use a LAN script.
 

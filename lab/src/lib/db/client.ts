@@ -26,3 +26,10 @@ export function db(): LabDb {
   g.labDb = instance;
   return instance;
 }
+
+/** Tests only: forget the open connection (after pointing TONUP_LAB_DATA somewhere new). */
+export function closeDbForTests() {
+  const sqlite = (g.labDb as unknown as { $client?: { close(): void } } | undefined)?.$client;
+  sqlite?.close();
+  g.labDb = undefined;
+}
