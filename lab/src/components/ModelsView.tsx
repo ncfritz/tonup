@@ -1,7 +1,7 @@
 'use client';
 
 import { DownloadOutlined } from '@ant-design/icons';
-import { App, Button, Card, Col, Dropdown, Flex, Row, Space, Table, Tag, Typography } from 'antd';
+import { App, Button, Dropdown, Flex, Space, Table, Tag, Typography } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -10,6 +10,7 @@ import type { PrefillStats } from '~/lib/queries';
 import type { ModelProgress } from '~/lib/verify';
 
 import { useStartVerification } from './NewVerification';
+import { pageStyles, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { pct } from './RunBits';
 import { BAR } from './RunCharts';
@@ -87,130 +88,119 @@ export function ModelsView({
         }
       />
       <PageBody>
-        <Row gutter={[16, 16]}>
-          {progress.length > 1 ? (
-            <Col span={24}>
-              <Card size="small" title="Accuracy by model">
-                <ProgressChart models={progress} />
-              </Card>
-            </Col>
-          ) : null}
-          <Col span={24}>
-            <Card size="small">
-              <Table
-                size="small"
-                rowKey="id"
-                dataSource={models}
-                pagination={false}
-                scroll={{ x: 960 }}
-                rowSelection={{
-                  selectedRowKeys: selected,
-                  onChange: (keys) => setSelected((keys as number[]).slice(-4)),
-                }}
-                locale={{ emptyText: 'No models yet: a finished training run adds one.' }}
-                columns={[
-                  { title: 'Model', render: (_, m) => <b>{m.name}</b> },
-                  { title: 'Status', render: (_, m) => STATUS[m.status] },
-                  {
-                    title: 'From',
-                    render: (_, m) => <Link href={`/runs/${m.runId}`}>Run #{m.runId}</Link>,
-                  },
-                  {
-                    title: `Visit (bar ${BAR.visit * 100})`,
-                    render: (_, m) => <Score v={m.visitCorrect} bar={BAR.visit} />,
-                  },
-                  {
-                    title: `Segment (bar ${BAR.dart * 100})`,
-                    render: (_, m) => <Score v={m.dartCorrect} bar={BAR.dart} />,
-                  },
-                  {
-                    title: `Board (bar ${BAR.board * 100})`,
-                    render: (_, m) => <Score v={m.boardFound} bar={BAR.board} />,
-                  },
-                  {
-                    title: 'Kept on phone',
-                    render: (_, m) => {
-                      const k = kept.get(m.name);
-                      return k ? (
-                        <span
-                          title={`${k.accepted} of ${k.visits} pre-filled visits kept as placed`}
-                        >
-                          {pct(k.accepted / k.visits)}{' '}
-                          <Typography.Text type="secondary">of {k.visits}</Typography.Text>
-                        </span>
-                      ) : (
-                        '—'
-                      );
-                    },
-                  },
-                  {
-                    title: 'Verified on',
-                    render: (_, m) =>
-                      m.evaluatedOn
-                        ? `${m.evaluatedOn}${m.samples != null ? ` · ${m.samples} photos` : ''}`
-                        : '—',
-                  },
-                  {
-                    title: 'Core ML',
-                    render: (_, m) =>
-                      m.mlpackage ? (
-                        <Tag color="success">exported</Tag>
-                      ) : (
-                        <Typography.Text type="warning">export failed</Typography.Text>
-                      ),
-                  },
-                  {
-                    render: (_, m) => (
-                      <Flex gap={6} justify="end">
-                        <Button size="small" disabled={!testPhotos} onClick={() => start([m.id])}>
-                          Verify
-                        </Button>
-                        <Dropdown
-                          menu={{
-                            items: [
-                              {
-                                key: 'mlpackage',
-                                disabled: !m.mlpackage,
-                                label: (
-                                  <a href={`/api/models/${m.id}/download`} download>
-                                    Core ML package (.zip)
-                                  </a>
-                                ),
-                              },
-                              {
-                                key: 'checkpoint',
-                                label: (
-                                  <a href={`/api/models/${m.id}/download?file=checkpoint`} download>
-                                    PyTorch checkpoint (.pt)
-                                  </a>
-                                ),
-                              },
-                            ],
-                          }}
-                        >
-                          <Button size="small" icon={<DownloadOutlined />} aria-label="Download" />
-                        </Dropdown>
-                        {m.status === 'active' ? null : (
-                          <Button size="small" onClick={() => activate(m.id)}>
-                            Set active
-                          </Button>
-                        )}
-                      </Flex>
-                    ),
-                  },
-                ]}
-              />
-            </Card>
-          </Col>
-          <Col span={24}>
-            <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              To ship one in Ton Up: unzip its Core ML package into{' '}
-              <Typography.Text code>modules/dart-vision/ios/Models</Typography.Text> and build
-              (docs/plan/capture-lab.md › Shipping a model). The verify set grows as you label, so
-              compare models in one verification rather than by their old numbers.
-            </Typography.Paragraph>
-          </Col>
-        </Row>
+        {progress.length > 1 ? (
+          <Section title="Accuracy by model">
+            <ProgressChart models={progress} />
+          </Section>
+        ) : null}
+        <Table
+          className={pageStyles.flush}
+          size="small"
+          rowKey="id"
+          dataSource={models}
+          pagination={false}
+          scroll={{ x: 960 }}
+          rowSelection={{
+            selectedRowKeys: selected,
+            onChange: (keys) => setSelected((keys as number[]).slice(-4)),
+          }}
+          locale={{ emptyText: 'No models yet: a finished training run adds one.' }}
+          columns={[
+            { title: 'Model', render: (_, m) => <b>{m.name}</b> },
+            { title: 'Status', render: (_, m) => STATUS[m.status] },
+            {
+              title: 'From',
+              render: (_, m) => <Link href={`/runs/${m.runId}`}>Run #{m.runId}</Link>,
+            },
+            {
+              title: `Visit (bar ${BAR.visit * 100})`,
+              render: (_, m) => <Score v={m.visitCorrect} bar={BAR.visit} />,
+            },
+            {
+              title: `Segment (bar ${BAR.dart * 100})`,
+              render: (_, m) => <Score v={m.dartCorrect} bar={BAR.dart} />,
+            },
+            {
+              title: `Board (bar ${BAR.board * 100})`,
+              render: (_, m) => <Score v={m.boardFound} bar={BAR.board} />,
+            },
+            {
+              title: 'Kept on phone',
+              render: (_, m) => {
+                const k = kept.get(m.name);
+                return k ? (
+                  <span title={`${k.accepted} of ${k.visits} pre-filled visits kept as placed`}>
+                    {pct(k.accepted / k.visits)}{' '}
+                    <Typography.Text type="secondary">of {k.visits}</Typography.Text>
+                  </span>
+                ) : (
+                  '—'
+                );
+              },
+            },
+            {
+              title: 'Verified on',
+              render: (_, m) =>
+                m.evaluatedOn
+                  ? `${m.evaluatedOn}${m.samples != null ? ` · ${m.samples} photos` : ''}`
+                  : '—',
+            },
+            {
+              title: 'Core ML',
+              render: (_, m) =>
+                m.mlpackage ? (
+                  <Tag color="success">exported</Tag>
+                ) : (
+                  <Typography.Text type="warning">export failed</Typography.Text>
+                ),
+            },
+            {
+              render: (_, m) => (
+                <Flex gap={6} justify="end">
+                  <Button size="small" disabled={!testPhotos} onClick={() => start([m.id])}>
+                    Verify
+                  </Button>
+                  <Dropdown
+                    menu={{
+                      items: [
+                        {
+                          key: 'mlpackage',
+                          disabled: !m.mlpackage,
+                          label: (
+                            <a href={`/api/models/${m.id}/download`} download>
+                              Core ML package (.zip)
+                            </a>
+                          ),
+                        },
+                        {
+                          key: 'checkpoint',
+                          label: (
+                            <a href={`/api/models/${m.id}/download?file=checkpoint`} download>
+                              PyTorch checkpoint (.pt)
+                            </a>
+                          ),
+                        },
+                      ],
+                    }}
+                  >
+                    <Button size="small" icon={<DownloadOutlined />} aria-label="Download" />
+                  </Dropdown>
+                  {m.status === 'active' ? null : (
+                    <Button size="small" onClick={() => activate(m.id)}>
+                      Set active
+                    </Button>
+                  )}
+                </Flex>
+              ),
+            },
+          ]}
+        />
+        <Typography.Paragraph type="secondary" className={pageStyles.pageNote}>
+          To ship one in Ton Up: unzip its Core ML package into{' '}
+          <Typography.Text code>modules/dart-vision/ios/Models</Typography.Text> and build
+          (docs/plan/capture-lab.md › Shipping a model). The verify set grows as you label, so
+          compare models in one verification rather than by their old numbers.
+        </Typography.Paragraph>
       </PageBody>
     </>
   );

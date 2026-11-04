@@ -5,6 +5,9 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import styles from './Page.module.css';
 
+/** The page classes, for parts that only need one (toolbar, tiles, flush tables, empty). */
+export { styles as pageStyles };
+
 /** A page to the content area's edges (Page.module.css): what's sticky goes in `head`. */
 export function EdgePage({ head, children }: { head: ReactNode; children: ReactNode }) {
   return (
@@ -76,7 +79,8 @@ export function Section({
   children,
   flush,
 }: {
-  title: ReactNode;
+  /** Without one the section is just its content, edge to edge (a progress bar, an error). */
+  title?: ReactNode;
   extra?: ReactNode;
   children: ReactNode;
   /** The body brings its own layout (panels) and padding. */
@@ -84,12 +88,14 @@ export function Section({
 }) {
   return (
     <section className={styles.section}>
-      <div className={styles.sectionHead}>
-        <Typography.Title level={5} className={styles.title}>
-          {title}
-        </Typography.Title>
-        {extra}
-      </div>
+      {title || extra ? (
+        <div className={styles.sectionHead}>
+          <Typography.Title level={5} className={styles.title}>
+            {title}
+          </Typography.Title>
+          {extra}
+        </div>
+      ) : null}
       {flush ? children : <div className={styles.sectionBody}>{children}</div>}
     </section>
   );
@@ -121,18 +127,21 @@ export function Panel({
   title,
   extra,
   children,
+  flush,
 }: {
   title: ReactNode;
   extra?: ReactNode;
   children: ReactNode;
+  /** The body brings its own padding (a count strip). */
+  flush?: boolean;
 }) {
   return (
     <div className={styles.panel}>
-      <div className={styles.sectionHead}>
+      <div className={`${styles.sectionHead} ${flush ? styles.headFlush : ''}`}>
         <Typography.Text strong>{title}</Typography.Text>
         {extra}
       </div>
-      <div className={styles.sectionBody}>{children}</div>
+      {flush ? children : <div className={styles.sectionBody}>{children}</div>}
     </div>
   );
 }

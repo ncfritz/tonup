@@ -4,7 +4,6 @@ import {
   Alert,
   App,
   Button,
-  Card,
   Checkbox,
   Drawer,
   Flex,
@@ -22,6 +21,7 @@ import { useEffect, useState } from 'react';
 
 import type { RunSummary, TrainParams } from '~/lib/runs';
 
+import { pageStyles } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { describeRun, duration, pct, RunStatus } from './RunBits';
 
@@ -98,54 +98,53 @@ export function RunsView({
         }
       />
       <PageBody>
-        <Card size="small">
-          <Table
-            size="small"
-            rowKey="id"
-            dataSource={runs}
-            pagination={{ pageSize: 20, hideOnSinglePage: true }}
-            scroll={{ x: 760 }}
-            locale={{ emptyText: 'No runs yet. Start with a baseline on DeepDarts.' }}
-            columns={[
-              {
-                title: 'Run',
-                render: (_, r) => (
-                  <Link href={r.kind === 'verify' ? `/verification/${r.id}` : `/runs/${r.id}`}>
-                    #{r.id}
-                  </Link>
+        <Table
+          className={pageStyles.flush}
+          size="small"
+          rowKey="id"
+          dataSource={runs}
+          pagination={{ pageSize: 20, hideOnSinglePage: true }}
+          scroll={{ x: 760 }}
+          locale={{ emptyText: 'No runs yet. Start with a baseline on DeepDarts.' }}
+          columns={[
+            {
+              title: 'Run',
+              render: (_, r) => (
+                <Link href={r.kind === 'verify' ? `/verification/${r.id}` : `/runs/${r.id}`}>
+                  #{r.id}
+                </Link>
+              ),
+              width: 64,
+            },
+            { title: 'What', render: (_, r) => describeRun(r) },
+            { title: 'Status', render: (_, r) => <RunStatus run={r} /> },
+            {
+              title: 'Visit correct',
+              render: (_, r) =>
+                r.visitCorrect == null ? (
+                  '—'
+                ) : (
+                  <span title={r.evaluatedOn ?? undefined}>{pct(r.visitCorrect)}</span>
                 ),
-                width: 64,
-              },
-              { title: 'What', render: (_, r) => describeRun(r) },
-              { title: 'Status', render: (_, r) => <RunStatus run={r} /> },
-              {
-                title: 'Visit correct',
-                render: (_, r) =>
-                  r.visitCorrect == null ? (
-                    '—'
-                  ) : (
-                    <span title={r.evaluatedOn ?? undefined}>{pct(r.visitCorrect)}</span>
-                  ),
-              },
-              {
-                title: 'Model',
-                render: (_, r) =>
-                  r.kind === 'verify' ? (
-                    <Link href={`/verification/${r.id}`}>Results</Link>
-                  ) : r.model ? (
-                    <Link href="/models">{r.model}</Link>
-                  ) : (
-                    '—'
-                  ),
-              },
-              {
-                title: 'Time',
-                render: (_, r) =>
-                  r.startedAt ? duration((r.endedAt ?? Date.now()) - r.startedAt) : 'waiting',
-              },
-            ]}
-          />
-        </Card>
+            },
+            {
+              title: 'Model',
+              render: (_, r) =>
+                r.kind === 'verify' ? (
+                  <Link href={`/verification/${r.id}`}>Results</Link>
+                ) : r.model ? (
+                  <Link href="/models">{r.model}</Link>
+                ) : (
+                  '—'
+                ),
+            },
+            {
+              title: 'Time',
+              render: (_, r) =>
+                r.startedAt ? duration((r.endedAt ?? Date.now()) - r.startedAt) : 'waiting',
+            },
+          ]}
+        />
       </PageBody>
 
       <Drawer

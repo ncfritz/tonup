@@ -1,8 +1,14 @@
 'use client';
 
-import { Flex, Layout, Typography } from 'antd';
+import { Typography } from 'antd';
 import type { ReactNode } from 'react';
 
+import styles from './Page.module.css';
+
+/**
+ * A page's title bar, as Olympus's: edge to edge with a border under it, and sticky, so the
+ * page scrolls under it (Page.module.css).
+ */
 export function PageHeader({
   title,
   subtitle,
@@ -15,33 +21,22 @@ export function PageHeader({
   extra?: ReactNode;
 }) {
   return (
-    <Layout.Header
-      style={{
-        background: '#fff',
-        borderBottom: '1px solid #f0f0f0',
-        height: 'auto',
-        lineHeight: 1.4,
-        padding: '12px 24px',
-      }}
-    >
-      <Flex wrap justify="space-between" align="center" gap={12}>
+    <div className={styles.sticky}>
+      <div className={styles.bar}>
         <div>
           {breadcrumb ? <Typography.Text type="secondary">{breadcrumb}</Typography.Text> : null}
-          <Typography.Title level={4} style={{ margin: 0 }}>
+          <Typography.Title level={4} className={styles.title}>
             {title}
           </Typography.Title>
           {subtitle ? <Typography.Text type="secondary">{subtitle}</Typography.Text> : null}
         </div>
         {extra}
-      </Flex>
-    </Layout.Header>
+      </div>
+    </div>
   );
 }
 
+/** The page below its title bar: to the content area's edges; its parts carry the padding. */
 export function PageBody({ children }: { children: ReactNode }) {
-  return (
-    <Layout.Content style={{ padding: 24, maxWidth: 1240, width: '100%', boxSizing: 'border-box' }}>
-      {children}
-    </Layout.Content>
-  );
+  return <div>{children}</div>;
 }

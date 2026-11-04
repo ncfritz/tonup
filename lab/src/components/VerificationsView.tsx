@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Col, Flex, Row, Table, Tag, Typography } from 'antd';
+import { Flex, Table, Tag, Typography } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import type { ModelProgress, VerificationListItem } from '~/lib/verify';
 
 import { NewVerificationButton, type ModelOption } from './NewVerification';
+import { pageStyles, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { pct, RunStatus } from './RunBits';
 import { BAR } from './RunCharts';
@@ -47,76 +48,69 @@ export function VerificationsView({
         extra={<NewVerificationButton models={models} testPhotos={testPhotos} />}
       />
       <PageBody>
-        <Row gutter={[16, 16]}>
-          <Col span={24}>
-            <Card size="small" title="Accuracy by model (each model’s latest verification)">
-              <ProgressChart models={progress} />
-            </Card>
-          </Col>
-          <Col span={24}>
-            <Card size="small">
-              <Table
-                size="small"
-                rowKey={(i) => i.run.id}
-                dataSource={items}
-                pagination={false}
-                scroll={{ x: 760 }}
-                locale={{ emptyText: 'No verifications yet' }}
-                columns={[
-                  {
-                    title: 'Run',
-                    render: (_, i) => <Link href={`/verification/${i.run.id}`}>#{i.run.id}</Link>,
-                  },
-                  {
-                    title: 'What',
-                    render: (_, i) =>
-                      i.run.kind === 'verify' ? (
-                        <>Verify {i.models.join(' vs ')}</>
-                      ) : (
-                        <>Training check of {i.models[0] ?? 'a new model'}</>
-                      ),
-                  },
-                  { title: 'Status', render: (_, i) => <RunStatus run={i.run} /> },
-                  {
-                    title: `Visit · Segment · Board`,
-                    render: (_, i) =>
-                      i.results.length ? (
-                        <Flex vertical gap={2}>
-                          {i.results.map((r) => (
-                            <span key={r.modelId}>
-                              <b style={{ display: 'inline-block', minWidth: 30 }}>{r.model}</b>{' '}
-                              <Score v={r.visitCorrect} bar={BAR.visit} /> ·{' '}
-                              <Score v={r.dartCorrect} bar={BAR.dart} /> ·{' '}
-                              <Score v={r.boardFound} bar={BAR.board} />
-                            </span>
-                          ))}
-                        </Flex>
-                      ) : (
-                        '—'
-                      ),
-                  },
-                  {
-                    title: 'Photos',
-                    render: (_, i) => {
-                      const r = i.results[0];
-                      return r ? (
-                        <>
-                          {r.samples}
-                          {r.valuesOnly ? (
-                            <Tag style={{ marginLeft: 6 }}>{r.valuesOnly} values only</Tag>
-                          ) : null}
-                        </>
-                      ) : (
-                        '—'
-                      );
-                    },
-                  },
-                  { title: 'When', render: (_, i) => when(i.run.createdAt) },
-                ]}
-              />
-            </Card>
-          </Col>
-        </Row>
+        <Section title="Accuracy by model (each model’s latest verification)">
+          <ProgressChart models={progress} />
+        </Section>
+        <Table
+          className={pageStyles.flush}
+          size="small"
+          rowKey={(i) => i.run.id}
+          dataSource={items}
+          pagination={false}
+          scroll={{ x: 760 }}
+          locale={{ emptyText: 'No verifications yet' }}
+          columns={[
+            {
+              title: 'Run',
+              render: (_, i) => <Link href={`/verification/${i.run.id}`}>#{i.run.id}</Link>,
+            },
+            {
+              title: 'What',
+              render: (_, i) =>
+                i.run.kind === 'verify' ? (
+                  <>Verify {i.models.join(' vs ')}</>
+                ) : (
+                  <>Training check of {i.models[0] ?? 'a new model'}</>
+                ),
+            },
+            { title: 'Status', render: (_, i) => <RunStatus run={i.run} /> },
+            {
+              title: `Visit · Segment · Board`,
+              render: (_, i) =>
+                i.results.length ? (
+                  <Flex vertical gap={2}>
+                    {i.results.map((r) => (
+                      <span key={r.modelId}>
+                        <b style={{ display: 'inline-block', minWidth: 30 }}>{r.model}</b>{' '}
+                        <Score v={r.visitCorrect} bar={BAR.visit} /> ·{' '}
+                        <Score v={r.dartCorrect} bar={BAR.dart} /> ·{' '}
+                        <Score v={r.boardFound} bar={BAR.board} />
+                      </span>
+                    ))}
+                  </Flex>
+                ) : (
+                  '—'
+                ),
+            },
+            {
+              title: 'Photos',
+              render: (_, i) => {
+                const r = i.results[0];
+                return r ? (
+                  <>
+                    {r.samples}
+                    {r.valuesOnly ? (
+                      <Tag style={{ marginLeft: 6 }}>{r.valuesOnly} values only</Tag>
+                    ) : null}
+                  </>
+                ) : (
+                  '—'
+                );
+              },
+            },
+            { title: 'When', render: (_, i) => when(i.run.createdAt) },
+          ]}
+        />
       </PageBody>
     </>
   );

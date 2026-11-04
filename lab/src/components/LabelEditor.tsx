@@ -11,7 +11,6 @@ import {
   App,
   AutoComplete,
   Button,
-  Card,
   Checkbox,
   Descriptions,
   Flex,
@@ -37,6 +36,7 @@ import { boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
 import type { CaptureDetail } from '~/lib/queries';
 
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
+import { pageStyles, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 
 /** Zoom: the most, a button's step, and how far a press moves before it's a drag (px). */
@@ -326,8 +326,8 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
         }
       />
       <PageBody>
-        <Flex wrap gap={16} align="flex-start">
-          <Card size="small" style={{ flex: '3 1 560px', minWidth: 0 }}>
+        <div className={pageStyles.split}>
+          <div className={pageStyles.main}>
             <Flex wrap justify="space-between" gap={8} style={{ marginBottom: 12 }}>
               <Segmented
                 value={mode}
@@ -527,11 +527,10 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               yet, click the photo to place it. Scroll to zoom, drag the photo to move around. A tip
               is where the dart enters the board.
             </Typography.Paragraph>
-          </Card>
+          </div>
 
-          <Flex vertical gap={16} style={{ flex: '1 1 340px', minWidth: 0 }}>
-            <Card
-              size="small"
+          <aside className={pageStyles.side}>
+            <Section
               title="Darts"
               extra={
                 <Button size="small" onClick={() => setMode('add')}>
@@ -673,9 +672,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   </Button>
                 </Popconfirm>
               </Space>
-            </Card>
+            </Section>
 
-            <Card size="small" title="Board points">
+            <Section title="Board points">
               <Flex wrap gap={6}>
                 {CALIBRATION_IDS.map((id) => (
                   <Button
@@ -707,9 +706,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   ? 'Mark at least four points to fit the board.'
                   : `Fit: points agree to ${measured.fitResidualMm.toFixed(1)} mm.`}
               </Typography.Paragraph>
-            </Card>
+            </Section>
 
-            <Card size="small" title="Photo">
+            <Section title="Photo">
               <Descriptions
                 size="small"
                 column={1}
@@ -781,9 +780,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                     : []),
                 ]}
               />
-            </Card>
+            </Section>
 
-            <Card size="small" title="Label history">
+            <Section title="Label history">
               <Timeline
                 items={capture.history.map((h) => ({
                   color: h.current ? 'green' : 'gray',
@@ -804,9 +803,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   ),
                 }))}
               />
-            </Card>
-          </Flex>
-        </Flex>
+            </Section>
+          </aside>
+        </div>
       </PageBody>
     </>
   );

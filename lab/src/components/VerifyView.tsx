@@ -1,21 +1,7 @@
 'use client';
 
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import {
-  App,
-  Button,
-  Card,
-  Col,
-  Collapse,
-  Empty,
-  Flex,
-  Progress,
-  Row,
-  Segmented,
-  Statistic,
-  Tag,
-  Typography,
-} from 'antd';
+import { App, Button, Collapse, Empty, Flex, Progress, Segmented, Tag, Typography } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -23,6 +9,7 @@ import { useEffect, useState } from 'react';
 import type { RunSummary } from '~/lib/runs';
 import type { ResultRow, Verification } from '~/lib/verify';
 
+import { Count, CountStrip, pageStyles, Panel, Panels, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { pct, RunStatus } from './RunBits';
 import { BAR } from './RunCharts';
@@ -45,10 +32,10 @@ function Delta({ v, base }: { v: number; base: number }) {
   );
 }
 
-function ResultCard({ r, color, base }: { r: ResultRow; color: string; base: ResultRow | null }) {
+function ResultPanel({ r, color, base }: { r: ResultRow; color: string; base: ResultRow | null }) {
   return (
-    <Card
-      size="small"
+    <Panel
+      flush
       title={
         <Flex gap={8} align="center">
           <span style={{ width: 10, height: 10, borderRadius: 5, background: color }} />
@@ -62,25 +49,29 @@ function ResultCard({ r, color, base }: { r: ResultRow; color: string; base: Res
         </Typography.Text>
       }
     >
-      <Row gutter={12}>
+      <CountStrip>
         {MEASURES.map((m) => {
           const v = r[FIELD[m.key]];
           return (
-            <Col span={8} key={m.key}>
-              <Statistic title={m.label} value={pct(v)} />
-              <Flex gap={6} align="center" wrap>
-                {v >= BAR[m.key] ? (
-                  <Tag color="success">meets {BAR[m.key] * 100}%</Tag>
-                ) : (
-                  <Tag color="warning">bar {BAR[m.key] * 100}%</Tag>
-                )}
-                {base ? <Delta v={v} base={base[FIELD[m.key]]} /> : null}
-              </Flex>
-            </Col>
+            <Count
+              key={m.key}
+              title={m.label}
+              value={pct(v)}
+              note={
+                <Flex gap={6} align="center" wrap>
+                  {v >= BAR[m.key] ? (
+                    <Tag color="success">meets {BAR[m.key] * 100}%</Tag>
+                  ) : (
+                    <Tag color="warning">bar {BAR[m.key] * 100}%</Tag>
+                  )}
+                  {base ? <Delta v={v} base={base[FIELD[m.key]]} /> : null}
+                </Flex>
+              }
+            />
           );
         })}
-      </Row>
-    </Card>
+      </CountStrip>
+    </Panel>
   );
 }
 
@@ -166,10 +157,10 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
         }
       />
       <PageBody>
-        <Row gutter={[16, 16]}>
-          {running ? (
-            <Col span={24}>
-              <Card size="small">
+        {running || run.error ? (
+          <Section>
+            {running ? (
+              <>
                 <Typography.Text type="secondary">
                   {run.status === 'queued'
                     ? 'Waiting for the run ahead of it'
@@ -182,41 +173,40 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
                   status="active"
                   strokeColor="#0F766E"
                 />
-              </Card>
-            </Col>
-          ) : null}
-          {run.error ? (
-            <Col span={24}>
-              <Card size="small">
-                <Typography.Text type="danger">{run.error}</Typography.Text>
-              </Card>
-            </Col>
-          ) : null}
+              </>
+            ) : null}
+            {run.error ? <Typography.Text type="danger">{run.error}</Typography.Text> : null}
+          </Section>
+        ) : null}
 
-          {data.results.map((r, i) => (
-            <Col xs={24} xl={data.results.length > 1 ? 12 : 24} key={r.modelId}>
-              <ResultCard r={r} color={colorOf(r.modelId)} base={i > 0 ? data.results[0]! : null} />
-            </Col>
-          ))}
+        {data.results.length ? (
+          <>
+            <Panels min={520}>
+              {data.results.map((r, i) => (
+                <ResultPanel
+                  key={r.modelId}
+                  r={r}
+                  color={colorOf(r.modelId)}
+                  base={i > 0 ? data.results[0]! : null}
+                />
+              ))}
+            </Panels>
 
-          {data.results.length ? (
-            <>
-              <Col span={24}>
-                <Flex justify="space-between" align="center" wrap gap={12}>
-                  <Typography.Title level={5} style={{ margin: 0 }}>
-                    By condition
-                  </Typography.Title>
-                  <Segmented
-                    value={measure}
-                    onChange={(v) => setMeasure(v as Measure)}
-                    options={MEASURES.map((m) => ({ value: m.key, label: m.label }))}
-                  />
-                </Flex>
-              </Col>
-              {data.breakdown.map((b) => (
-                <Col xs={24} lg={12} xxl={8} key={b.key}>
-                  <Card
-                    size="small"
+            <Section
+              title="By condition"
+              extra={
+                <Segmented
+                  value={measure}
+                  onChange={(v) => setMeasure(v as Measure)}
+                  options={MEASURES.map((m) => ({ value: m.key, label: m.label }))}
+                />
+              }
+              flush
+            >
+              <Panels min={420} edge={false}>
+                {data.breakdown.map((b) => (
+                  <Panel
+                    key={b.key}
                     title={b.title}
                     extra={
                       b.unmeasured ? (
@@ -227,91 +217,72 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
                     }
                   >
                     <BreakdownChart breakdown={b} models={models} measure={measure} />
-                  </Card>
-                </Col>
-              ))}
+                  </Panel>
+                ))}
+              </Panels>
+            </Section>
 
-              <Col span={24}>
-                <Flex justify="space-between" align="center" wrap gap={12}>
-                  <div>
-                    <Typography.Title level={5} style={{ margin: 0 }}>
-                      Worst photos
-                    </Typography.Title>
-                    <Flex gap={16} style={{ fontSize: 12, marginTop: 4 }} wrap>
-                      <Typography.Text type="secondary">
-                        <span style={{ color: TRUTH }}>○</span> true tips
-                      </Typography.Text>
-                      <Typography.Text type="secondary">
-                        <span style={{ color: PREDICTED }}>✕</span> predicted tips and the board the
-                        model found
-                      </Typography.Text>
-                      <Typography.Text type="secondary">
-                        Board not found first, then most darts wrong
-                      </Typography.Text>
-                    </Flex>
-                  </div>
-                  {models.length > 1 ? (
-                    <Segmented
-                      value={only}
-                      onChange={setOnly}
-                      options={[
-                        { value: 'all', label: 'All models' },
-                        ...models.map((m) => ({ value: String(m.id), label: m.name })),
-                      ]}
-                    />
-                  ) : null}
-                </Flex>
-              </Col>
+            <Section
+              title="Worst photos"
+              extra={
+                models.length > 1 ? (
+                  <Segmented
+                    value={only}
+                    onChange={setOnly}
+                    options={[
+                      { value: 'all', label: 'All models' },
+                      ...models.map((m) => ({ value: String(m.id), label: m.name })),
+                    ]}
+                  />
+                ) : null
+              }
+              flush
+            >
+              <div className={pageStyles.legend}>
+                <Typography.Text type="secondary">
+                  <span style={{ color: TRUTH }}>○</span> true tips
+                </Typography.Text>
+                <Typography.Text type="secondary">
+                  <span style={{ color: PREDICTED }}>✕</span> predicted tips and the board the model
+                  found
+                </Typography.Text>
+                <Typography.Text type="secondary">
+                  Board not found first, then most darts wrong
+                </Typography.Text>
+              </div>
               {worst.length ? (
-                worst.map((w) => (
-                  <Col xs={12} md={8} lg={6} xxl={4} key={`${w.modelId}-${w.captureId}`}>
+                <div className={`${pageStyles.tiles} ${pageStyles.tilesInSection}`}>
+                  {worst.map((w) => (
                     <WorstPhoto
+                      key={`${w.modelId}-${w.captureId}`}
                       item={w}
                       color={models.length > 1 ? colorOf(w.modelId) : undefined}
                     />
-                  </Col>
-                ))
+                  ))}
+                </div>
               ) : (
-                <Col span={24}>
-                  <Card size="small">
-                    <Empty description="Every visit right" />
-                  </Card>
-                </Col>
+                <div className={pageStyles.empty}>
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Every visit right" />
+                </div>
               )}
-            </>
-          ) : null}
+            </Section>
+          </>
+        ) : null}
 
-          <Col span={24}>
-            <Collapse
-              size="small"
-              defaultActiveKey={running || run.error ? ['log'] : []}
-              items={[
-                {
-                  key: 'log',
-                  label: 'Log',
-                  children: (
-                    <pre
-                      style={{
-                        margin: 0,
-                        background: '#0E1217',
-                        color: '#c9d1d9',
-                        borderRadius: 6,
-                        padding: '12px 14px',
-                        fontSize: 12,
-                        lineHeight: 1.6,
-                        maxHeight: 320,
-                        overflow: 'auto',
-                        whiteSpace: 'pre-wrap',
-                      }}
-                    >
-                      {live.log.tail || 'Nothing yet.'}
-                    </pre>
-                  ),
-                },
-              ]}
-            />
-          </Col>
-        </Row>
+        <Section>
+          <Collapse
+            ghost
+            size="small"
+            defaultActiveKey={running || run.error ? ['log'] : []}
+            items={[
+              {
+                key: 'log',
+                label: 'Log',
+                children: <pre className={pageStyles.log}>{live.log.tail || 'Nothing yet.'}</pre>,
+              },
+            ]}
+          />
+        </Section>
       </PageBody>
     </>
   );

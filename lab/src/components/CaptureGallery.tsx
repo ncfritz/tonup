@@ -1,12 +1,13 @@
 'use client';
 
-import { Card, Empty, Flex, Pagination, Segmented, Select, Typography } from 'antd';
+import { Empty, Flex, Pagination, Segmented, Select, Typography } from 'antd';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import type { CaptureCard, CaptureFilter } from '~/lib/queries';
 
 import { ReviewTags, SplitTag, StaticOverlay, StatusTag } from './CaptureBits';
+import { pageStyles } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 
 const VIEWS = [
@@ -50,48 +51,47 @@ export function CaptureGallery({
         subtitle={`${result.total.toLocaleString()} photo${result.total === 1 ? '' : 's'} shown`}
       />
       <PageBody>
-        <Card size="small" style={{ marginBottom: 16 }}>
-          <Flex wrap gap={12} align="center">
-            <Segmented
-              options={VIEWS}
-              value={view}
-              onChange={(v) =>
-                go(
-                  v === 'review'
-                    ? { review: '1', split: undefined }
-                    : { review: undefined, split: v === 'all' ? undefined : String(v) },
-                )
-              }
-            />
-            <Select
-              allowClear
-              placeholder="All sessions"
-              style={{ minWidth: 220 }}
-              value={filter.sessionId}
-              onChange={(v?: string) => go({ session: v })}
-              options={sessions.map((s) => ({
-                value: s.id,
-                label: `${new Date(s.startedAt).toLocaleString()} · ${s.id}`,
-              }))}
-            />
-            <Select
-              allowClear
-              placeholder="Any status"
-              style={{ minWidth: 160 }}
-              value={filter.status}
-              onChange={(v?: string) => go({ status: v })}
-              options={[
-                { value: 'labelled', label: 'Labelled' },
-                { value: 'values-only', label: 'Values only' },
-                { value: 'rejected', label: 'Left out' },
-              ]}
-            />
-          </Flex>
-        </Card>
+        <div className={pageStyles.toolbar}>
+          <Segmented
+            options={VIEWS}
+            value={view}
+            onChange={(v) =>
+              go(
+                v === 'review'
+                  ? { review: '1', split: undefined }
+                  : { review: undefined, split: v === 'all' ? undefined : String(v) },
+              )
+            }
+          />
+          <Select
+            allowClear
+            placeholder="All sessions"
+            style={{ minWidth: 220 }}
+            value={filter.sessionId}
+            onChange={(v?: string) => go({ session: v })}
+            options={sessions.map((s) => ({
+              value: s.id,
+              label: `${new Date(s.startedAt).toLocaleString()} · ${s.id}`,
+            }))}
+          />
+          <Select
+            allowClear
+            placeholder="Any status"
+            style={{ minWidth: 160 }}
+            value={filter.status}
+            onChange={(v?: string) => go({ status: v })}
+            options={[
+              { value: 'labelled', label: 'Labelled' },
+              { value: 'values-only', label: 'Values only' },
+              { value: 'rejected', label: 'Left out' },
+            ]}
+          />
+        </div>
 
         {result.cards.length === 0 ? (
-          <Card>
+          <div className={pageStyles.empty}>
             <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 <>
                   No captures here yet. Import a folder on <Link href="/sessions">Sessions</Link>,
@@ -99,44 +99,33 @@ export function CaptureGallery({
                 </>
               }
             />
-          </Card>
+          </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: 16,
-            }}
-          >
+          <div className={pageStyles.tiles}>
             {result.cards.map((c) => (
-              <Link key={c.id} href={`/captures/${c.id}`} style={{ color: 'inherit' }}>
-                <Card
-                  hoverable
-                  size="small"
-                  cover={
-                    <div
-                      style={{
-                        position: 'relative',
-                        aspectRatio: `${c.width} / ${c.height}`,
-                        background: '#222',
-                      }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element -- local thumbnails */}
-                      <img
-                        src={`/api/captures/${c.id}/thumb`}
-                        alt={`Capture ${c.id}`}
-                        loading="lazy"
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-                      />
-                      <StaticOverlay
-                        width={c.width}
-                        height={c.height}
-                        points={c.points}
-                        darts={c.darts}
-                      />
-                    </div>
-                  }
+              <Link key={c.id} href={`/captures/${c.id}`} className={pageStyles.tile}>
+                <div
+                  style={{
+                    position: 'relative',
+                    aspectRatio: `${c.width} / ${c.height}`,
+                    background: '#222',
+                  }}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local thumbnails */}
+                  <img
+                    src={`/api/captures/${c.id}/thumb`}
+                    alt={`Capture ${c.id}`}
+                    loading="lazy"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                  />
+                  <StaticOverlay
+                    width={c.width}
+                    height={c.height}
+                    points={c.points}
+                    darts={c.darts}
+                  />
+                </div>
+                <div className={pageStyles.tileBody}>
                   <Flex justify="space-between" align="center" gap={8}>
                     <Typography.Text strong ellipsis>
                       {c.darts.some((d) => d.entered ?? d.scored)
@@ -155,14 +144,14 @@ export function CaptureGallery({
                     <StatusTag status={c.status} />
                     <ReviewTags review={c.review} />
                   </div>
-                </Card>
+                </div>
               </Link>
             ))}
           </div>
         )}
 
         {result.total > result.pageSize ? (
-          <Flex justify="center" style={{ marginTop: 24 }}>
+          <div className={pageStyles.footer}>
             <Pagination
               current={result.page}
               pageSize={result.pageSize}
@@ -170,7 +159,7 @@ export function CaptureGallery({
               showSizeChanger={false}
               onChange={(p) => go({ page: String(p) })}
             />
-          </Flex>
+          </div>
         ) : null}
       </PageBody>
     </>

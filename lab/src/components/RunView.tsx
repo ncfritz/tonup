@@ -1,23 +1,12 @@
 'use client';
 
-import {
-  App,
-  Button,
-  Card,
-  Col,
-  Descriptions,
-  Flex,
-  Progress,
-  Row,
-  Statistic,
-  Tag,
-  Typography,
-} from 'antd';
+import { App, Button, Descriptions, Flex, Progress, Tag, Typography } from 'antd';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 import type { EpochMetrics, TrainRunSummary } from '~/lib/runs';
 
+import { Count, CountStrip, pageStyles, Panel, Panels, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { describeRun, duration, pct, RunStatus } from './RunBits';
 import { AccuracyChart, BAR, LossChart } from './RunCharts';
@@ -111,174 +100,115 @@ export function RunView({ initial }: { initial: RunData }) {
         }
       />
       <PageBody>
-        <Row gutter={[16, 16]}>
-          <Col span={24}>
-            <Card size="small">
-              <Flex vertical gap={12}>
-                <div>
-                  <Typography.Text type="secondary">
-                    {run.status === 'queued'
-                      ? 'Waiting for the run ahead of it'
-                      : `Epoch ${Math.min(done + (run.stage === 'train' ? 1 : 0), epochs)} of ${epochs}${
-                          run.stage === 'train' && log.step
-                            ? ` · step ${log.step.step}/${log.step.of}`
-                            : ''
-                        }`}
-                  </Typography.Text>
-                  <Progress
-                    percent={Math.round(progress * 100)}
-                    status={run.status === 'failed' ? 'exception' : live ? 'active' : undefined}
-                    strokeColor="#0F766E"
-                  />
-                </div>
-                <Row gutter={16}>
-                  <Col xs={12} md={5}>
-                    <Statistic
-                      title="Elapsed"
-                      value={run.startedAt ? duration((run.endedAt ?? now) - run.startedAt) : '—'}
-                    />
-                  </Col>
-                  <Col xs={12} md={5}>
-                    <Statistic
-                      title="Left (estimate)"
-                      value={left != null ? `~${duration(left)}` : '—'}
-                    />
-                  </Col>
-                  <Col xs={12} md={5}>
-                    <Statistic
-                      title="Per epoch"
-                      value={perEpoch != null ? duration(perEpoch * 1000) : '—'}
-                    />
-                  </Col>
-                  <Col xs={12} md={4}>
-                    <Statistic
-                      title="Throughput"
-                      value={
-                        last?.images_per_second
-                          ? `${Math.round(last.images_per_second)} img/s`
-                          : '—'
-                      }
-                    />
-                  </Col>
-                  <Col xs={24} md={5}>
-                    <Statistic
-                      title="Best val visit"
-                      value={best ? pct(best.visit_correct) : '—'}
-                      suffix={
-                        best ? (
-                          <Typography.Text type="secondary"> ep {best.epoch}</Typography.Text>
-                        ) : null
-                      }
-                    />
-                  </Col>
-                </Row>
-              </Flex>
-            </Card>
-          </Col>
+        <Section>
+          <Typography.Text type="secondary">
+            {run.status === 'queued'
+              ? 'Waiting for the run ahead of it'
+              : `Epoch ${Math.min(done + (run.stage === 'train' ? 1 : 0), epochs)} of ${epochs}${
+                  run.stage === 'train' && log.step ? ` · step ${log.step.step}/${log.step.of}` : ''
+                }`}
+          </Typography.Text>
+          <Progress
+            percent={Math.round(progress * 100)}
+            status={run.status === 'failed' ? 'exception' : live ? 'active' : undefined}
+            strokeColor="#0F766E"
+          />
+          {run.error ? <Typography.Text type="danger">{run.error}</Typography.Text> : null}
+        </Section>
+        <CountStrip>
+          <Count
+            title="Elapsed"
+            value={run.startedAt ? duration((run.endedAt ?? now) - run.startedAt) : '—'}
+          />
+          <Count title="Left (estimate)" value={left != null ? `~${duration(left)}` : '—'} />
+          <Count title="Per epoch" value={perEpoch != null ? duration(perEpoch * 1000) : '—'} />
+          <Count
+            title="Throughput"
+            value={last?.images_per_second ? `${Math.round(last.images_per_second)} img/s` : '—'}
+          />
+          <Count
+            title="Best val visit"
+            value={best ? pct(best.visit_correct) : '—'}
+            note={best ? `epoch ${best.epoch}` : undefined}
+          />
+        </CountStrip>
 
-          {run.error ? (
-            <Col span={24}>
-              <Card size="small">
-                <Typography.Text type="danger">{run.error}</Typography.Text>
-              </Card>
-            </Col>
-          ) : null}
-
-          {run.status === 'done' || run.visitCorrect != null ? (
-            <Col span={24}>
-              <Card
-                size="small"
-                title={`Verified on ${run.evaluatedOn ?? '—'}${run.samples != null ? ` · ${run.samples} photos` : ''}`}
-                extra={run.model ? <Link href="/models">Model {run.model}</Link> : null}
-              >
-                <Row gutter={16}>
-                  <Col xs={24} md={8}>
-                    <Statistic title="Visit total correct" value={pct(run.visitCorrect)} />
-                    {passTag(run.visitCorrect, BAR.visit)}
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <Statistic title="Dart segment correct" value={pct(run.dartCorrect)} />
-                    {passTag(run.dartCorrect, BAR.dart)}
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <Statistic title="Board found" value={pct(run.boardFound)} />
-                    {passTag(run.boardFound, BAR.board)}
-                  </Col>
-                </Row>
-              </Card>
-            </Col>
-          ) : null}
-
-          <Col xs={24} lg={12}>
-            <Card size="small" title="Validation accuracy by epoch">
-              <AccuracyChart metrics={metrics} epochs={epochs} />
-            </Card>
-          </Col>
-          <Col xs={24} lg={12}>
-            <Card size="small" title="Loss by epoch">
-              <LossChart metrics={metrics} epochs={epochs} />
-            </Card>
-          </Col>
-
-          <Col xs={24} lg={9}>
-            <Card size="small" title="Settings">
-              <Descriptions
-                size="small"
-                column={1}
-                items={[
-                  {
-                    label: 'Start from',
-                    children: run.params.from === 'model' ? (run.baseModel ?? '—') : 'Scratch',
-                  },
-                  {
-                    label: 'Data',
-                    children: [
-                      run.params.deepdarts ? 'DeepDarts' : null,
-                      run.params.captures ? 'our captures' : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' + '),
-                  },
-                  { label: 'Epochs', children: run.params.epochs },
-                  { label: 'Learning rate', children: run.params.lr },
-                  { label: 'Batch', children: run.params.batch },
-                  { label: 'Capture weight', children: `${run.params.captureWeight}×` },
-                  {
-                    label: 'DeepDarts per epoch',
-                    children: run.params.deepdartsSample
-                      ? run.params.deepdartsSample.toLocaleString()
-                      : 'all',
-                  },
-                ]}
+        {run.status === 'done' || run.visitCorrect != null ? (
+          <Section
+            title={`Verified on ${run.evaluatedOn ?? '—'}${run.samples != null ? ` · ${run.samples} photos` : ''}`}
+            extra={run.model ? <Link href="/models">Model {run.model}</Link> : null}
+            flush
+          >
+            <CountStrip>
+              <Count
+                title="Visit total correct"
+                value={pct(run.visitCorrect)}
+                note={passTag(run.visitCorrect, BAR.visit)}
               />
-            </Card>
-          </Col>
-          <Col xs={24} lg={15}>
-            <Card
+              <Count
+                title="Dart segment correct"
+                value={pct(run.dartCorrect)}
+                note={passTag(run.dartCorrect, BAR.dart)}
+              />
+              <Count
+                title="Board found"
+                value={pct(run.boardFound)}
+                note={passTag(run.boardFound, BAR.board)}
+              />
+            </CountStrip>
+          </Section>
+        ) : null}
+
+        <Panels min={480}>
+          <Panel title="Validation accuracy by epoch">
+            <AccuracyChart metrics={metrics} epochs={epochs} />
+          </Panel>
+          <Panel title="Loss by epoch">
+            <LossChart metrics={metrics} epochs={epochs} />
+          </Panel>
+        </Panels>
+
+        <Panels min={360}>
+          <Panel title="Settings">
+            <Descriptions
               size="small"
-              title="Log"
-              extra={<Typography.Text type="secondary">runs/{run.id}/log.txt</Typography.Text>}
-            >
-              <pre
-                ref={logRef}
-                style={{
-                  margin: 0,
-                  background: '#0E1217',
-                  color: '#c9d1d9',
-                  borderRadius: 6,
-                  padding: '12px 14px',
-                  fontSize: 12,
-                  lineHeight: 1.6,
-                  maxHeight: 360,
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
-                {log.tail || 'Nothing yet.'}
-              </pre>
-            </Card>
-          </Col>
-        </Row>
+              column={1}
+              items={[
+                {
+                  label: 'Start from',
+                  children: run.params.from === 'model' ? (run.baseModel ?? '—') : 'Scratch',
+                },
+                {
+                  label: 'Data',
+                  children: [
+                    run.params.deepdarts ? 'DeepDarts' : null,
+                    run.params.captures ? 'our captures' : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' + '),
+                },
+                { label: 'Epochs', children: run.params.epochs },
+                { label: 'Learning rate', children: run.params.lr },
+                { label: 'Batch', children: run.params.batch },
+                { label: 'Capture weight', children: `${run.params.captureWeight}×` },
+                {
+                  label: 'DeepDarts per epoch',
+                  children: run.params.deepdartsSample
+                    ? run.params.deepdartsSample.toLocaleString()
+                    : 'all',
+                },
+              ]}
+            />
+          </Panel>
+          <Panel
+            title="Log"
+            extra={<Typography.Text type="secondary">runs/{run.id}/log.txt</Typography.Text>}
+          >
+            <pre ref={logRef} className={pageStyles.log}>
+              {log.tail || 'Nothing yet.'}
+            </pre>
+          </Panel>
+        </Panels>
       </PageBody>
     </>
   );

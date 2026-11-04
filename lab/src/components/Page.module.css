@@ -95,3 +95,144 @@
   border-right: 1px solid var(--ant-color-border-secondary);
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
+
+/* A bar of controls (filters) under the title, edge to edge. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+/* Photos in a grid of cells divided by borders; the grid clips its own outside edges. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  overflow: hidden;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.tile {
+  display: block;
+  min-width: 0;
+  margin: 0 -1px -1px 0;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  color: inherit;
+}
+
+.tile:hover {
+  background: var(--ant-color-fill-quaternary);
+  color: inherit;
+}
+
+.tileBody {
+  padding: 8px 12px 12px;
+}
+
+/* Nothing to show, in the page's margin. */
+.empty {
+  padding: 32px 24px;
+}
+
+/* A line of explanation under a list, in the page's margin. */
+.pageNote {
+  padding: 12px 24px;
+  margin: 0 !important;
+}
+
+/* A line or controls under a list, in the page's margin. */
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 16px 24px;
+}
+
+/* A table to the page's edges: its outer cells keep the page's margin. */
+.flush :global(.ant-table-cell:first-child) {
+  padding-inline-start: 24px !important;
+}
+
+.flush :global(.ant-table-cell:last-child) {
+  padding-inline-end: 24px !important;
+}
+
+/* A table in a section: no rounded box of its own. */
+.flush :global(.ant-table-container),
+.flush :global(.ant-table) {
+  border-radius: 0 !important;
+}
+
+/* A run's output: as it came, the newest in view. */
+.log {
+  margin: 0;
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: #c9d1d9;
+  background: #0e1217;
+  border-radius: var(--ant-border-radius);
+}
+
+/* A panel head over a strip: the strip's cells carry the space below it. */
+.headFlush {
+  padding-bottom: 4px;
+}
+
+/* A panel's strip has no line of its own under it; the panel draws its edge. */
+.panel .strip {
+  border-bottom: none;
+}
+
+/* A key to what's drawn, at the top of a section. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 4px 24px 12px;
+  font-size: 12px;
+}
+
+/* Tiles inside a section: the line above them is theirs, the section draws the one below. */
+.tilesInSection {
+  border-top: 1px solid var(--ant-color-border-secondary);
+  border-bottom: none;
+}
+
+/* A main area beside a side panel, divided by a border (a narrow window: one under the other). */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.main {
+  min-width: 0;
+  padding: 16px 24px;
+}
+
+.side {
+  min-width: 0;
+  border-left: 1px solid var(--ant-color-border-secondary);
+}
+
+/* The side's last section: the split draws the line under it. */
+.side > section:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 1100px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side {
+    border-left: none;
+    border-top: 1px solid var(--ant-color-border-secondary);
+  }
+}
