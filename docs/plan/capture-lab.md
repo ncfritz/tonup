@@ -230,7 +230,7 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 
 ### Trying Capture
 
-1. `pnpm capture:sync`, then `pnpm capture:ios` with the iPhone connected (or open `ios/` in Xcode and run). `pnpm ios:sync` switches back to Ton Up.
+1. `pnpm capture:sync`, then `pnpm capture:release` with the iPhone connected and unlocked: a Release build carries its JavaScript, so it runs without a dev server (`pnpm capture:ios` is the Debug build for `pnpm capture:start`). `pnpm ios:sync` switches back to Ton Up.
 2. On the Mac: `cd lab && pnpm dev:lan`. Find the Mac's name in System Settings › General › Sharing (Local hostname, for example `my-mac.local`).
 3. In Capture: Settings › Lab address `my-mac.local:3100`, Test. iOS asks for local-network access the first time.
 4. Start a session, snap, label, save. The visit goes to Lab straight away, or waits in the outbox until Lab is back.
@@ -239,6 +239,7 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 
 - **Routes directory per variant (checked in L0):** expo-router's `root` plugin option exists in SDK 58, and Expo CLI uses it for the dev server, `expo export` and the Xcode bundling step. Exporting both variants confirmed each bundle holds only its own routes. Capture's strings are added at runtime by its layout, so they aren't in Ton Up's bundle either.
 - **Variant in Xcode builds:** a build started from Xcode doesn't inherit the shell's `APP_VARIANT`, so `plugins/with-app-variant.js` writes it into `ios/.xcode.env` at prebuild, and Xcode's bundling step bundles the variant that was prebuilt.
+- **Stale workspace after switching variants (found in L5):** an Xcode window still open on the other variant saves its `.xcworkspace` back into the regenerated `ios/`, and `expo run:ios` picked it ("does not contain a scheme named TUCapture"). The run scripts first remove any workspace whose project is gone (`scripts/stale-workspaces.mjs`).
 - **Typed routes:** `.expo/types/router.d.ts` is regenerated for whichever variant's dev server ran last. After running Capture, start Ton Up's dev server once (`pnpm start`) before `pnpm check`, or its route types fail.
 - **Next.js importing `../src/domain` (checked in L0):** works with `turbopack.root` and `outputFileTracingRoot` set to the repository and `experimental.externalDir`; `pnpm build` and the scoring self-check pass.
 - **Ant Design in server components:** compound components (`Layout.Header`, `Descriptions.Item`) are undefined on the server, so pages read data in a server component and render through a client component.
