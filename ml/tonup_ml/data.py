@@ -34,12 +34,19 @@ class Sample:
     # Channels this sample labels (an unlabelled channel isn't "nothing there").
     labelled: set[str] = field(default_factory=set)
     group: str = ""  # for splitting: photos of one session stay together
+    # The split Lab assigned (lab/src/lib/splits.ts); None means split_of(group).
+    split: str | None = None
 
 
 def split_of(group: str, val: float = 0.1, test: float = 0.1) -> str:
-    """A stable train/val/test split by group."""
+    """A stable train/val/test split by group (the same formula as Lab's splitOf)."""
     h = int(hashlib.sha1(group.encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
     return "test" if h < test else "val" if h < test + val else "train"
+
+
+def split_for(s: Sample) -> str:
+    """The sample's split: Lab's when the label carries one, else from its group."""
+    return s.split or split_of(s.group)
 
 
 def deepdarts(root: Path) -> list[Sample]:
@@ -58,18 +65,28 @@ def deepdarts(root: Path) -> list[Sample]:
 
 
 def captures(root: Path) -> list[Sample]:
-    """Our captures: <id>.jpg and <id>.json written by the app (src/features/camera/captures.ts)."""
+    """Our captures: <id>.jpg and <id>.json, written by Ton Up (src/features/camera/captures.ts)
+    or by Lab's dataset snapshots (lab/src/lib/snapshots.ts), which add the session, its split
+    and darts as objects with the entered value. Values-only captures have no tips to learn from
+    and are skipped."""
     out = []
     for meta in sorted(root.glob("*.json")):
+        if meta.name == "manifest.json":
+            continue
         m = json.loads(meta.read_text())
+        if m.get("valuesOnly"):
+            continue
         points: dict[str, list[tuple[float, float]]] = {c: [] for c in CHANNELS}
         labelled = {"tip"}
         for cid, p in zip(CHANNELS[:5], m["calibration"]):
             if p is not None:
                 points[cid] = [(p["x"], p["y"])]
                 labelled.add(cid)
-        points["tip"] = [(d["x"], d["y"]) for d in m["darts"]]
-        out.append(Sample(root / m["image"], points, labelled, m.get("createdAt", meta.stem)[:10]))
+        points["tip"] = [
+            (d["x"], d["y"]) for d in m["darts"] if d.get("x") is not None and d.get("y") is not None
+        ]
+        group = m.get("sessionId") or m.get("createdAt", meta.stem)[:10]
+        out.append(Sample(root / m["image"], points, labelled, group, m.get("split")))
     return out
 
 

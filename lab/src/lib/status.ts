@@ -3,6 +3,7 @@ import { count } from 'drizzle-orm';
 import { db } from './db/client';
 import { sessions } from './db/schema';
 import { dataDir, LAB_VERSION } from './env';
+import { activeModel } from './runs';
 import { labelAt, SELF_CHECK } from './score';
 
 export interface LabStatus {
@@ -10,7 +11,7 @@ export interface LabStatus {
   version: string;
   dataDir: string;
   sessions: number;
-  /** The model Capture pulls for pre-filling; none until L4. */
+  /** The model Capture pre-fills with, by name. */
   activeModel: string | null;
   scoring: { expected: string; got: string; ok: boolean };
 }
@@ -24,7 +25,7 @@ export function labStatus(): LabStatus {
     version: LAB_VERSION,
     dataDir: dataDir(),
     sessions: row?.n ?? 0,
-    activeModel: null,
+    activeModel: activeModel()?.name ?? null,
     scoring: { expected: SELF_CHECK.expected, got, ok: got === SELF_CHECK.expected },
   };
 }

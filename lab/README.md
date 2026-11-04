@@ -14,7 +14,7 @@ pnpm dev:lan      # also reachable from the phone at http://<this-mac>.local:310
 pnpm build && pnpm start      # or start:lan
 ```
 
-Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db`, `photos/` and `thumbs/`, with snapshots, runs and models as the milestones land. The database is created and migrated on startup.
+Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db`, `photos/` and `thumbs/`, `snapshots/` (what each run trained on), `runs/<id>/` (log, metrics, checkpoint, verification) and `models/<vN>/` (the Core ML package). The database is created and migrated on startup.
 
 ## Getting captures in
 
@@ -25,6 +25,10 @@ Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db`, `photos
 Every session gets its set (train, val or verify) the first time Lab sees it. The label editor saves each change as a new version; the review queue collects labels whose tips disagree with their values, darts flagged on the wire and board marks that don't fit.
 
 macOS asks once whether Node may accept incoming connections when you first use a LAN script.
+
+## Training
+
+Runs › New run snapshots the labels, trains with `ml/` (`../ml/.venv/bin/python`, or `TONUP_LAB_PYTHON`), verifies on the verify set and exports; the result is a candidate on Models. Runs go one at a time; use `pnpm start` rather than `pnpm dev` for long runs, since hot reload restarts the server.
 
 ## Check
 

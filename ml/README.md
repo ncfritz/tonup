@@ -34,11 +34,15 @@ python -m tonup_ml.train --deepdarts data/deepdarts --captures data/captures \
 
 Each epoch prints the validation numbers that matter in a game: visit total correct, dart segment correct, board found. The best checkpoint by visit accuracy is `best.pt`, with its numbers in `best.json`.
 
+Lab runs this for you and adds `--metrics runs/<id>/metrics.jsonl` (one JSON line per epoch), `--deepdarts-sample N` (a fresh random N DeepDarts photos each epoch, so fine-tunes aren't swamped) and `--seed`. `--no-pretrained` starts from random weights when the ImageNet backbone can't be downloaded. `--captures` also reads a Lab snapshot folder, taking each photo's split from its label.
+
 ## Evaluate
 
 ```sh
 python -m tonup_ml.evaluate --checkpoint runs/ours/best.pt --captures data/captures --split test
 ```
+
+`--out eval.json` writes the numbers and `--predictions predictions.jsonl` one line per photo, which Lab's verification pages read.
 
 The bar for shipping (docs/plan/snap-to-score.md): on our own test photos, dart segment correct ≥ 95%, visit correct ≥ 90%, board found ≥ 98%.
 

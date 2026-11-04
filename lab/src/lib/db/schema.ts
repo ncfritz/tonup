@@ -138,3 +138,64 @@ export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
 });
+
+export const RUN_STATUS = ['queued', 'running', 'done', 'failed', 'cancelled'] as const;
+export const MODEL_STATUS = ['candidate', 'active', 'retired'] as const;
+
+/** A frozen copy of the dataset a run used: hard links to the photos and the labels as of then. */
+export const snapshots = sqliteTable('snapshots', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  path: text('path').notNull(),
+  train: integer('train').notNull(),
+  val: integer('val').notNull(),
+  test: integer('test').notNull(),
+  /** Values-only captures in it (verification of visit totals only). */
+  valuesOnly: integer('values_only').notNull(),
+});
+
+/** A training or verification run, run one at a time by the runner (lib/runner.ts). */
+export const runs = sqliteTable(
+  'runs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    kind: text('kind', { enum: ['train', 'verify'] }).notNull(),
+    status: text('status', { enum: RUN_STATUS }).notNull(),
+    /** What it's doing now: snapshot, train, evaluate, export. */
+    stage: text('stage'),
+    /** The run's settings as JSON (epochs, learning rate, data); the one JSON column. */
+    params: text('params').notNull(),
+    snapshotId: integer('snapshot_id').references(() => snapshots.id),
+    baseModelId: integer('base_model_id'),
+    modelId: integer('model_id'),
+    pid: integer('pid'),
+    error: text('error'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    startedAt: integer('started_at', { mode: 'timestamp_ms' }),
+    endedAt: integer('ended_at', { mode: 'timestamp_ms' }),
+    /** Results on the verification set (or DeepDarts' test split before there is one). */
+    evaluatedOn: text('evaluated_on'),
+    samples: integer('samples'),
+    visitCorrect: real('visit_correct'),
+    dartCorrect: real('dart_correct'),
+    boardFound: real('board_found'),
+  },
+  (t) => [index('runs_status').on(t.status)],
+);
+
+export const models = sqliteTable('models', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  /** v1, v2, … in order of training. */
+  name: text('name').notNull().unique(),
+  runId: integer('run_id').notNull(),
+  status: text('status', { enum: MODEL_STATUS }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  /** Under the data folder: runs/<run>/best.pt and models/<id>/DartKeypoints.mlpackage. */
+  checkpoint: text('checkpoint').notNull(),
+  mlpackage: text('mlpackage'),
+  evaluatedOn: text('evaluated_on'),
+  samples: integer('samples'),
+  visitCorrect: real('visit_correct'),
+  dartCorrect: real('dart_correct'),
+  boardFound: real('board_found'),
+});

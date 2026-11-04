@@ -21,8 +21,8 @@ const NAV = [
   { key: '/', icon: <DashboardOutlined />, label: 'Overview', ready: true },
   { key: '/captures', icon: <CameraOutlined />, label: 'Captures', ready: true },
   { key: '/sessions', icon: <FolderOpenOutlined />, label: 'Sessions', ready: true },
-  { key: '/runs', icon: <ExperimentOutlined />, label: 'Runs', ready: false },
-  { key: '/models', icon: <DeploymentUnitOutlined />, label: 'Models', ready: false },
+  { key: '/runs', icon: <ExperimentOutlined />, label: 'Runs', ready: true },
+  { key: '/models', icon: <DeploymentUnitOutlined />, label: 'Models', ready: true },
   { key: '/verification', icon: <CheckCircleOutlined />, label: 'Verification', ready: false },
 ];
 

@@ -1,6 +1,6 @@
 # Capture and Lab: implementation plan
 
-- Status: In progress (2026-11-03): L0 to L2 done; L2 needs a build on the iPhone
+- Status: In progress (2026-11-04): L0 to L3 done; L2 needs a build on the iPhone, L3 a DeepDarts baseline on the M1 Pro
 - Decisions: [ADR 0012](../architecture/decisions/0012-capture-and-lab.md); builds on [snap-to-score.md](snap-to-score.md) (milestone S4)
 
 Ton Up Capture is an internal iPhone app for photographing visits and labelling them carefully. Ton Up Lab is a web app on the laptop that collects the captures, keeps the training and verification sets apart, runs training and verification, and manages models. Together they turn "copy a folder and run a script" into a loop: capture, label, train, verify, pull the new model into Capture to pre-fill the next labels.
@@ -199,6 +199,14 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 
 - **L2 (Capture):** `src/capture-app` (Home, Session, Label, Settings) over `src/features/capture-lab`: the visit as plain state (`visit.ts`: values, board, tips, review; a tip must score its value or be flagged on the wire), the label file, the outbox as files in Documents (`outboxFiles.ts`), sync (`outbox.ts`, `lab.ts`: multipart upload with `expo-file-system`'s `File.upload`) and the settings and session store (`store.ts`, saved to Documents/capture-state.json). The photo markup from snap to score (`PhotoMarkup`) now takes plain props so both apps use it. An installed model pre-fills the board and matches its tips to the values entered.
 
+- **L3 (training from Lab):** `snapshots`, `runs` and `models` tables. A training run snapshots the current labels (`snapshots/<id>/`: each photo hard-linked beside a label file in `ml/`'s format with its split, plus `manifest.json`), then runs `tonup_ml.train` (epoch metrics to `metrics.jsonl`), `tonup_ml.evaluate` on the snapshot's verify photos (DeepDarts' test split until there are any) and `tonup_ml.export`, and registers the best checkpoint as a candidate model `vN`; a failed export still registers it, without a Core ML package. One run at a time from a queue (`src/lib/runner.ts`), under `caffeinate -i` on macOS; cancel kills the process group, and a run left running when Lab stopped is marked failed on startup. Pages: Runs (list, new-run drawer: from scratch or fine-tune a model, data, epochs, learning rate, batch, capture weight, DeepDarts sample per epoch), Run (live progress with step, elapsed, estimate, throughput; accuracy and loss by epoch against the bar; settings; log; verified results) and Models (scores against the bar, Core ML path, set active). `ml/` gained `--metrics`, `--deepdarts-sample`, `--seed`, `--no-pretrained` and step progress in `train`, `--out` and `--predictions` in `evaluate`, and reads Lab snapshots (split from the label, values-only visits skipped).
+
+### Trying a training run
+
+1. `cd ml && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` (Lab runs `ml/.venv/bin/python`; set `TONUP_LAB_PYTHON` for another).
+2. Set the DeepDarts folder on Sessions, then `cd lab && pnpm build && pnpm start`.
+3. Runs › New run › from scratch with DeepDarts, Epochs 1 first to time an epoch, then the full baseline.
+
 ### Trying Capture
 
 1. `pnpm capture:sync`, then `pnpm capture:ios` with the iPhone connected (or open `ios/` in Xcode and run). `pnpm ios:sync` switches back to Ton Up.
@@ -214,6 +222,8 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 - **Next.js importing `../src/domain` (checked in L0):** works with `turbopack.root` and `outputFileTracingRoot` set to the repository and `experimental.externalDir`; `pnpm build` and the scoring self-check pass.
 - **Ant Design in server components:** compound components (`Layout.Header`, `Descriptions.Item`) are undefined on the server, so pages read data in a server component and render through a client component.
 - **Runner in dev:** hot reload can start a second runner; the `globalThis` singleton guards it, and real runs use `pnpm start`.
+- **Turbopack tracing the Python path:** `path.join(repoDir(), 'ml', '.venv', 'bin', 'python')` made `next build` try to trace the virtualenv's symlinked interpreter and fail; the paths in `runner.ts` carry `turbopackIgnore`.
+- **End to end (checked in L3, Linux CPU):** a four-epoch run on 52 generated captures snapshotted, trained, verified on 12 held-out photos and registered v1; export failed without coremltools as expected and the model was still registered.
 - **Local network:** iOS asks for local-network permission on first sync; `.local` names resolve on the home network only.
 
 ## Open questions
