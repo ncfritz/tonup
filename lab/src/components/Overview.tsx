@@ -1,24 +1,32 @@
 'use client';
 
-import { Alert, Card, Col, Descriptions, Row, Statistic, Tag, Typography } from 'antd';
+import { Card, Col, Descriptions, Flex, Row, Statistic, Tag, Typography } from 'antd';
 import Link from 'next/link';
 
 import type { DeepdartsSummary } from '~/lib/deepdarts';
 import type { OverviewCounts } from '~/lib/queries';
 import type { LabStatus } from '~/lib/status';
+import type { Coverage, ModelProgress } from '~/lib/verify';
 
 import { PageBody, PageHeader } from './PageHeader';
+import { pct as percent } from './RunBits';
+import { CoverageChart, ProgressChart, ThinNote } from './VerifyCharts';
 
-/** Overview: the dataset at a glance. Accuracy charts arrive with runs and models (L3, L4). */
+/** Overview: how close the model is to the bar, and where the dataset is thin. */
 export function Overview({
   status,
   counts,
   deepdarts,
+  progress,
+  coverage,
 }: {
   status: LabStatus;
   counts: OverviewCounts;
   deepdarts: DeepdartsSummary | null;
+  progress: ModelProgress;
+  coverage: Coverage[];
 }) {
+  const active = progress.find((m) => m.status === 'active');
   const inUse = counts.bySplit.train + counts.bySplit.val + counts.bySplit.test;
   const pct = (n: number) => (inUse ? `${Math.round((n / inUse) * 100)}%` : '—');
   return (
@@ -52,7 +60,15 @@ export function Overview({
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic title="Active model" value={status.activeModel ?? 'None yet'} />
-              <Typography.Text type="secondary">Models arrive in L3</Typography.Text>
+              {active ? (
+                <Typography.Text type="secondary">
+                  Visit {percent(active.visitCorrect)} on {active.samples} verify photos
+                </Typography.Text>
+              ) : (
+                <Link href="/models">
+                  {status.activeModel ? 'Not verified yet' : 'Pick one on Models'}
+                </Link>
+              )}
             </Card>
           </Col>
 
@@ -123,13 +139,40 @@ export function Overview({
           </Col>
 
           <Col span={24}>
-            <Alert
-              type="info"
-              showIcon
-              title="Accuracy charts, runs and models arrive in L3 and L4"
-              description="See docs/plan/capture-lab.md for the milestones."
-            />
+            <Card
+              size="small"
+              title="Accuracy by model"
+              extra={<Link href="/verification">Verification</Link>}
+            >
+              <ProgressChart models={progress} />
+            </Card>
           </Col>
+
+          <Col span={24}>
+            <Flex justify="space-between" align="center" wrap gap={8}>
+              <Typography.Title level={5} style={{ margin: 0 }}>
+                Coverage by condition
+              </Typography.Title>
+              <ThinNote />
+            </Flex>
+          </Col>
+          {coverage.map((c) => (
+            <Col xs={24} lg={12} key={c.key}>
+              <Card
+                size="small"
+                title={c.title}
+                extra={
+                  c.unmeasured ? (
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {c.unmeasured} not measured
+                    </Typography.Text>
+                  ) : null
+                }
+              >
+                <CoverageChart coverage={c} />
+              </Card>
+            </Col>
+          ))}
         </Row>
       </PageBody>
     </>

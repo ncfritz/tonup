@@ -16,7 +16,7 @@ import torch
 
 from .data import KeypointDataset, captures, deepdarts, split_for
 from .decode import as_calibration, decode
-from .geometry import apply, fit_board, score
+from .geometry import apply, fit_board, parse_value, score
 from .model import focal_loss, offset_loss
 
 MAX_RESIDUAL_MM = 8.0
@@ -39,31 +39,41 @@ def evaluate(
     records: list | None = None,
 ) -> dict[str, float]:
     """Visit, dart and board accuracy, and the loss, over `samples`. With `records`, appends
-    one dict per photo: what was predicted and whether it was right (for Lab's failure gallery)."""
+    one dict per photo: what was predicted and whether it was right (for Lab's failure gallery).
+    A values-only sample (Lab) is judged on its entered values: the visit total and the darts'
+    segments, with no loss since it has no points."""
     model.eval()
     chosen = samples[:limit] if limit else samples
     ds = KeypointDataset(chosen, train=False)
     visits = darts_right = darts = found = n = 0
     loss_sum = 0.0
+    with_loss = 0
     for i in range(len(ds)):
         item = ds[i]
-        truth = json.loads(item["truth"])
+        values = chosen[i].values
         heat, off = model(item["image"][None].to(dev))
-        loss_sum += float(
-            focal_loss(heat, item["heat"][None].to(dev), item["mask"][None].to(dev))
-            + offset_loss(off, item["offset"][None].to(dev), item["offset_mask"][None].to(dev))
-        )
         pred = decode(heat[0].cpu(), off[0].cpu())
         cal = as_calibration(pred)
         fit = fit_board(cal)
         ok_board = fit is not None and fit[1] < MAX_RESIDUAL_MM
-        true_cal = {c: tuple(p[0]) for c, p in truth.items() if c != "tip" and p}
-        want = _scores(true_cal, [tuple(p) for p in truth["tip"]])
+        if values is None:
+            truth = json.loads(item["truth"])
+            loss_sum += float(
+                focal_loss(heat, item["heat"][None].to(dev), item["mask"][None].to(dev))
+                + offset_loss(off, item["offset"][None].to(dev), item["offset_mask"][None].to(dev))
+            )
+            with_loss += 1
+            true_cal = {c: tuple(p[0]) for c, p in truth.items() if c != "tip" and p}
+            want = _scores(true_cal, [tuple(p) for p in truth["tip"]])
+        else:
+            parsed = [parse_value(v) for v in values]
+            # Darts that missed the board have no tip in the photo to find.
+            want = None if None in parsed else [p for p in parsed if p and p[2] > 0]
         if want is None:
             continue
         n += 1
         found += ok_board
-        tips = [p[:2] for p in pred["tip"][: len(truth["tip"])]]
+        tips = [p[:2] for p in pred["tip"][: len(want)]]
         got = _scores(cal, tips) if ok_board else None
         darts += len(want)
         right = 0
@@ -82,6 +92,7 @@ def evaluate(
                 {
                     "image": s.image.name,
                     "group": s.group,
+                    "values_only": s.values is not None,
                     "board_found": bool(ok_board),
                     "darts": len(want),
                     "darts_right": right,
@@ -99,7 +110,7 @@ def evaluate(
         "visit_correct": visits / max(1, n),
         "dart_correct": darts_right / max(1, darts),
         "board_found": found / max(1, n),
-        "loss": loss_sum / max(1, len(ds)),
+        "loss": loss_sum / max(1, with_loss),
     }
 
 
@@ -119,7 +130,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.deepdarts:
         samples += deepdarts(Path(args.deepdarts))
     if args.captures:
-        samples += captures(Path(args.captures))
+        samples += captures(Path(args.captures), values_only=True)
     if args.split != "all":
         samples = [s for s in samples if split_for(s) == args.split]
     dev = device()

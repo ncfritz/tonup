@@ -16,14 +16,14 @@ import {
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
-import type { EpochMetrics, RunSummary } from '~/lib/runs';
+import type { EpochMetrics, TrainRunSummary } from '~/lib/runs';
 
 import { PageBody, PageHeader } from './PageHeader';
 import { describeRun, duration, pct, RunStatus } from './RunBits';
 import { AccuracyChart, BAR, LossChart } from './RunCharts';
 
 interface RunData {
-  run: RunSummary;
+  run: TrainRunSummary;
   metrics: EpochMetrics[];
   log: { tail: string; step: { epoch: number; step: number; of: number } | null };
 }

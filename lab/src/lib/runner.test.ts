@@ -8,10 +8,20 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { closeDbForTests } from './db/client';
+import { eq } from 'drizzle-orm';
 import { ingestCapture } from './ingest';
 import { cancelRun, idleForTests, recoverRuns, tick } from './runner';
 import { activateModel, activeModel, createTrainRun, DEFAULTS, getRun, listModels } from './runs';
+import { db } from './db/client';
+import { captures, verifyItems } from './db/schema';
 import { splitOf } from './splits';
+import {
+  coverage,
+  createVerifyRun,
+  getVerification,
+  listVerifications,
+  modelProgress,
+} from './verify';
 
 const toImage = (p: { x: number; y: number }) => ({
   x: 0.5 + (p.x / 170) * 0.3,
@@ -183,5 +193,83 @@ describe('models', () => {
     activateModel(v2!.id);
     expect(activeModel()?.name).toBe('v2');
     expect(listModels().map((m) => m.status)).toEqual(['active', 'retired']);
+  });
+});
+
+describe('verification', () => {
+  it('records a training run’s check photo by photo', async () => {
+    const run = createTrainRun(params());
+    tick();
+    await idleForTests();
+    const v = getVerification(run.id)!;
+    expect(v.results).toMatchObject([
+      { model: 'v1', samples: 2, valuesOnly: 1, visitCorrect: 0.5 },
+    ]);
+    const items = db().select().from(verifyItems).all();
+    expect(items.map((i) => [i.captureId, i.valuesOnly, i.visitCorrect]).sort()).toEqual([
+      ['c3', false, true],
+      ['c4', true, false],
+    ]);
+    // The wrong one is in the gallery with the label it was checked against.
+    expect(v.worst).toMatchObject([{ captureId: 'c4', model: 'v1', wantTotal: 60, gotTotal: 20 }]);
+    expect(v.worst[0]!.truth?.values).toEqual(['T20']);
+    expect(modelProgress().map((m) => m.name)).toEqual(['v1']);
+  });
+
+  it('compares models on one fresh snapshot, with a breakdown by condition', async () => {
+    createTrainRun(params());
+    createTrainRun(params());
+    tick();
+    await idleForTests();
+    const [v2, v1] = listModels();
+    const run = createVerifyRun({ modelIds: [v1!.id, v2!.id] });
+    tick();
+    await idleForTests();
+    const v = getVerification(run.id)!;
+    expect(v.run).toMatchObject({ status: 'done', kind: 'verify', models: ['v1', 'v2'] });
+    expect(v.snapshot?.id).toBe(3);
+    expect(v.results.map((r) => r.model)).toEqual(['v1', 'v2']);
+    const darts = v.breakdown.find((b) => b.key === 'darts')!;
+    expect(darts.buckets).toEqual([
+      {
+        bucket: '1',
+        by: {
+          [v1!.id]: expect.objectContaining({ n: 2, visit: 0.5 }),
+          [v2!.id]: expect.objectContaining({ n: 2 }),
+        },
+      },
+    ]);
+    // Each model's numbers are now those of the latest verification.
+    expect(listModels().find((m) => m.id === v1!.id)!.evaluatedOn).toBe('verify set, snapshot 3');
+    expect(listVerifications().map((l) => l.run.id)).toEqual([3, 2, 1]);
+    expect(
+      log()
+        .filter((l) => l.startsWith('tonup_ml.evaluate'))
+        .at(-1),
+    ).toContain(`--out ${path.join(dir, 'data', 'runs', '3', `eval-${v2!.id}.json`)}`);
+  });
+
+  it('fails a verification with nothing in the verify set', async () => {
+    createTrainRun(params());
+    tick();
+    await idleForTests();
+    db().update(captures).set({ status: 'rejected' }).where(eq(captures.sessionId, 'x')).run();
+    const run = createVerifyRun({ modelIds: [listModels()[0]!.id] });
+    tick();
+    await idleForTests();
+    expect(getRun(run.id)!.run).toMatchObject({
+      status: 'failed',
+      error: expect.stringMatching(/verify set/),
+    });
+  });
+
+  it('counts coverage by condition for training and verify', () => {
+    const darts = coverage().find((c) => c.key === 'darts')!;
+    expect(darts.buckets.find((b) => b.bucket === '1')).toEqual({
+      bucket: '1',
+      training: 2,
+      verify: 2,
+      thin: true,
+    });
   });
 });

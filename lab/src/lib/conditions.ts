@@ -121,7 +121,11 @@ export function measure(input: LabelInput, width: number, height: number): Measu
     darts,
     angleDeg: shape?.angleDeg ?? null,
     boardPx: shape?.boardPx ?? null,
-    dartCount: tips,
+    // Darts in the board: a tip, or (values only) an entered value that isn't off the board.
+    dartCount: input.darts.filter(
+      (d) =>
+        d.tip || (d.entered != null && !['Miss', 'Bounce-out'].includes(normaliseValue(d.entered))),
+    ).length,
     tightGroup,
     fitResidualMm: fit?.residual ?? null,
     review,

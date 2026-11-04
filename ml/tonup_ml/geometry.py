@@ -54,6 +54,25 @@ def score(x: float, y: float) -> tuple[int, int, int]:
     return seg, mult, seg * mult
 
 
+def parse_value(v: str) -> tuple[int, int, int] | None:
+    """(segment, multiplier, points) for an entered value ("T20", "D16", "5", "Bull", "25",
+    "Miss"), as score() gives them; None for one it can't read. A miss or bounce-out scores
+    nothing and has no tip."""
+    s = v.strip().upper().replace(" ", "")
+    if s in ("BULL", "50", "DB", "D25"):
+        return 25, 2, 50
+    if s in ("25", "SB", "OB"):
+        return 25, 1, 25
+    if s in ("MISS", "M", "0", "BOUNCE-OUT", "BOUNCEOUT", "BO"):
+        return 0, 0, 0
+    mult = {"S": 1, "D": 2, "T": 3}.get(s[:1])
+    num = s[1:] if mult else s
+    if not num.isdigit() or not 1 <= int(num) <= 20:
+        return None
+    m = mult or 1
+    return int(num), m, int(num) * m
+
+
 def fit_homography(src: np.ndarray, dst: np.ndarray) -> np.ndarray | None:
     """3x3 homography taking src points to dst points (N >= 4), least squares beyond four."""
     if len(src) < 4:

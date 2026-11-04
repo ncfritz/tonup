@@ -140,7 +140,7 @@ describe('ingestCapture', () => {
       'phone',
     );
     expect(getCapture('vo-1')!.status).toBe('values-only');
-    expect(getCapture('vo-1')!.dartCount).toBe(0);
+    expect(getCapture('vo-1')!.dartCount).toBe(3); // darts in the board, from the values entered
   });
 
   it('turns photos upright from their EXIF orientation', async () => {

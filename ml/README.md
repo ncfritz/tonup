@@ -42,7 +42,7 @@ Lab runs this for you and adds `--metrics runs/<id>/metrics.jsonl` (one JSON lin
 python -m tonup_ml.evaluate --checkpoint runs/ours/best.pt --captures data/captures --split test
 ```
 
-`--out eval.json` writes the numbers and `--predictions predictions.jsonl` one line per photo, which Lab's verification pages read.
+`--out eval.json` writes the numbers and `--predictions predictions.jsonl` one line per photo, which Lab's verification pages read. Values-only visits in a Lab snapshot count too, judged on the visit total and the segments of the values entered.
 
 The bar for shipping (docs/plan/snap-to-score.md): on our own test photos, dart segment correct ≥ 95%, visit correct ≥ 90%, board found ≥ 98%.
 

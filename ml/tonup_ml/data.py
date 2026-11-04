@@ -36,6 +36,9 @@ class Sample:
     group: str = ""  # for splitting: photos of one session stay together
     # The split Lab assigned (lab/src/lib/splits.ts); None means split_of(group).
     split: str | None = None
+    # A values-only visit (Lab): what the player entered, with no points to learn from. Only
+    # evaluation reads these, for the visit total and segments.
+    values: list[str] | None = None
 
 
 def split_of(group: str, val: float = 0.1, test: float = 0.1) -> str:
@@ -64,17 +67,21 @@ def deepdarts(root: Path) -> list[Sample]:
     return out
 
 
-def captures(root: Path) -> list[Sample]:
+def captures(root: Path, values_only: bool = False) -> list[Sample]:
     """Our captures: <id>.jpg and <id>.json, written by Ton Up (src/features/camera/captures.ts)
     or by Lab's dataset snapshots (lab/src/lib/snapshots.ts), which add the session, its split
     and darts as objects with the entered value. Values-only captures have no tips to learn from
-    and are skipped."""
+    and are skipped, unless `values_only` (evaluation), when they come back with their values."""
     out = []
     for meta in sorted(root.glob("*.json")):
         if meta.name == "manifest.json":
             continue
         m = json.loads(meta.read_text())
+        group = m.get("sessionId") or m.get("createdAt", meta.stem)[:10]
         if m.get("valuesOnly"):
+            if values_only:
+                values = [d["value"] for d in m["darts"] if d.get("value")]
+                out.append(Sample(root / m["image"], {c: [] for c in CHANNELS}, set(), group, m.get("split"), values))
             continue
         points: dict[str, list[tuple[float, float]]] = {c: [] for c in CHANNELS}
         labelled = {"tip"}
@@ -85,7 +92,6 @@ def captures(root: Path) -> list[Sample]:
         points["tip"] = [
             (d["x"], d["y"]) for d in m["darts"] if d.get("x") is not None and d.get("y") is not None
         ]
-        group = m.get("sessionId") or m.get("createdAt", meta.stem)[:10]
         out.append(Sample(root / m["image"], points, labelled, group, m.get("split")))
     return out
 

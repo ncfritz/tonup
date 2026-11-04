@@ -75,3 +75,35 @@ def test_training_writes_metrics_and_evaluation_writes_files(tmp_path):
     rows = [json.loads(l) for l in (out / "predictions.jsonl").read_text().splitlines()]
     assert rows[0]["image"] == "5.jpg" and rows[0]["group"] == "s5"
     assert {"board_found", "darts", "darts_right", "visit_correct", "predicted"} <= set(rows[0])
+
+
+def test_parse_value():
+    from tonup_ml.geometry import parse_value
+
+    assert parse_value("T20") == (20, 3, 60)
+    assert parse_value("d16") == (16, 2, 32)
+    assert parse_value("5") == parse_value("S5") == (5, 1, 5)
+    assert parse_value("Bull") == (25, 2, 50) and parse_value("25") == (25, 1, 25)
+    assert parse_value("Miss") == (0, 0, 0)
+    assert parse_value("T21") is None
+
+
+def test_values_only_visits_are_verified_on_their_values(tmp_path):
+    from tonup_ml.evaluate import evaluate
+    from tonup_ml.model import DartKeypoints
+
+    import torch
+
+    synthetic(tmp_path, 2)
+    lab_file(tmp_path, 0, sessionId="a", split="test")
+    lab_file(tmp_path, 1, sessionId="b", split="test", valuesOnly=True)
+    samples = captures(tmp_path, values_only=True)
+    vo = [s for s in samples if s.values is not None]
+    assert len(vo) == 1 and vo[0].values == ["T20", "T20", "T20", "Miss"]
+    records: list = []
+    result = evaluate(DartKeypoints(pretrained=False), samples, torch.device("cpu"), records=records)
+    assert result["samples"] == 2
+    by_image = {r["image"]: r for r in records}
+    assert by_image["1.jpg"]["values_only"] is True and by_image["0.jpg"]["values_only"] is False
+    # The miss scores nothing and isn't a dart to find.
+    assert by_image["1.jpg"]["want_total"] == 180 and by_image["1.jpg"]["darts"] == 3

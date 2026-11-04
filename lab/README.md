@@ -28,7 +28,7 @@ macOS asks once whether Node may accept incoming connections when you first use 
 
 ## Training
 
-Runs › New run snapshots the labels, trains with `ml/` (`../ml/.venv/bin/python`, or `TONUP_LAB_PYTHON`), verifies on the verify set and exports; the result is a candidate on Models. Runs go one at a time; use `pnpm start` rather than `pnpm dev` for long runs, since hot reload restarts the server.
+Runs › New run snapshots the labels, trains with `ml/` (`../ml/.venv/bin/python`, or `TONUP_LAB_PYTHON`), verifies on the verify set and exports; the result is a candidate on Models. Verification (or Models › Compare) checks chosen models on one fresh snapshot of the verify set, with the breakdown by condition and the worst photos; download a model's Core ML package from Models. Runs go one at a time; use `pnpm start` rather than `pnpm dev` for long runs, since hot reload restarts the server.
 
 ## Check
 

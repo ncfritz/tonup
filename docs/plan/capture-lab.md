@@ -1,6 +1,6 @@
 # Capture and Lab: implementation plan
 
-- Status: In progress (2026-11-04): L0 to L3 done; L2 needs a build on the iPhone, L3 a DeepDarts baseline on the M1 Pro
+- Status: In progress (2026-11-04): L0 to L4 done; L2 needs a build on the iPhone, L3 a DeepDarts baseline on the M1 Pro
 - Decisions: [ADR 0012](../architecture/decisions/0012-capture-and-lab.md); builds on [snap-to-score.md](snap-to-score.md) (milestone S4)
 
 Ton Up Capture is an internal iPhone app for photographing visits and labelling them carefully. Ton Up Lab is a web app on the laptop that collects the captures, keeps the training and verification sets apart, runs training and verification, and manages models. Together they turn "copy a folder and run a script" into a loop: capture, label, train, verify, pull the new model into Capture to pre-fill the next labels.
@@ -201,11 +201,14 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 
 - **L3 (training from Lab):** `snapshots`, `runs` and `models` tables. A training run snapshots the current labels (`snapshots/<id>/`: each photo hard-linked beside a label file in `ml/`'s format with its split, plus `manifest.json`), then runs `tonup_ml.train` (epoch metrics to `metrics.jsonl`), `tonup_ml.evaluate` on the snapshot's verify photos (DeepDarts' test split until there are any) and `tonup_ml.export`, and registers the best checkpoint as a candidate model `vN`; a failed export still registers it, without a Core ML package. One run at a time from a queue (`src/lib/runner.ts`), under `caffeinate -i` on macOS; cancel kills the process group, and a run left running when Lab stopped is marked failed on startup. Pages: Runs (list, new-run drawer: from scratch or fine-tune a model, data, epochs, learning rate, batch, capture weight, DeepDarts sample per epoch), Run (live progress with step, elapsed, estimate, throughput; accuracy and loss by epoch against the bar; settings; log; verified results) and Models (scores against the bar, Core ML path, set active). `ml/` gained `--metrics`, `--deepdarts-sample`, `--seed`, `--no-pretrained` and step progress in `train`, `--out` and `--predictions` in `evaluate`, and reads Lab snapshots (split from the label, values-only visits skipped).
 
+- **L4 (verification):** `verify_results` (a model's totals in one verification) and `verify_items` (each photo's outcome, the model's points, and the photo's conditions as of the snapshot). A verification run (`POST /api/runs` with `kind: "verify"` and up to four `modelIds`) takes one fresh snapshot and evaluates each model on its verify photos; a training run records its own check the same way, and each model's numbers become those of its latest verification. Values-only visits now count: `evaluate` judges them on the visit total and the segments from the entered values (`--captures` includes them; training still skips them), and a values-only visit's dart count is its darts in the board. Conditions are bucketed once (`src/lib/buckets.ts`: camera angle, board size as a share of the photo, light, darts in the board, grouping) for both the breakdown and coverage; a bucket is thin under 30 photos or under 10 in verify. Pages: Verification (accuracy by model, every verification and training check), one verification (each model against the bar with the change from the first, a column chart per condition for visit, segment or board found, and the worst photos with the board and tips the model found over the true tips), Models (select two to four and compare on the verify set, verify one, download the Core ML package as a zip or the checkpoint) and Overview (accuracy by model, coverage by condition with thin buckets marked).
+
 ### Trying a training run
 
 1. `cd ml && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` (Lab runs `ml/.venv/bin/python`; set `TONUP_LAB_PYTHON` for another).
 2. Set the DeepDarts folder on Sessions, then `cd lab && pnpm build && pnpm start`.
 3. Runs › New run › from scratch with DeepDarts, Epochs 1 first to time an epoch, then the full baseline.
+4. Once there are verify photos: Models › select two › Compare on the verify set.
 
 ### Trying Capture
 
@@ -224,6 +227,7 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 - **Runner in dev:** hot reload can start a second runner; the `globalThis` singleton guards it, and real runs use `pnpm start`.
 - **Turbopack tracing the Python path:** `path.join(repoDir(), 'ml', '.venv', 'bin', 'python')` made `next build` try to trace the virtualenv's symlinked interpreter and fail; the paths in `runner.ts` carry `turbopackIgnore`.
 - **End to end (checked in L3, Linux CPU):** a four-epoch run on 52 generated captures snapshotted, trained, verified on 12 held-out photos and registered v1; export failed without coremltools as expected and the model was still registered.
+- **End to end (checked in L4, Linux CPU):** a fine-tune of v1 checked itself on 15 verify photos (3 of them values only); a verification of v1 against v2 on a fresh snapshot recorded both and the breakdown; the zip download unpacks to `DartKeypoints.mlpackage/`.
 - **Local network:** iOS asks for local-network permission on first sync; `.local` names resolve on the home network only.
 
 ## Open questions

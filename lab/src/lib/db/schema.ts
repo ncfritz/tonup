@@ -199,3 +199,58 @@ export const models = sqliteTable('models', {
   dartCorrect: real('dart_correct'),
   boardFound: real('board_found'),
 });
+
+/** One model's totals in one verification (a verification run, or a training run's check). */
+export const verifyResults = sqliteTable(
+  'verify_results',
+  {
+    runId: integer('run_id')
+      .notNull()
+      .references(() => runs.id, { onDelete: 'cascade' }),
+    modelId: integer('model_id')
+      .notNull()
+      .references(() => models.id, { onDelete: 'cascade' }),
+    snapshotId: integer('snapshot_id').references(() => snapshots.id),
+    samples: integer('samples').notNull(),
+    /** Of those, values-only visits (judged on the visit total and segments only). */
+    valuesOnly: integer('values_only').notNull(),
+    visitCorrect: real('visit_correct').notNull(),
+    dartCorrect: real('dart_correct').notNull(),
+    boardFound: real('board_found').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.runId, t.modelId] })],
+);
+
+/**
+ * One photo in one verification: what the model got and the photo's conditions as they were
+ * then (labels can change later; the breakdown should match the snapshot).
+ */
+export const verifyItems = sqliteTable(
+  'verify_items',
+  {
+    runId: integer('run_id')
+      .notNull()
+      .references(() => runs.id, { onDelete: 'cascade' }),
+    modelId: integer('model_id')
+      .notNull()
+      .references(() => models.id, { onDelete: 'cascade' }),
+    captureId: text('capture_id').notNull(),
+    valuesOnly: integer('values_only', { mode: 'boolean' }).notNull(),
+    boardFound: integer('board_found', { mode: 'boolean' }).notNull(),
+    darts: integer('darts').notNull(),
+    dartsRight: integer('darts_right').notNull(),
+    visitCorrect: integer('visit_correct', { mode: 'boolean' }).notNull(),
+    wantTotal: integer('want_total').notNull(),
+    gotTotal: integer('got_total'),
+    /** The model's points as JSON: { calibration: { cal20: [x, y], … }, tips: [[x, y], …] }. */
+    predicted: text('predicted').notNull(),
+    angleDeg: real('angle_deg'),
+    /** The board's size across as a fraction of the photo's long side (how close it was). */
+    boardFrac: real('board_frac'),
+    brightness: real('brightness'),
+    dartCount: integer('dart_count').notNull(),
+    tightGroup: integer('tight_group', { mode: 'boolean' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.runId, t.modelId, t.captureId] })],
+);

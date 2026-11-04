@@ -41,17 +41,45 @@ if (mod === 'tonup_ml.train') {
   }
   fs.writeFileSync(path.join(out, 'best.pt'), 'weights');
 } else if (mod === 'tonup_ml.evaluate') {
+  // One line per verify photo in the snapshot: the first right, the rest wrong.
+  const dir = arg('--captures');
+  const tests = dir
+    ? fs
+        .readdirSync(dir)
+        .filter((f) => f.endsWith('.json') && f !== 'manifest.json')
+        .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')))
+        .filter((l) => l.split === 'test')
+    : [];
   fs.writeFileSync(
     arg('--out'),
     JSON.stringify({
-      samples: 2,
+      samples: tests.length || 2,
       visit_correct: 0.5,
       dart_correct: 0.75,
       board_found: 1,
       loss: 0.3,
     }),
   );
-  fs.writeFileSync(arg('--predictions'), '{}\n');
+  if (arg('--predictions'))
+    fs.writeFileSync(
+      arg('--predictions'),
+      tests
+        .map((l, i) =>
+          JSON.stringify({
+            image: l.image,
+            group: l.sessionId,
+            values_only: l.valuesOnly,
+            board_found: true,
+            darts: 1,
+            darts_right: i === 0 ? 1 : 0,
+            visit_correct: i === 0,
+            want_total: 60,
+            got_total: i === 0 ? 60 : 20,
+            predicted: { calibration: { cal20: [0.5, 0.2] }, tips: [[0.5, 0.3]] },
+          }),
+        )
+        .join('\n') + '\n',
+    );
 } else if (mod === 'tonup_ml.export') {
   fs.mkdirSync(arg('--out'), { recursive: true });
   fs.writeFileSync(path.join(arg('--out'), 'Manifest.json'), '{}');

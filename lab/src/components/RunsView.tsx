@@ -109,7 +109,11 @@ export function RunsView({
             columns={[
               {
                 title: 'Run',
-                render: (_, r) => <Link href={`/runs/${r.id}`}>#{r.id}</Link>,
+                render: (_, r) => (
+                  <Link href={r.kind === 'verify' ? `/verification/${r.id}` : `/runs/${r.id}`}>
+                    #{r.id}
+                  </Link>
+                ),
                 width: 64,
               },
               { title: 'What', render: (_, r) => describeRun(r) },
@@ -125,7 +129,14 @@ export function RunsView({
               },
               {
                 title: 'Model',
-                render: (_, r) => (r.model ? <Link href="/models">{r.model}</Link> : '—'),
+                render: (_, r) =>
+                  r.kind === 'verify' ? (
+                    <Link href={`/verification/${r.id}`}>Results</Link>
+                  ) : r.model ? (
+                    <Link href="/models">{r.model}</Link>
+                  ) : (
+                    '—'
+                  ),
               },
               {
                 title: 'Time',

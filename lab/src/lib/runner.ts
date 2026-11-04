@@ -1,12 +1,13 @@
 // The run queue (capture-lab.md › Runs): one run at a time, each a series of child processes
 // of ml/'s Python environment. A training run snapshots the data, trains, evaluates the best
-// checkpoint on the verification set, exports it to Core ML and registers it as a candidate.
+// checkpoint on the verification set, exports it to Core ML and registers it as a candidate; a
+// verification run evaluates chosen models on one fresh snapshot (lib/verify.ts).
 // Output goes to <data>/runs/<id>/log.txt; per-epoch numbers to metrics.jsonl.
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, inArray } from 'drizzle-orm';
 
 import { db } from './db/client';
 import { models, runs } from './db/schema';
@@ -14,6 +15,7 @@ import { deepdartsPath } from './deepdarts';
 import { dataDir } from './env';
 import { nextModelName, runDir, type TrainParams } from './runs';
 import { createSnapshot } from './snapshots';
+import { recordVerification, type VerifyParams } from './verify';
 
 /** The repository (Lab runs from lab/), ml/ in it, and its Python. */
 export const repoDir = () =>
@@ -134,138 +136,15 @@ function python(runId: number, log: fs.WriteStream, module: string, args: string
 }
 
 async function execute(id: number) {
-  const d = db();
-  const row = d.select().from(runs).where(eq(runs.id, id)).get();
+  const row = db().select().from(runs).where(eq(runs.id, id)).get();
   if (!row) return;
   const dir = runDir(id);
   fs.mkdirSync(dir, { recursive: true });
   const log = fs.createWriteStream(path.join(dir, 'log.txt'), { flags: 'a' });
   setRun(id, { status: 'running', startedAt: new Date(), stage: 'snapshot', error: null });
   try {
-    const p = JSON.parse(row.params) as TrainParams;
-    log.write(`Run #${id}: ${p.from === 'model' ? 'fine-tune' : 'from scratch'}\n`);
-
-    const snap = createSnapshot();
-    setRun(id, { snapshotId: snap.id });
-    log.write(
-      `Snapshot ${snap.id}: ${snap.train} train, ${snap.val} val, ${snap.test} verify (${snap.valuesOnly} values only)\n`,
-    );
-    const dd = p.deepdarts ? deepdartsPath() : null;
-    if (p.deepdarts && !dd)
-      throw new Error('DeepDarts is selected but its folder isn’t set (Sessions page)');
-    if (!dd && snap.train === 0)
-      throw new Error('No training data: no captures in the train set and no DeepDarts');
-
-    let resume: string | null = null;
-    if (p.from === 'model' && p.baseModelId) {
-      const base = d.select().from(models).where(eq(models.id, p.baseModelId)).get();
-      if (!base) throw new Error(`Model ${p.baseModelId} not found`);
-      resume = path.join(dataDir(), base.checkpoint);
-    }
-
-    setRun(id, { stage: 'train' });
-    await python(id, log, 'tonup_ml.train', [
-      ...(dd ? ['--deepdarts', dd] : []),
-      ...(p.captures ? ['--captures', snap.path] : []),
-      '--out',
-      dir,
-      '--metrics',
-      path.join(dir, 'metrics.jsonl'),
-      '--epochs',
-      String(p.epochs),
-      '--lr',
-      String(p.lr),
-      '--batch',
-      String(p.batch),
-      '--capture-weight',
-      String(p.captureWeight),
-      '--deepdarts-sample',
-      String(p.deepdartsSample),
-      '--workers',
-      String(p.workers),
-      ...(resume ? ['--resume', resume] : []),
-    ]);
-
-    // Verify on our own held-out photos; before there are any, on DeepDarts' test split.
-    setRun(id, { stage: 'evaluate' });
-    const onOurs = snap.test - snap.valuesOnly > 0;
-    const evaluatedOn = onOurs ? `verify set, snapshot ${snap.id}` : 'DeepDarts test split';
-    if (onOurs || dd) {
-      await python(id, log, 'tonup_ml.evaluate', [
-        '--checkpoint',
-        path.join(dir, 'best.pt'),
-        ...(onOurs ? ['--captures', snap.path] : ['--deepdarts', dd!]),
-        '--split',
-        'test',
-        '--out',
-        path.join(dir, 'eval.json'),
-        '--predictions',
-        path.join(dir, 'predictions.jsonl'),
-      ]);
-    }
-    const evalFile = path.join(dir, 'eval.json');
-    const ev = fs.existsSync(evalFile)
-      ? (JSON.parse(fs.readFileSync(evalFile, 'utf8')) as {
-          samples: number;
-          visit_correct: number;
-          dart_correct: number;
-          board_found: number;
-        })
-      : null;
-    const results = ev
-      ? {
-          evaluatedOn,
-          samples: ev.samples,
-          visitCorrect: ev.visit_correct,
-          dartCorrect: ev.dart_correct,
-          boardFound: ev.board_found,
-        }
-      : {
-          evaluatedOn: null,
-          samples: null,
-          visitCorrect: null,
-          dartCorrect: null,
-          boardFound: null,
-        };
-    setRun(id, results);
-
-    // Export for the phone; a failed export still registers the model (Lab can retry later).
-    setRun(id, { stage: 'export' });
-    const name = nextModelName();
-    const modelDir = path.join(dataDir(), 'models', name);
-    fs.mkdirSync(modelDir, { recursive: true });
-    let mlpackage: string | null = path.join('models', name, 'DartKeypoints.mlpackage');
-    try {
-      await python(id, log, 'tonup_ml.export', [
-        '--checkpoint',
-        path.join(dir, 'best.pt'),
-        '--version',
-        name,
-        '--out',
-        path.join(dataDir(), mlpackage),
-      ]);
-    } catch (e) {
-      if (e instanceof RunCancelled) throw e;
-      log.write(
-        `Export failed: ${e instanceof Error ? e.message : String(e)}. The model is registered without a Core ML package.\n`,
-      );
-      mlpackage = null;
-    }
-    const [model] = d
-      .insert(models)
-      .values({
-        name,
-        runId: id,
-        status: 'candidate',
-        createdAt: new Date(),
-        checkpoint: path.join('runs', String(id), 'best.pt'),
-        mlpackage,
-        ...results,
-      })
-      .returning({ id: models.id })
-      .all();
-    setRun(id, { status: 'done', stage: null, modelId: model!.id, endedAt: new Date(), pid: null });
-    log.write(`Registered ${name} as a candidate.\n`);
+    if (row.kind === 'verify') await verify(id, row.params, dir, log);
+    else await train(id, row.params, dir, log);
   } catch (e) {
     if (e instanceof RunCancelled || cancelled(id)) {
       log.write('Cancelled.\n');
@@ -278,6 +157,215 @@ async function execute(id: number) {
   } finally {
     log.end();
   }
+}
+
+/** evaluate on a snapshot's verify photos, writing the files recordVerification reads. */
+async function evaluateOn(
+  id: number,
+  log: fs.WriteStream,
+  checkpoint: string,
+  snapPath: string,
+  files: { evalFile: string; predictionsFile: string },
+) {
+  await python(id, log, 'tonup_ml.evaluate', [
+    '--checkpoint',
+    checkpoint,
+    '--captures',
+    snapPath,
+    '--split',
+    'test',
+    '--out',
+    files.evalFile,
+    '--predictions',
+    files.predictionsFile,
+  ]);
+}
+
+/** A verification run: one fresh snapshot, each chosen model evaluated on its verify photos. */
+async function verify(id: number, rawParams: string, dir: string, log: fs.WriteStream) {
+  const d = db();
+  const p = JSON.parse(rawParams) as VerifyParams;
+  const found = d.select().from(models).where(inArray(models.id, p.modelIds)).all();
+  const chosen = p.modelIds.flatMap((m) => found.filter((f) => f.id === m));
+  if (chosen.length !== p.modelIds.length) throw new Error('A model in this run no longer exists');
+  log.write(`Run #${id}: verify ${chosen.map((m) => m.name).join(', ')}\n`);
+
+  const snap = createSnapshot();
+  setRun(id, { snapshotId: snap.id });
+  log.write(
+    `Snapshot ${snap.id}: ${snap.test} verify photos (${snap.valuesOnly} values only in all sets)\n`,
+  );
+  if (snap.test === 0)
+    throw new Error('No photos in the verify set yet: label visits from a verify session first');
+
+  let last = null;
+  for (const [k, m] of chosen.entries()) {
+    setRun(id, { stage: 'verify' });
+    log.write(`\nVerifying ${m.name} (${k + 1} of ${chosen.length})\n`);
+    const files = {
+      evalFile: path.join(dir, `eval-${m.id}.json`),
+      predictionsFile: path.join(dir, `predictions-${m.id}.jsonl`),
+    };
+    await evaluateOn(id, log, path.join(dataDir(), m.checkpoint), snap.path, files);
+    last = recordVerification({ runId: id, modelId: m.id, snapshotId: snap.id, ...files });
+  }
+  setRun(id, {
+    status: 'done',
+    stage: null,
+    endedAt: new Date(),
+    pid: null,
+    // A run's own columns hold one model's numbers; for a single model, these.
+    ...(chosen.length === 1 && last
+      ? {
+          evaluatedOn: `verify set, snapshot ${snap.id}`,
+          samples: last.samples,
+          visitCorrect: last.visit_correct,
+          dartCorrect: last.dart_correct,
+          boardFound: last.board_found,
+        }
+      : {}),
+  });
+  log.write('Done.\n');
+}
+
+async function train(id: number, rawParams: string, dir: string, log: fs.WriteStream) {
+  const d = db();
+  const p = JSON.parse(rawParams) as TrainParams;
+  log.write(`Run #${id}: ${p.from === 'model' ? 'fine-tune' : 'from scratch'}\n`);
+
+  const snap = createSnapshot();
+  setRun(id, { snapshotId: snap.id });
+  log.write(
+    `Snapshot ${snap.id}: ${snap.train} train, ${snap.val} val, ${snap.test} verify (${snap.valuesOnly} values only)\n`,
+  );
+  const dd = p.deepdarts ? deepdartsPath() : null;
+  if (p.deepdarts && !dd)
+    throw new Error('DeepDarts is selected but its folder isn’t set (Sessions page)');
+  if (!dd && snap.train === 0)
+    throw new Error('No training data: no captures in the train set and no DeepDarts');
+
+  let resume: string | null = null;
+  if (p.from === 'model' && p.baseModelId) {
+    const base = d.select().from(models).where(eq(models.id, p.baseModelId)).get();
+    if (!base) throw new Error(`Model ${p.baseModelId} not found`);
+    resume = path.join(dataDir(), base.checkpoint);
+  }
+
+  setRun(id, { stage: 'train' });
+  await python(id, log, 'tonup_ml.train', [
+    ...(dd ? ['--deepdarts', dd] : []),
+    ...(p.captures ? ['--captures', snap.path] : []),
+    '--out',
+    dir,
+    '--metrics',
+    path.join(dir, 'metrics.jsonl'),
+    '--epochs',
+    String(p.epochs),
+    '--lr',
+    String(p.lr),
+    '--batch',
+    String(p.batch),
+    '--capture-weight',
+    String(p.captureWeight),
+    '--deepdarts-sample',
+    String(p.deepdartsSample),
+    '--workers',
+    String(p.workers),
+    ...(resume ? ['--resume', resume] : []),
+  ]);
+
+  // Verify on our own held-out photos; before there are any, on DeepDarts' test split.
+  setRun(id, { stage: 'evaluate' });
+  const onOurs = snap.test > 0;
+  const evaluatedOn = onOurs ? `verify set, snapshot ${snap.id}` : 'DeepDarts test split';
+  const evalFile = path.join(dir, 'eval.json');
+  if (onOurs) {
+    await evaluateOn(id, log, path.join(dir, 'best.pt'), snap.path, {
+      evalFile,
+      predictionsFile: path.join(dir, 'predictions.jsonl'),
+    });
+  } else if (dd) {
+    await python(id, log, 'tonup_ml.evaluate', [
+      '--checkpoint',
+      path.join(dir, 'best.pt'),
+      '--deepdarts',
+      dd,
+      '--split',
+      'test',
+      '--out',
+      evalFile,
+    ]);
+  }
+  const ev = fs.existsSync(evalFile)
+    ? (JSON.parse(fs.readFileSync(evalFile, 'utf8')) as {
+        samples: number;
+        visit_correct: number;
+        dart_correct: number;
+        board_found: number;
+      })
+    : null;
+  const results = ev
+    ? {
+        evaluatedOn,
+        samples: ev.samples,
+        visitCorrect: ev.visit_correct,
+        dartCorrect: ev.dart_correct,
+        boardFound: ev.board_found,
+      }
+    : {
+        evaluatedOn: null,
+        samples: null,
+        visitCorrect: null,
+        dartCorrect: null,
+        boardFound: null,
+      };
+  setRun(id, results);
+
+  // Export for the phone; a failed export still registers the model (Lab can retry later).
+  setRun(id, { stage: 'export' });
+  const name = nextModelName();
+  const modelDir = path.join(dataDir(), 'models', name);
+  fs.mkdirSync(modelDir, { recursive: true });
+  let mlpackage: string | null = path.join('models', name, 'DartKeypoints.mlpackage');
+  try {
+    await python(id, log, 'tonup_ml.export', [
+      '--checkpoint',
+      path.join(dir, 'best.pt'),
+      '--version',
+      name,
+      '--out',
+      path.join(dataDir(), mlpackage),
+    ]);
+  } catch (e) {
+    if (e instanceof RunCancelled) throw e;
+    log.write(
+      `Export failed: ${e instanceof Error ? e.message : String(e)}. The model is registered without a Core ML package.\n`,
+    );
+    mlpackage = null;
+  }
+  const [model] = d
+    .insert(models)
+    .values({
+      name,
+      runId: id,
+      status: 'candidate',
+      createdAt: new Date(),
+      checkpoint: path.join('runs', String(id), 'best.pt'),
+      mlpackage,
+      ...results,
+    })
+    .returning({ id: models.id })
+    .all();
+  setRun(id, { status: 'done', stage: null, modelId: model!.id, endedAt: new Date(), pid: null });
+  if (onOurs && ev)
+    recordVerification({
+      runId: id,
+      modelId: model!.id,
+      snapshotId: snap.id,
+      evalFile,
+      predictionsFile: path.join(dir, 'predictions.jsonl'),
+    });
+  log.write(`Registered ${name} as a candidate.\n`);
 }
 
 /** Tests only: wait until the runner is idle. */

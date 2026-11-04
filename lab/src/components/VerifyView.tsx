@@ -1,0 +1,318 @@
+'use client';
+
+import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
+import {
+  App,
+  Button,
+  Card,
+  Col,
+  Collapse,
+  Empty,
+  Flex,
+  Progress,
+  Row,
+  Segmented,
+  Statistic,
+  Tag,
+  Typography,
+} from 'antd';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+import type { RunSummary } from '~/lib/runs';
+import type { ResultRow, Verification } from '~/lib/verify';
+
+import { PageBody, PageHeader } from './PageHeader';
+import { pct, RunStatus } from './RunBits';
+import { BAR } from './RunCharts';
+import { BreakdownChart, MEASURES, MODEL_COLORS, type Measure } from './VerifyCharts';
+import { PREDICTED, TRUTH, WorstPhoto } from './WorstPhoto';
+
+const FIELD: Record<Measure, 'visitCorrect' | 'dartCorrect' | 'boardFound'> = {
+  visit: 'visitCorrect',
+  dart: 'dartCorrect',
+  board: 'boardFound',
+};
+
+function Delta({ v, base }: { v: number; base: number }) {
+  const d = (v - base) * 100;
+  if (Math.abs(d) < 0.05) return <Typography.Text type="secondary">±0</Typography.Text>;
+  return (
+    <Typography.Text type={d > 0 ? 'success' : 'danger'} style={{ fontSize: 13 }}>
+      {d > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {Math.abs(d).toFixed(1)} pts
+    </Typography.Text>
+  );
+}
+
+function ResultCard({ r, color, base }: { r: ResultRow; color: string; base: ResultRow | null }) {
+  return (
+    <Card
+      size="small"
+      title={
+        <Flex gap={8} align="center">
+          <span style={{ width: 10, height: 10, borderRadius: 5, background: color }} />
+          {r.model}
+          {r.modelStatus === 'active' ? <Tag color="cyan">Active</Tag> : null}
+        </Flex>
+      }
+      extra={
+        <Typography.Text type="secondary">
+          {r.samples} photos{r.valuesOnly ? ` · ${r.valuesOnly} values only` : ''}
+        </Typography.Text>
+      }
+    >
+      <Row gutter={12}>
+        {MEASURES.map((m) => {
+          const v = r[FIELD[m.key]];
+          return (
+            <Col span={8} key={m.key}>
+              <Statistic title={m.label} value={pct(v)} />
+              <Flex gap={6} align="center" wrap>
+                {v >= BAR[m.key] ? (
+                  <Tag color="success">meets {BAR[m.key] * 100}%</Tag>
+                ) : (
+                  <Tag color="warning">bar {BAR[m.key] * 100}%</Tag>
+                )}
+                {base ? <Delta v={v} base={base[FIELD[m.key]]} /> : null}
+              </Flex>
+            </Col>
+          );
+        })}
+      </Row>
+    </Card>
+  );
+}
+
+interface LiveData {
+  run: RunSummary;
+  log: { tail: string };
+}
+
+/** One verification: totals against the bar, the breakdown by condition, the worst photos. */
+export function VerifyView({ data, initialLog }: { data: Verification; initialLog: string }) {
+  const { message } = App.useApp();
+  const router = useRouter();
+  const [live, setLive] = useState<LiveData>({ run: data.run, log: { tail: initialLog } });
+  const running = live.run.status === 'queued' || live.run.status === 'running';
+  const [measure, setMeasure] = useState<Measure>('visit');
+  const [only, setOnly] = useState('all');
+
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(async () => {
+      const res = await fetch(`/api/runs/${data.run.id}`);
+      if (!res.ok) return;
+      const next = (await res.json()) as LiveData;
+      setLive(next);
+      if (next.run.status !== 'queued' && next.run.status !== 'running') router.refresh();
+    }, 2000);
+    return () => clearInterval(t);
+  }, [running, data.run.id, router]);
+
+  const run = live.run;
+  const models =
+    data.results.length > 0
+      ? data.results.map((r) => ({ id: r.modelId, name: r.model }))
+      : run.kind === 'verify'
+        ? run.params.modelIds.map((id, i) => ({ id, name: run.models[i] ?? `#${id}` }))
+        : [];
+  const colorOf = (id: number) =>
+    MODEL_COLORS[
+      Math.max(
+        0,
+        models.findIndex((m) => m.id === id),
+      ) % MODEL_COLORS.length
+    ]!;
+  const done = data.results.length;
+  const asked = run.kind === 'verify' ? run.params.modelIds.length : 1;
+  const worst = data.worst.filter((w) => only === 'all' || String(w.modelId) === only);
+
+  const cancel = async () => {
+    const res = await fetch(`/api/runs/${run.id}/cancel`, { method: 'POST' });
+    if (!res.ok) message.error('Couldn’t cancel');
+  };
+
+  return (
+    <>
+      <PageHeader
+        breadcrumb={
+          <>
+            <Link href="/verification">Verification</Link> / #{run.id}
+          </>
+        }
+        title={
+          <Flex gap={10} align="center">
+            {run.kind === 'verify' ? `Verification #${run.id}` : `Training run #${run.id}’s check`}
+            <RunStatus run={run} />
+          </Flex>
+        }
+        subtitle={[
+          models.map((m) => m.name).join(' vs '),
+          data.snapshot
+            ? `snapshot ${data.snapshot.id}, ${data.snapshot.test} verify photos`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        extra={
+          running ? (
+            <Button danger onClick={cancel}>
+              Cancel
+            </Button>
+          ) : run.kind === 'train' ? (
+            <Link href={`/runs/${run.id}`}>Training run #{run.id}</Link>
+          ) : null
+        }
+      />
+      <PageBody>
+        <Row gutter={[16, 16]}>
+          {running ? (
+            <Col span={24}>
+              <Card size="small">
+                <Typography.Text type="secondary">
+                  {run.status === 'queued'
+                    ? 'Waiting for the run ahead of it'
+                    : run.stage === 'snapshot'
+                      ? 'Snapshotting the verify set'
+                      : `Verifying model ${Math.min(done + 1, asked)} of ${asked}`}
+                </Typography.Text>
+                <Progress
+                  percent={Math.round((done / asked) * 100)}
+                  status="active"
+                  strokeColor="#0F766E"
+                />
+              </Card>
+            </Col>
+          ) : null}
+          {run.error ? (
+            <Col span={24}>
+              <Card size="small">
+                <Typography.Text type="danger">{run.error}</Typography.Text>
+              </Card>
+            </Col>
+          ) : null}
+
+          {data.results.map((r, i) => (
+            <Col xs={24} xl={data.results.length > 1 ? 12 : 24} key={r.modelId}>
+              <ResultCard r={r} color={colorOf(r.modelId)} base={i > 0 ? data.results[0]! : null} />
+            </Col>
+          ))}
+
+          {data.results.length ? (
+            <>
+              <Col span={24}>
+                <Flex justify="space-between" align="center" wrap gap={12}>
+                  <Typography.Title level={5} style={{ margin: 0 }}>
+                    By condition
+                  </Typography.Title>
+                  <Segmented
+                    value={measure}
+                    onChange={(v) => setMeasure(v as Measure)}
+                    options={MEASURES.map((m) => ({ value: m.key, label: m.label }))}
+                  />
+                </Flex>
+              </Col>
+              {data.breakdown.map((b) => (
+                <Col xs={24} lg={12} xxl={8} key={b.key}>
+                  <Card
+                    size="small"
+                    title={b.title}
+                    extra={
+                      b.unmeasured ? (
+                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                          {b.unmeasured} not measured
+                        </Typography.Text>
+                      ) : null
+                    }
+                  >
+                    <BreakdownChart breakdown={b} models={models} measure={measure} />
+                  </Card>
+                </Col>
+              ))}
+
+              <Col span={24}>
+                <Flex justify="space-between" align="center" wrap gap={12}>
+                  <div>
+                    <Typography.Title level={5} style={{ margin: 0 }}>
+                      Worst photos
+                    </Typography.Title>
+                    <Flex gap={16} style={{ fontSize: 12, marginTop: 4 }} wrap>
+                      <Typography.Text type="secondary">
+                        <span style={{ color: TRUTH }}>○</span> true tips
+                      </Typography.Text>
+                      <Typography.Text type="secondary">
+                        <span style={{ color: PREDICTED }}>✕</span> predicted tips and the board the
+                        model found
+                      </Typography.Text>
+                      <Typography.Text type="secondary">
+                        Board not found first, then most darts wrong
+                      </Typography.Text>
+                    </Flex>
+                  </div>
+                  {models.length > 1 ? (
+                    <Segmented
+                      value={only}
+                      onChange={setOnly}
+                      options={[
+                        { value: 'all', label: 'All models' },
+                        ...models.map((m) => ({ value: String(m.id), label: m.name })),
+                      ]}
+                    />
+                  ) : null}
+                </Flex>
+              </Col>
+              {worst.length ? (
+                worst.map((w) => (
+                  <Col xs={12} md={8} lg={6} xxl={4} key={`${w.modelId}-${w.captureId}`}>
+                    <WorstPhoto
+                      item={w}
+                      color={models.length > 1 ? colorOf(w.modelId) : undefined}
+                    />
+                  </Col>
+                ))
+              ) : (
+                <Col span={24}>
+                  <Card size="small">
+                    <Empty description="Every visit right" />
+                  </Card>
+                </Col>
+              )}
+            </>
+          ) : null}
+
+          <Col span={24}>
+            <Collapse
+              size="small"
+              defaultActiveKey={running || run.error ? ['log'] : []}
+              items={[
+                {
+                  key: 'log',
+                  label: 'Log',
+                  children: (
+                    <pre
+                      style={{
+                        margin: 0,
+                        background: '#0E1217',
+                        color: '#c9d1d9',
+                        borderRadius: 6,
+                        padding: '12px 14px',
+                        fontSize: 12,
+                        lineHeight: 1.6,
+                        maxHeight: 320,
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                      }}
+                    >
+                      {live.log.tail || 'Nothing yet.'}
+                    </pre>
+                  ),
+                },
+              ]}
+            />
+          </Col>
+        </Row>
+      </PageBody>
+    </>
+  );
+}

@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { db } from './db/client';
 import { models, runs, snapshots } from './db/schema';
 import { dataDir } from './env';
+import type { VerifyParams } from './verify';
 
 export const trainParams = z
   .object({
@@ -125,31 +126,50 @@ export function readLog(id: number, lines = 200) {
 export type RunRow = typeof runs.$inferSelect;
 export type ModelRow = typeof models.$inferSelect;
 
-export interface RunSummary extends Omit<RunRow, 'createdAt' | 'startedAt' | 'endedAt' | 'params'> {
+interface RunCommon extends Omit<
+  RunRow,
+  'createdAt' | 'startedAt' | 'endedAt' | 'params' | 'kind'
+> {
   createdAt: number;
   startedAt: number | null;
   endedAt: number | null;
-  params: TrainParams;
   baseModel: string | null;
   model: string | null;
   snapshot: { train: number; val: number; test: number } | null;
 }
+export interface TrainRunSummary extends RunCommon {
+  kind: 'train';
+  params: TrainParams;
+}
+export interface VerifyRunSummary extends RunCommon {
+  kind: 'verify';
+  params: VerifyParams;
+  /** The models it verifies, by name. */
+  models: string[];
+}
+export type RunSummary = TrainRunSummary | VerifyRunSummary;
 
 function summarise(
   r: RunRow,
   names: Map<number, string>,
   snaps: Map<number, { train: number; val: number; test: number }>,
 ): RunSummary {
-  return {
+  const common = {
     ...r,
     createdAt: r.createdAt.getTime(),
     startedAt: r.startedAt?.getTime() ?? null,
     endedAt: r.endedAt?.getTime() ?? null,
-    params: JSON.parse(r.params) as TrainParams,
     baseModel: r.baseModelId ? (names.get(r.baseModelId) ?? null) : null,
     model: r.modelId ? (names.get(r.modelId) ?? null) : null,
     snapshot: r.snapshotId ? (snaps.get(r.snapshotId) ?? null) : null,
   };
+  return r.kind === 'verify'
+    ? (() => {
+        const params = JSON.parse(r.params) as VerifyParams;
+        const models = params.modelIds.map((m) => names.get(m) ?? `#${m}`);
+        return { ...common, kind: 'verify' as const, params, models };
+      })()
+    : { ...common, kind: 'train', params: JSON.parse(r.params) as TrainParams };
 }
 
 function lookups(rows: RunRow[]) {

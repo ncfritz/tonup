@@ -16,6 +16,7 @@ const STAGE: Record<string, string> = {
   snapshot: 'snapshotting the data',
   train: 'training',
   evaluate: 'verifying',
+  verify: 'verifying',
   export: 'exporting to Core ML',
 };
 
@@ -31,7 +32,8 @@ export function RunStatus({ run }: { run: Pick<RunSummary, 'status' | 'stage'> }
 
 export const pct = (v: number | null | undefined) => (v == null ? '—' : `${(v * 100).toFixed(1)}%`);
 
-export function describeRun(r: Pick<RunSummary, 'params' | 'baseModel'>) {
+export function describeRun(r: RunSummary) {
+  if (r.kind === 'verify') return `Verify ${r.models.join(' vs ')} on the verify set`;
   const p = r.params;
   const data = [p.deepdarts ? 'DeepDarts' : null, p.captures ? 'our captures' : null]
     .filter(Boolean)
