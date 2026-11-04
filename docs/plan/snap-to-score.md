@@ -7,15 +7,16 @@ After a visit the player takes one photo; the app finds the board and the darts,
 
 ## Pieces
 
-| Piece          | Where                                | What                                                                                                                                                                                               |
-| -------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geometry       | `src/domain/camera`                  | Keypoint ids, the calibration points' board positions, homography (DLT, least squares with the bull), image → board millimetres, proposals with confidence and a near-wire flag                    |
-| Native module  | `modules/dart-vision`                | Swift: load `DartKeypoints.mlmodelc` if bundled, run it through Vision, decode heatmaps to keypoints, measure sharpness                                                                            |
-| Capture        | `src/app/snap/[sessionId].tsx`       | `expo-camera` preview with a board guide, 1×/2× zoom, coaching ("Step a little to the side", "Snap, then pull")                                                                                    |
-| Result         | same route                           | The photo with numbered markers, the board with the same darts, per-dart score and confidence; drag, add, remove; "One dart missed the board?" when fewer than expected; Confirm records the darts |
-| Manual marking | same route                           | No model or no board found: tap the four calibration points (a diagram shows which), then the darts                                                                                                |
-| Captures       | `captures` table, Documents/captures | With "Keep photos to improve detection" on: the photo and its final labels (DeepDarts format) for training                                                                                         |
-| Training       | `ml/`                                | PyTorch model, loaders for DeepDarts and our captures, training on MPS, evaluation by score, Core ML export                                                                                        |
+| Piece           | Where                                | What                                                                                                                                                                                               |
+| --------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geometry        | `src/domain/camera`                  | Keypoint ids, the calibration points' board positions, homography (DLT, least squares with the bull), image → board millimetres, proposals with confidence and a near-wire flag                    |
+| Native module   | `modules/dart-vision`                | Swift: load `DartKeypoints.mlmodelc` if bundled, run it through Vision, decode heatmaps to keypoints, measure sharpness                                                                            |
+| Capture         | `src/app/snap/[sessionId].tsx`       | `expo-camera` preview with a board guide, 1×/2× zoom, coaching ("Step a little to the side", "Snap, then pull")                                                                                    |
+| Result          | same route                           | The photo with numbered markers, the board with the same darts, per-dart score and confidence; drag, add, remove; "One dart missed the board?" when fewer than expected; Confirm records the darts |
+| Manual marking  | same route                           | No model or no board found: tap the four calibration points (a diagram shows which), then the darts                                                                                                |
+| Captures        | `captures` table, Documents/captures | With "Keep photos to improve detection" on: the photo and its final labels (DeepDarts format) for training                                                                                         |
+| Training        | `ml/`                                | PyTorch model, loaders for DeepDarts and our captures, training on MPS, evaluation by score, Core ML export                                                                                        |
+| Capture and Lab | `src/capture-app`, `lab/`            | Internal capture-and-label app and the laptop web app that runs training and verification ([capture-lab.md](capture-lab.md), ADR 0012)                                                             |
 
 ## Milestones
 

@@ -9,18 +9,21 @@ function files(dir: string): string[] {
   });
 }
 
-const app = join(__dirname, 'app');
+// Ton Up's routes, and Ton Up Capture's (ADR 0012).
+for (const root of ['app', 'capture-app']) {
+  const dir = join(__dirname, root);
 
-describe('route modules', () => {
-  it('src/app holds no test files (expo-router would bundle them as routes)', () => {
-    expect(files(app).filter((f) => /\.test\./.test(f))).toEqual([]);
-  });
-
-  for (const file of files(app).filter((f) => /\.tsx?$/.test(f))) {
-    it(`${relative(app, file)} loads and exports a component`, () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports -- loading each route file
-      const mod = require(file);
-      expect(typeof mod.default).toBe('function');
+  describe(`route modules in src/${root}`, () => {
+    it('holds no test files (expo-router would bundle them as routes)', () => {
+      expect(files(dir).filter((f) => /\.test\./.test(f))).toEqual([]);
     });
-  }
-});
+
+    for (const file of files(dir).filter((f) => /\.tsx?$/.test(f))) {
+      it(`${relative(dir, file)} loads and exports a component`, () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- loading each route file
+        const mod = require(file);
+        expect(typeof mod.default).toBe('function');
+      });
+    }
+  });
+}

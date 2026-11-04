@@ -12,5 +12,5 @@
     "types": ["jest", "node"]
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules", "docs/design/mockups", "ios", "android", "ml"]
+  "exclude": ["node_modules", "docs/design/mockups", "ios", "android", "ml", "lab"]
 }

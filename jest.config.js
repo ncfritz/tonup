@@ -11,7 +11,7 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|react-native-unistyles|react-native-nitro-modules|intl-messageformat|@formatjs/.*|i18next-icu|standard-navigation)',
   ],
-  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/docs/', '/ml/'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/docs/', '/ml/', '/lab/'],
   moduleNameMapper: {
     '^@modules/(.*)$': '<rootDir>/modules/$1',
     '^@/assets/(.*)$': '<rootDir>/assets/$1',

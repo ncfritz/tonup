@@ -13,6 +13,8 @@ module.exports = defineConfig([
       'android/*',
       'docs/design/mockups/*',
       'src/services/db/migrations/*',
+      // Ton Up Lab is its own project with its own lint setup (ADR 0012).
+      'lab/**',
     ],
   },
   {

@@ -1,3 +1,7 @@
 docs/design/mockups/
 pnpm-lock.yaml
 src/services/db/migrations/
+lab/.next/
+lab/node_modules/
+lab/pnpm-lock.yaml
+lab/drizzle/
