@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512" role="img" aria-label="A muted dartboard seen through camera viewfinder brackets, with a reticle on the bull and tap markers on the board"><rect width="512" height="512" fill="#121820"/>
+<g transform="translate(47 -221) scale(1.725)">
+<circle cx="200" cy="200" r="200" fill="#05070a"></circle>
+<g transform="rotate(-99 200 200)" fill="none">
+<circle cx="200" cy="200" r="57.45" stroke="#3d4955" stroke-width="83.1"></circle>
+<circle cx="200" cy="200" r="57.45" stroke="#141920" stroke-width="83.1" pathLength="20" stroke-dasharray="1 1"></circle>
+<circle cx="200" cy="200" r="103" stroke="#4f8a76" stroke-width="8"></circle>
+<circle cx="200" cy="200" r="103" stroke="#a3624d" stroke-width="8" pathLength="20" stroke-dasharray="1 1"></circle>
+<circle cx="200" cy="200" r="134.5" stroke="#3d4955" stroke-width="55"></circle>
+<circle cx="200" cy="200" r="134.5" stroke="#141920" stroke-width="55" pathLength="20" stroke-dasharray="1 1"></circle>
+<circle cx="200" cy="200" r="166" stroke="#4f8a76" stroke-width="8"></circle>
+<circle cx="200" cy="200" r="166" stroke="#a3624d" stroke-width="8" pathLength="20" stroke-dasharray="1 1"></circle>
+</g>
+<circle cx="200" cy="200" r="15.9" fill="#4f8a76"></circle>
+<circle cx="200" cy="200" r="6.35" fill="#a3624d"></circle>
+<g font-size="17" text-anchor="middle" fill="#c3ccd5" font-family="JetBrains Mono, monospace" font-weight="700"><text x="200.0" y="21.0">20</text><text x="257.2" y="30.1">1</text><text x="308.7" y="56.3">18</text><text x="349.7" y="97.3">4</text><text x="375.9" y="148.8">13</text><text x="385.0" y="206.0">6</text><text x="375.9" y="263.2">10</text><text x="349.7" y="314.7">15</text><text x="308.7" y="355.7">2</text><text x="257.2" y="381.9">17</text><text x="200.0" y="391.0">3</text><text x="142.8" y="381.9">19</text><text x="91.3" y="355.7">7</text><text x="50.3" y="314.7">16</text><text x="24.1" y="263.2">8</text><text x="15.0" y="206.0">11</text><text x="24.1" y="148.8">14</text><text x="50.3" y="97.3">9</text><text x="91.3" y="56.3">12</text><text x="142.8" y="30.1">5</text></g>
+</g>
+<g fill="none" stroke="#2dd4bf" stroke-width="5" stroke-linecap="round">
+<circle cx="392" cy="124" r="46"></circle>
+<path d="M392 62 V94 M392 154 V186 M330 124 H362 M422 124 H454"></path>
+</g>
+<g fill="none" stroke="#2dd4bf" stroke-width="4">
+<circle cx="254" cy="279" r="15"></circle>
+<circle cx="306" cy="210" r="15"></circle>
+<circle cx="211" cy="176" r="15"></circle>
+</g>
+<g fill="#2dd4bf">
+<circle cx="254" cy="279" r="5"></circle>
+<circle cx="306" cy="210" r="5"></circle>
+<circle cx="211" cy="176" r="5"></circle>
+</g>
+<g fill="none" stroke="#2dd4bf" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+<path d="M60 136 V60 H136"></path>
+<path d="M376 60 H452 V136"></path>
+<path d="M60 376 V452 H136"></path>
+<path d="M376 452 H452 V376"></path>
+</g>
+</svg>

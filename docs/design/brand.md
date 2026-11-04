@@ -10,4 +10,16 @@ Both use the Training lab theme's muted board: slate singles (`#2A333C` / `#1A20
 
 `app.config.ts` sets `icon` and configures `expo-splash-screen` with the image full-screen (`enableFullScreenImage_legacy`, `resizeMode: cover`) on `#0E1217`, the same in light and dark mode. The art is close to the 19.5:9 aspect of current iPhones, so `cover` crops only a few points top and bottom. The root layout keeps the splash up until fonts load.
 
+## TU Capture
+
+The capture app (ADR 0012) has its own pair so the two are easy to tell apart on a home screen: the same board with teal (`#2DD4BF`) camera details.
+
+| File                                                                | What it is                                                                                                                                                                                                                |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `assets/capture/icon.png`                                           | 1024×1024 icon: the board brighter than Ton Up's (slate `#3D4955` / `#141920`, rings `#4F8A76` / `#A3624D`, numbers `#C3CCD5` on `#121820`) behind four viewfinder brackets, a reticle on the bull and three tip markers. |
+| `assets/capture/splash.png`                                         | 1170×2532 launch art: the TON UP wordmark with a spaced teal CAPTURE line under the underline, and Ton Up's rising board in viewfinder brackets with a reticle on the bull and numbered tips 1, 2 and 3.                  |
+| `assets/brand/capture-icon.svg`, `assets/brand/capture-splash.html` | Sources, from the Ton Up Icons & Launch artifact's "Capture app" row (teal accent). The PNGs were rendered in Chromium at 2× (icon) and 3× (splash) with JetBrains Mono Bold.                                             |
+
+`app.config.ts` gives the capture variant its icon and the same `expo-splash-screen` settings with its own image; `pnpm capture:sync` picks them up.
+
 After changing either, run `pnpm ios:sync` (prebuild) so the native project picks them up. The design canvas for these lives in the Ton Up Icons & Launch artifact (Icon D, Launch 3).

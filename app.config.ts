@@ -46,11 +46,11 @@ const privacyManifests = {
 
 type PluginEntry = [string, Record<string, unknown>];
 
-const splash: PluginEntry = [
+// Full-screen Training-lab board art, same in light and dark (docs/design/brand.md).
+const splash = (image: string): PluginEntry => [
   'expo-splash-screen',
   {
-    // Full-screen Training-lab board art, same in light and dark (docs/design/brand.md).
-    image: './assets/splash.png',
+    image,
     resizeMode: 'cover',
     enableFullScreenImage_legacy: true,
     backgroundColor: '#0E1217',
@@ -101,7 +101,7 @@ function tonUp(config: ConfigContext['config']): ExpoConfig {
       './plugins/with-storekit-config',
       ['./plugins/with-app-variant', { variant: 'tonup' }],
       ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
-      splash,
+      splash('./assets/splash.png'),
     ],
     experiments: {
       typedRoutes: true,
@@ -121,6 +121,7 @@ function capture(config: ConfigContext['config']): ExpoConfig {
     ...base,
     name: 'TU Capture',
     scheme: 'tonupcapture',
+    icon: './assets/capture/icon.png',
     ios: {
       ...base.ios,
       bundleIdentifier: `${BUNDLE_ID}.capture`,
@@ -138,7 +139,8 @@ function capture(config: ConfigContext['config']): ExpoConfig {
       camera('TU Capture photographs the board so its darts can be labelled for training.'),
       ['./plugins/with-app-variant', { variant: 'capture' }],
       ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
-      splash,
+      // Its own launch art and icon: the lab board through a viewfinder (docs/design/brand.md).
+      splash('./assets/capture/splash.png'),
     ],
   };
 }
