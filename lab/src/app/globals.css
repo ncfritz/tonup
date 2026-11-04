@@ -1,0 +1,14 @@
+/* Resets only (feature styles live with the feature). No scrollbars, as Olympus: areas scroll. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}

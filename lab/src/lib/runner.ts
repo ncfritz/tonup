@@ -334,7 +334,7 @@ async function train(id: number, rawParams: string, dir: string, log: fs.WriteSt
       '--version',
       name,
       '--out',
-      path.join(dataDir(), mlpackage),
+      path.join(/* turbopackIgnore: true */ dataDir(), mlpackage),
     ]);
   } catch (e) {
     if (e instanceof RunCancelled) throw e;

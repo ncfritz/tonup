@@ -1,0 +1,97 @@
+/*
+ * A page that flows to the content area's edges, as Olympus's (docs/conventions/ux.md, Page
+ * edges): its bars, strips and sections abut the edges and each other, divided by borders rather
+ * than set apart as cards; their insides carry the padding.
+ */
+
+/* The title bar and the count strip stay; the rest of the page scrolls under them. */
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--ant-color-bg-container);
+}
+
+/* A phone: the counts would fill the screen, so nothing sticks. */
+@media (max-width: 767px) {
+  .sticky {
+    position: static;
+  }
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.title {
+  margin: 0 !important;
+}
+
+/* Headline counts: edge to edge, each in a cell of its own. */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.cell {
+  min-width: 0;
+  padding: 14px 24px;
+  border-right: 1px solid var(--ant-color-border-secondary);
+}
+
+.cell:last-child {
+  border-right: none;
+}
+
+.note {
+  font-size: var(--ant-font-size-sm, 12px);
+}
+
+.cell :global(.ant-statistic-content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px 0;
+}
+
+.sectionBody {
+  padding: 8px 24px 16px;
+}
+
+/* Panels side by side across the page's width, divided by borders (a phone: one across). Each
+   draws its right and bottom edges; the grid clips the ones that fall on its own outside. */
+.panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--panel-min, 480px)), 1fr));
+  overflow: hidden;
+}
+
+.panelsEdge {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.panel {
+  min-width: 0;
+  margin: 0 -1px -1px 0;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}

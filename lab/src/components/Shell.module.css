@@ -1,0 +1,57 @@
+/*
+ * Lab's chrome, after Olympus's console shell (packages/console/src/shell): a navy header the
+ * same in any theme, and a pages sider that is a light panel open and a slate rail collapsed,
+ * with a pill on its edge to fold it. Selectors reach into antd's markup with :global and are
+ * more specific than antd's own (which wraps them in :where), so they win.
+ */
+
+/* Menu rows the full width of the sider, square. */
+.pages :global(.ant-menu .ant-menu-item) {
+  border-radius: 0;
+  margin-inline: 0;
+  width: 100%;
+}
+
+/* Collapsed: the slate rail. */
+.collapsed :global(.ant-menu .ant-menu-item) {
+  color: #d1d1d1;
+}
+
+.collapsed :global(.ant-menu .ant-menu-item:hover) {
+  color: #fff;
+}
+
+.collapsed :global(.ant-menu .ant-menu-item.ant-menu-item-selected) {
+  background-color: #8598aa;
+  color: #fff;
+}
+
+/* The pill on the sider's edge, the colour of the sider it is on. */
+.pill:global(.ant-btn.ant-btn):not(:disabled),
+.pill:global(.ant-btn.ant-btn):not(:disabled):hover,
+.pill:global(.ant-btn.ant-btn):not(:disabled):active {
+  border: none;
+  box-shadow: none;
+}
+
+.pillCollapsed:global(.ant-btn.ant-btn):not(:disabled) {
+  background: #324354;
+  color: #fff;
+}
+
+.pillCollapsed:global(.ant-btn.ant-btn):not(:disabled):hover {
+  background: #517093;
+  color: #fff;
+}
+
+.pillExpanded:global(.ant-btn.ant-btn):not(:disabled) {
+  background: #fff;
+  color: #243344;
+  box-shadow: 0 0 0 1px #e5e5e5;
+}
+
+.pillExpanded:global(.ant-btn.ant-btn):not(:disabled):hover {
+  background: #efefef;
+  color: #243344;
+  box-shadow: 0 0 0 1px #e5e5e5;
+}
