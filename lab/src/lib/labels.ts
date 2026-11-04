@@ -33,6 +33,13 @@ export const captureFile = z.object({
   tags: z.array(z.string().max(40)).max(10).optional(),
   valuesOnly: z.boolean().optional(),
   prefillModel: z.string().nullable().optional(),
+  /** What the model placed before the player confirmed (same order and shape as the label). */
+  prefill: z
+    .object({
+      calibration: z.array(point.nullable()).max(5),
+      tips: z.array(point.nullable()).max(6),
+    })
+    .optional(),
   zoom: z.number().positive().optional(),
   deviceModel: z.string().max(80).optional(),
 });

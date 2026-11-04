@@ -1,6 +1,6 @@
 # Capture and Lab: implementation plan
 
-- Status: In progress (2026-11-04): L0 to L4 done; L2 needs a build on the iPhone, L3 a DeepDarts baseline on the M1 Pro
+- Status: Built (2026-11-04): L0 to L5 done. Still to try on real hardware: Capture on the iPhone (L2, L5) and a DeepDarts baseline on the M1 Pro (L3)
 - Decisions: [ADR 0012](../architecture/decisions/0012-capture-and-lab.md); builds on [snap-to-score.md](snap-to-score.md) (milestone S4)
 
 Ton Up Capture is an internal iPhone app for photographing visits and labelling them carefully. Ton Up Lab is a web app on the laptop that collects the captures, keeps the training and verification sets apart, runs training and verification, and manages models. Together they turn "copy a folder and run a script" into a loop: capture, label, train, verify, pull the new model into Capture to pre-fill the next labels.
@@ -72,16 +72,26 @@ Rules:
     ],
     "valuesOnly": false,
     "prefillModel": "v3",
+    "prefill": {
+      "calibration": [
+        { "x": 0.48, "y": 0.06 },
+        null,
+        { "x": 0.52, "y": 0.94 },
+        { "x": 0.17, "y": 0.55 },
+        { "x": 0.5, "y": 0.5 }
+      ],
+      "tips": [{ "x": 0.5, "y": 0.27 }, { "x": 0.41, "y": 0.21 }, null]
+    },
     "zoom": 1,
     "deviceModel": "iPhone 16 Pro"
   }
   ```
 
-  `calibration` is in DeepDarts order (5/20, 13/6, 17/3, 8/11, then the bull), null where a point isn't visible. Each dart is one thrown dart in order; a Miss or Bounce-out has no tip. Ton Up's own files have plain `{x, y}` darts and no session, and Lab groups them into one session per day (`tonup-YYYY-MM-DD`).
+  `calibration` is in DeepDarts order (5/20, 13/6, 17/3, 8/11, then the bull), null where a point isn't visible. Each dart is one thrown dart in order; a Miss or Bounce-out has no tip. `prefill` is what the model placed before the player confirmed (same order; here the player moved the second tip), sent whenever the model proposed a board. Ton Up's own files have plain `{x, y}` darts and no session, and Lab groups them into one session per day (`tonup-YYYY-MM-DD`).
 
 ### Model pull
 
-`GET /api/models/active` returns the model's version and the files of its `.mlpackage` (a handful: `Manifest.json`, the model spec and the weights). Capture downloads them into its `models` folder with `expo-file-system`, where `dart-vision` already looks and compiles them on load. No archive format or new native code.
+`GET /api/models/active` returns the model's version and the files of its `.mlpackage` (a handful: `Manifest.json`, the model spec and the weights). Capture downloads them into its `models` folder with `expo-file-system`, where `dart-vision` already looks and compiles them on load. No archive format; the one native addition is `reloadModelAsync`, so a new model is used without restarting the app.
 
 ## Ton Up Lab (laptop)
 
@@ -203,12 +213,20 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 
 - **L4 (verification):** `verify_results` (a model's totals in one verification) and `verify_items` (each photo's outcome, the model's points, and the photo's conditions as of the snapshot). A verification run (`POST /api/runs` with `kind: "verify"` and up to four `modelIds`) takes one fresh snapshot and evaluates each model on its verify photos; a training run records its own check the same way, and each model's numbers become those of its latest verification. Values-only visits now count: `evaluate` judges them on the visit total and the segments from the entered values (`--captures` includes them; training still skips them), and a values-only visit's dart count is its darts in the board. Conditions are bucketed once (`src/lib/buckets.ts`: camera angle, board size as a share of the photo, light, darts in the board, grouping) for both the breakdown and coverage; a bucket is thin under 30 photos or under 10 in verify. Pages: Verification (accuracy by model, every verification and training check), one verification (each model against the bar with the change from the first, a column chart per condition for visit, segment or board found, and the worst photos with the board and tips the model found over the true tips), Models (select two to four and compare on the verify set, verify one, download the Core ML package as a zip or the checkpoint) and Overview (accuracy by model, coverage by condition with thin buckets marked).
 
+- **L5 (model pull and review):** `GET /api/models/active` lists the active model's Core ML package file by file and `GET /api/models/:id/files/...` serves each. Capture's Settings shows Lab's active model against the phone's and **Get vN from Lab** downloads it into `Documents/models/.incoming`, checks every file's size, then swaps it in for `DartKeypoints.mlpackage` (removing any `.mlmodelc` or `.mlmodel` dropped in by hand, which dart-vision would otherwise load first), records it in `installed.json` and reloads (`reloadModelAsync`, new in dart-vision); a failed download leaves the old model. Home says when Lab's model isn't on the phone. Each label now carries the model's **proposal** (`prefill`: its calibration points and the tips it placed, as placed) beside what the player confirmed, also when the player re-marked the board. Lab compares the two on the board in mm (`lib/prefill.ts`; moved more than 3 mm is a correction) into `prefills` and `prefill_points`; a label not kept as placed gets the review reason "corrected from model", and those lead the To review queue. The label editor draws what the model placed under the label (dashed board, ✕ tips) with how much was kept, and **Looks right** takes a corrected label out of the queue without a new version. Overview and Models show, per model, visits kept as placed, tips kept and board kept: the L5 measure.
+
 ### Trying a training run
 
 1. `cd ml && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` (Lab runs `ml/.venv/bin/python`; set `TONUP_LAB_PYTHON` for another).
 2. Set the DeepDarts folder on Sessions, then `cd lab && pnpm build && pnpm start`.
 3. Runs › New run › from scratch with DeepDarts, Epochs 1 first to time an epoch, then the full baseline.
 4. Once there are verify photos: Models › select two › Compare on the verify set.
+
+### Trying the model pull
+
+1. On Lab's Models page, set a model with a Core ML package active.
+2. Rebuild Capture once (`pnpm capture:sync`, then `pnpm capture:ios`): dart-vision's reload is native.
+3. Capture › Settings › Get vN from Lab. Snap a visit: the board and tips are placed, and Overview's "Labelling with the model" counts what you kept.
 
 ### Trying Capture
 
@@ -228,6 +246,7 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 - **Turbopack tracing the Python path:** `path.join(repoDir(), 'ml', '.venv', 'bin', 'python')` made `next build` try to trace the virtualenv's symlinked interpreter and fail; the paths in `runner.ts` carry `turbopackIgnore`.
 - **End to end (checked in L3, Linux CPU):** a four-epoch run on 52 generated captures snapshotted, trained, verified on 12 held-out photos and registered v1; export failed without coremltools as expected and the model was still registered.
 - **End to end (checked in L4, Linux CPU):** a fine-tune of v1 checked itself on 15 verify photos (3 of them values only); a verification of v1 against v2 on a fresh snapshot recorded both and the breakdown; the zip download unpacks to `DartKeypoints.mlpackage/`.
+- **End to end (checked in L5, Linux):** the active-model and file routes served a package (and refused a path out of it); eight Capture-style uploads with proposals gave 3 corrected labels at the head of the queue, the editor's overlay, and acceptance per model on Overview.
 - **Local network:** iOS asks for local-network permission on first sync; `.local` names resolve on the home network only.
 
 ## Open questions

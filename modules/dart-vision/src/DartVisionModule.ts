@@ -29,6 +29,8 @@ export interface DetectResult {
 
 declare class DartVisionModule extends NativeModule {
   getCapabilitiesAsync(): Promise<VisionCapabilities>;
+  /** Loads the model again (after a new one was put in Documents/models). */
+  reloadModelAsync(): Promise<VisionCapabilities>;
   /** Reads a photo (a file:// URI); without a model, returns only the size and sharpness. */
   detectAsync(uri: string): Promise<DetectResult>;
 }

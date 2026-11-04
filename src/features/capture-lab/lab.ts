@@ -74,3 +74,39 @@ export function uploader(url: string) {
     }
   };
 }
+
+/** Lab's active model and the files of its Core ML package (GET /api/models/active). */
+export interface ActiveModel {
+  id: number;
+  name: string;
+  visitCorrect: number | null;
+  /** Null when Lab has no Core ML package for it (its export failed). */
+  files: { path: string; size: number }[] | null;
+}
+
+export type ActiveModelReply =
+  { ok: true; model: ActiveModel | null } | { ok: false; error: string };
+
+export async function fetchActiveModel(
+  url: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ActiveModelReply> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await fetchImpl(`${normaliseLabUrl(url)}/api/models/active`, {
+      signal: controller.signal,
+    });
+    if (!res.ok) return { ok: false, error: `Lab answered ${res.status}` };
+    const body = (await res.json()) as { model?: ActiveModel | null };
+    return { ok: true, model: body.model ?? null };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Where one file of a model's package is served. */
+export const modelFileUrl = (url: string, id: number, path: string) =>
+  `${normaliseLabUrl(url)}/api/models/${id}/files/${path.split('/').map(encodeURIComponent).join('/')}`;

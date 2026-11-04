@@ -254,3 +254,34 @@ export const verifyItems = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.runId, t.modelId, t.captureId] })],
 );
+
+/** What the model pre-filled on the phone, against what the player confirmed (lib/prefill.ts). */
+export const prefills = sqliteTable('prefills', {
+  captureId: text('capture_id')
+    .primaryKey()
+    .references(() => captures.id, { onDelete: 'cascade' }),
+  model: text('model').notNull(),
+  boardKept: integer('board_kept', { mode: 'boolean' }).notNull(),
+  /** The furthest a board point moved, mm; null when one was dropped or added. */
+  boardMovedMm: real('board_moved_mm'),
+  tipsNeeded: integer('tips_needed').notNull(),
+  tipsPlaced: integer('tips_placed').notNull(),
+  tipsKept: integer('tips_kept').notNull(),
+  /** Board and every tip kept: the player only confirmed. */
+  accepted: integer('accepted', { mode: 'boolean' }).notNull(),
+});
+
+/** The model's proposed points: calibration keypoints (idx 0) and tips (idx = dart). */
+export const prefillPoints = sqliteTable(
+  'prefill_points',
+  {
+    captureId: text('capture_id')
+      .notNull()
+      .references(() => captures.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: [...KEYPOINTS, 'tip'] }).notNull(),
+    idx: integer('idx').notNull(),
+    x: real('x').notNull(),
+    y: real('y').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.captureId, t.kind, t.idx] })],
+);

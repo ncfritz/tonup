@@ -4,13 +4,13 @@ import { Card, Col, Descriptions, Flex, Row, Statistic, Tag, Typography } from '
 import Link from 'next/link';
 
 import type { DeepdartsSummary } from '~/lib/deepdarts';
-import type { OverviewCounts } from '~/lib/queries';
+import type { OverviewCounts, PrefillStats } from '~/lib/queries';
 import type { LabStatus } from '~/lib/status';
 import type { Coverage, ModelProgress } from '~/lib/verify';
 
 import { PageBody, PageHeader } from './PageHeader';
 import { pct as percent } from './RunBits';
-import { CoverageChart, ProgressChart, ThinNote } from './VerifyCharts';
+import { CoverageChart, PrefillChart, ProgressChart, ThinNote } from './VerifyCharts';
 
 /** Overview: how close the model is to the bar, and where the dataset is thin. */
 export function Overview({
@@ -19,12 +19,14 @@ export function Overview({
   deepdarts,
   progress,
   coverage,
+  prefill,
 }: {
   status: LabStatus;
   counts: OverviewCounts;
   deepdarts: DeepdartsSummary | null;
   progress: ModelProgress;
   coverage: Coverage[];
+  prefill: PrefillStats[];
 }) {
   const active = progress.find((m) => m.status === 'active');
   const inUse = counts.bySplit.train + counts.bySplit.val + counts.bySplit.test;
@@ -145,6 +147,16 @@ export function Overview({
               extra={<Link href="/verification">Verification</Link>}
             >
               <ProgressChart models={progress} />
+            </Card>
+          </Col>
+
+          <Col span={24}>
+            <Card
+              size="small"
+              title="Labelling with the model: how much of its pre-fill was kept"
+              extra={<Link href="/captures?review=1">Corrected labels</Link>}
+            >
+              <PrefillChart stats={prefill} />
             </Card>
           </Col>
 

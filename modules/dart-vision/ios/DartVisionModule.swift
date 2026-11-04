@@ -24,6 +24,16 @@ public class DartVisionModule: Module {
       return ["model": self.model != nil, "version": self.version ?? NSNull()]
     }
 
+    /// Forgets the loaded model and loads again: after Capture pulls a new one into
+    /// Documents/models.
+    AsyncFunction("reloadModelAsync") { () -> [String: Any] in
+      self.model = nil
+      self.version = nil
+      self.loaded = false
+      self.loadModel()
+      return ["model": self.model != nil, "version": self.version ?? NSNull()]
+    }
+
     AsyncFunction("detectAsync") { (uri: String) throws -> [String: Any] in
       self.loadModel()
       let path = URL(string: uri)?.path ?? uri

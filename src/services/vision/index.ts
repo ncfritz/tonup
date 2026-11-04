@@ -13,6 +13,16 @@ export async function visionCapabilities(): Promise<VisionCapabilities> {
   }
 }
 
+/** After a new model lands in Documents/models: loads it in place of the old one. */
+export async function reloadModel(): Promise<VisionCapabilities> {
+  if (!DartVision) return { model: false, version: null };
+  try {
+    return await DartVision.reloadModelAsync();
+  } catch {
+    return { model: false, version: null };
+  }
+}
+
 /** Reads a photo; `size` is used when the native side isn't there. */
 export async function detect(
   uri: string,

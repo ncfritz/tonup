@@ -1,4 +1,4 @@
-import { centreOf } from '@/domain/board';
+import { centreOf, polar } from '@/domain/board';
 import { applyHomography, boardPointOf, CALIBRATION_IDS, fitHomography } from '@/domain/camera';
 import type { Point } from '@/domain/darts';
 import type { DetectResult } from '@/services/vision';
@@ -128,10 +128,31 @@ describe('with a model', () => {
     expect(labelFile(s, meta).prefillModel).toBe('v3');
   });
 
-  it('drops the model’s board when re-marked', () => {
+  it('drops the model’s board when re-marked, but still sends what it proposed', () => {
     const s = remark(toBoard(enter(start(photo, detected), '5')));
     expect(s.boardFromModel).toBe(false);
     expect(s.marking).toBe(0);
+    const f = labelFile(s, meta);
+    expect(f.prefillModel).toBe('v3');
+    expect(f.prefill?.calibration.every((p) => p !== null)).toBe(true);
+  });
+
+  it('sends the model’s proposal as placed, after the player moves a tip', () => {
+    let s = toTips(toBoard(enter(enter(start(photo, detected), '5'), 'T20')));
+    const placed = s.tips[0]!;
+    s = tapTip(selectDart(s, 0), img(polar(60, 72)));
+    const f = labelFile(s, meta);
+    expect(f.darts[0]).toMatchObject({ x: expect.any(Number) });
+    expect(f.darts[0]!.x).not.toBe(placed.x);
+    expect(f.prefill?.tips[0]?.x).toBeCloseTo(placed.x, 4);
+    expect(f.prefill?.tips[0]?.y).toBeCloseTo(placed.y, 4);
+    expect(f.prefill?.tips).toHaveLength(2);
+  });
+
+  it('sends no proposal without a model', () => {
+    const s = toTips(markBoard(toBoard(enter(start(photo, null), 'T20'))));
+    expect(labelFile(s, meta)).not.toHaveProperty('prefill');
+    expect(labelFile(s, meta).prefillModel).toBeNull();
   });
 });
 

@@ -7,6 +7,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { checkLab, normaliseLabUrl, uploader, type LabHealth } from '@/features/capture-lab/lab';
 import { sessionsOn, syncOutbox, type SessionSummary } from '@/features/capture-lab/outbox';
+import { modelFiles } from '@/features/capture-lab/modelFiles';
 import { fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { newSessionId, useCapture } from '@/features/capture-lab/store';
 import { Button, Icon, Pressable, Screen, Text } from '@/ui';
@@ -70,6 +71,19 @@ export default function CaptureHome() {
     }, [labUrl, refresh, sync]),
   );
 
+  // Lab has a model this phone doesn't: say so, since pre-filling is what speeds labelling up.
+  const installedName = (() => {
+    try {
+      return modelFiles.installed()?.name ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  const newerModel =
+    health?.ok && health.activeModel && health.activeModel !== installedName
+      ? health.activeModel
+      : null;
+
   const startSession = () => {
     if (!session) {
       useCapture.getState().startSession({
@@ -121,6 +135,17 @@ export default function CaptureHome() {
               <Text variant="caption" tone="muted">
                 {t('home.labVersion', { version: health.version, url: normaliseLabUrl(labUrl) })}
               </Text>
+              {newerModel ? (
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() => router.push('/settings')}
+                  testID="capture-model-newer"
+                >
+                  <Text variant="caption" tone="accent">
+                    {t('home.modelNewer', { name: newerModel })}
+                  </Text>
+                </Pressable>
+              ) : null}
             </>
           ) : (
             <>

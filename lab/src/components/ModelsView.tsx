@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import type { PrefillStats } from '~/lib/queries';
 import type { ModelProgress } from '~/lib/verify';
 
 import { useStartVerification } from './NewVerification';
@@ -49,11 +50,14 @@ export function ModelsView({
   models,
   progress,
   testPhotos,
+  prefill,
 }: {
   models: ModelListItem[];
   progress: ModelProgress;
   testPhotos: number;
+  prefill: PrefillStats[];
 }) {
+  const kept = new Map(prefill.map((p) => [p.model, p]));
   const { message } = App.useApp();
   const router = useRouter();
   const start = useStartVerification();
@@ -122,6 +126,22 @@ export function ModelsView({
                   {
                     title: `Board (bar ${BAR.board * 100})`,
                     render: (_, m) => <Score v={m.boardFound} bar={BAR.board} />,
+                  },
+                  {
+                    title: 'Kept on phone',
+                    render: (_, m) => {
+                      const k = kept.get(m.name);
+                      return k ? (
+                        <span
+                          title={`${k.accepted} of ${k.visits} pre-filled visits kept as placed`}
+                        >
+                          {pct(k.accepted / k.visits)}{' '}
+                          <Typography.Text type="secondary">of {k.visits}</Typography.Text>
+                        </span>
+                      ) : (
+                        '—'
+                      );
+                    },
                   },
                   {
                     title: 'Verified on',

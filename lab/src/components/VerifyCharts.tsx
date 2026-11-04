@@ -16,9 +16,10 @@ import {
   YAxis,
 } from 'recharts';
 
+import type { PrefillStats } from '~/lib/queries';
 import type { Breakdown, Coverage, ModelProgress } from '~/lib/verify';
 
-import { BAR, SERIES } from './RunCharts';
+import { BAR, legendOrder, SERIES } from './RunCharts';
 
 const GRID = '#f0f0f0';
 const AXIS = '#595959';
@@ -91,7 +92,13 @@ export function BreakdownChart({
           contentStyle={tooltipStyle}
           cursor={{ fill: 'rgba(0,0,0,0.04)' }}
         />
-        {models.length > 1 ? <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} /> : null}
+        {models.length > 1 ? (
+          <Legend
+            iconSize={10}
+            wrapperStyle={{ fontSize: 12 }}
+            itemSorter={legendOrder(models.map((m) => `m${m.id}`))}
+          />
+        ) : null}
         <ReferenceLine y={BAR[measure]} stroke={AXIS} strokeDasharray="5 4" />
         {models.map((m, i) => (
           <Bar
@@ -150,7 +157,11 @@ export function CoverageChart({ coverage }: { coverage: Coverage }) {
           formatter={(v, name) => [v, name]}
           labelFormatter={(b) => (thin.has(String(b)) ? `${b} (thin)` : String(b))}
         />
-        <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
+        <Legend
+          iconSize={10}
+          wrapperStyle={{ fontSize: 12 }}
+          itemSorter={legendOrder(['training', 'verify'])}
+        />
         <Bar
           name="Training (train + val)"
           dataKey="training"
@@ -221,7 +232,10 @@ export function ProgressChart({ models }: { models: ModelProgress }) {
           formatter={(v) => pct(Number(v))}
           labelFormatter={(n, p) => `${n} · ${p[0]?.payload.samples ?? '—'} photos`}
         />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Legend
+          wrapperStyle={{ fontSize: 12 }}
+          itemSorter={legendOrder(['visit', 'dart', 'board'])}
+        />
         <ReferenceLine
           y={BAR.visit}
           stroke={AXIS}
@@ -253,6 +267,82 @@ export function ProgressChart({ models }: { models: ModelProgress }) {
           isAnimationActive={false}
         />
       </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** How much of each model's pre-fill players kept on the phone (the L5 measure). */
+export function PrefillChart({ stats }: { stats: PrefillStats[] }) {
+  if (!stats.length)
+    return (
+      <Empty description="No pre-filled visits yet: set a model active and pull it into Capture" />
+    );
+  const data = stats.map((s) => ({
+    model: s.model,
+    visits: s.visits,
+    accepted: s.accepted / s.visits,
+    tips: s.tipsNeeded ? s.tipsKept / s.tipsNeeded : null,
+    board: s.boardKept / s.visits,
+  }));
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }} barGap={2}>
+        <CartesianGrid stroke={GRID} vertical={false} />
+        <XAxis
+          dataKey="model"
+          height={34}
+          tickLine={false}
+          interval={0}
+          tick={({ x, y, payload }) => {
+            const row = data.find((d) => d.model === payload.value);
+            return (
+              <g transform={`translate(${x},${y})`}>
+                <text y={12} textAnchor="middle" fill={AXIS} fontSize={12}>
+                  {payload.value}
+                </text>
+                <text y={26} textAnchor="middle" fill="#8c8c8c" fontSize={10}>
+                  {row?.visits} visits
+                </text>
+              </g>
+            );
+          }}
+        />
+        <YAxis domain={[0, 1]} tickFormatter={pct} tick={{ fill: AXIS, fontSize: 11 }} width={40} />
+        <Tooltip
+          contentStyle={tooltipStyle}
+          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+          formatter={(v, name) => [v == null ? '—' : pct(Number(v)), name]}
+        />
+        <Legend
+          iconSize={10}
+          wrapperStyle={{ fontSize: 12 }}
+          itemSorter={legendOrder(['accepted', 'tips', 'board'])}
+        />
+        <Bar
+          name="Visit kept as placed"
+          dataKey="accepted"
+          fill={SERIES.visit}
+          maxBarSize={24}
+          radius={[4, 4, 0, 0]}
+          isAnimationActive={false}
+        />
+        <Bar
+          name="Tips kept"
+          dataKey="tips"
+          fill={SERIES.dart}
+          maxBarSize={24}
+          radius={[4, 4, 0, 0]}
+          isAnimationActive={false}
+        />
+        <Bar
+          name="Board kept"
+          dataKey="board"
+          fill={SERIES.board}
+          maxBarSize={24}
+          radius={[4, 4, 0, 0]}
+          isAnimationActive={false}
+        />
+      </BarChart>
     </ResponsiveContainer>
   );
 }

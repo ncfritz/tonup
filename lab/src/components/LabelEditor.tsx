@@ -24,12 +24,16 @@ import { useMemo, useRef, useState, type PointerEvent } from 'react';
 import { CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
 import { measure } from '~/lib/conditions';
+import { CORRECTED } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
 import { boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
 import type { CaptureDetail } from '~/lib/queries';
 
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
 import { PageBody, PageHeader } from './PageHeader';
+
+/** The model's proposal, in the same colour as predictions on the Verification page. */
+const MODEL = '#eb6834';
 
 type Selected = { kind: 'point'; id: CalibrationId } | { kind: 'dart'; idx: number } | null;
 
@@ -73,6 +77,13 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const r = Math.max(W, H) / 90;
   const measured = useMemo(() => measure(label, W, H), [label, W, H]);
   const board = useMemo(() => boardDrawing(label.points, W, H), [label.points, W, H]);
+  // What the model placed on the phone, drawn under the label (shown by default when corrected).
+  const prefill = capture.prefill;
+  const [showModel, setShowModel] = useState(() => !!prefill && !prefill.accepted);
+  const modelBoard = useMemo(
+    () => (prefill ? boardDrawing(pointsMap(prefill.calibration), W, H) : null),
+    [prefill, W, H],
+  );
 
   const update = (next: LabelInput) => {
     setLabel(next);
@@ -150,6 +161,13 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     if (andNext && capture.nextReviewId) router.push(`/captures/${capture.nextReviewId}`);
     else router.refresh();
   };
+  const looksRight = async () => {
+    const res = await fetch(`/api/captures/${capture.id}/review`, { method: 'POST' });
+    if (!res.ok) return message.error('Couldn’t update the review queue');
+    message.success('Checked: out of the review queue');
+    if (capture.nextReviewId) router.push(`/captures/${capture.nextReviewId}`);
+    else router.refresh();
+  };
   const setLeftOut = async (rejected: boolean) => {
     const res = await fetch(`/api/captures/${capture.id}/status`, {
       method: 'POST',
@@ -215,7 +233,12 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   { label: 'Add dart', value: 'add' },
                 ]}
               />
-              <Space>
+              <Space wrap>
+                {prefill ? (
+                  <Checkbox checked={showModel} onChange={(e) => setShowModel(e.target.checked)}>
+                    <span style={{ color: MODEL }}>✕</span> What {prefill.model} placed
+                  </Checkbox>
+                ) : null}
                 <Typography.Text type="secondary">Zoom</Typography.Text>
                 <Segmented
                   value={zoom}
@@ -263,6 +286,37 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   onPointerUp={endDrag}
                   onPointerCancel={endDrag}
                 >
+                  {showModel && prefill ? (
+                    <g pointerEvents="none" stroke={MODEL} strokeLinecap="round">
+                      {modelBoard ? (
+                        <path
+                          d={`${modelBoard.rings} ${modelBoard.wires}`}
+                          fill="none"
+                          strokeOpacity={0.8}
+                          strokeWidth={r / 7}
+                          strokeDasharray={`${r / 1.5} ${r / 2}`}
+                        />
+                      ) : null}
+                      {[...prefill.calibration, ...prefill.tips.flatMap((t) => (t ? [t] : []))].map(
+                        (p, i) => (
+                          <g key={i} strokeWidth={r / 3.5}>
+                            <line
+                              x1={p.x * W - r * 0.8}
+                              y1={p.y * H - r * 0.8}
+                              x2={p.x * W + r * 0.8}
+                              y2={p.y * H + r * 0.8}
+                            />
+                            <line
+                              x1={p.x * W - r * 0.8}
+                              y1={p.y * H + r * 0.8}
+                              x2={p.x * W + r * 0.8}
+                              y2={p.y * H - r * 0.8}
+                            />
+                          </g>
+                        ),
+                      )}
+                    </g>
+                  ) : null}
                   {board ? (
                     <path
                       d={`${board.rings} ${board.wires}`}
@@ -459,6 +513,11 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                     Save, next to review
                   </Button>
                 ) : null}
+                {capture.review?.includes(CORRECTED) && !dirty ? (
+                  <Button onClick={looksRight}>
+                    Looks right{capture.nextReviewId ? ', next' : ''}
+                  </Button>
+                ) : null}
                 <Button
                   disabled={!dirty}
                   onClick={() => {
@@ -549,9 +608,31 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                         : '—',
                   },
                   { label: 'Size', children: `${W} × ${H}` },
-                  ...(capture.prefillModel
-                    ? [{ label: 'Pre-filled by', children: capture.prefillModel }]
-                    : []),
+                  ...(prefill
+                    ? [
+                        {
+                          label: 'Pre-filled by',
+                          children: (
+                            <>
+                              {prefill.model}:{' '}
+                              {prefill.accepted ? (
+                                <Tag color="success">kept as placed</Tag>
+                              ) : (
+                                <>
+                                  board {prefill.boardKept ? 'kept' : 'corrected'}
+                                  {prefill.boardMovedMm !== null && !prefill.boardKept
+                                    ? ` (${prefill.boardMovedMm.toFixed(1)} mm)`
+                                    : ''}
+                                  , {prefill.tipsKept} of {prefill.tipsNeeded} tips kept
+                                </>
+                              )}
+                            </>
+                          ),
+                        },
+                      ]
+                    : capture.prefillModel
+                      ? [{ label: 'Pre-filled by', children: capture.prefillModel }]
+                      : []),
                   ...(capture.deviceModel
                     ? [
                         {

@@ -1,6 +1,6 @@
 import { Overview } from '~/components/Overview';
 import { deepdartsSummary } from '~/lib/deepdarts';
-import { overviewCounts } from '~/lib/queries';
+import { overviewCounts, prefillStats } from '~/lib/queries';
 import { labStatus } from '~/lib/status';
 import { coverage, modelProgress } from '~/lib/verify';
 
@@ -16,6 +16,7 @@ export default function OverviewPage() {
       deepdarts={deepdartsSummary()}
       progress={modelProgress()}
       coverage={coverage()}
+      prefill={prefillStats()}
     />
   );
 }

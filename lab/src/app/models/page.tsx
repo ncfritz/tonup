@@ -1,5 +1,5 @@
 import { ModelsView } from '~/components/ModelsView';
-import { overviewCounts } from '~/lib/queries';
+import { overviewCounts, prefillStats } from '~/lib/queries';
 import { listModels } from '~/lib/runs';
 import { modelProgress } from '~/lib/verify';
 
@@ -11,6 +11,7 @@ export default function ModelsPage() {
       models={listModels()}
       progress={modelProgress()}
       testPhotos={overviewCounts().bySplit.test}
+      prefill={prefillStats()}
     />
   );
 }

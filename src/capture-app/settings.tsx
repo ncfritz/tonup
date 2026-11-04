@@ -5,9 +5,11 @@ import { TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { checkLab, type LabHealth } from '@/features/capture-lab/lab';
+import { modelFiles } from '@/features/capture-lab/modelFiles';
+import { checkForModel, pullModel, type PullStatus } from '@/features/capture-lab/modelPull';
 import { fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { useCapture } from '@/features/capture-lab/store';
-import { visionCapabilities } from '@/services/vision';
+import { reloadModel, visionCapabilities } from '@/services/vision';
 import { Button, Header, ListRow, Screen, Section, Text, ToggleRow } from '@/ui';
 
 /** Lab's address, the model and pre-filling, and the sent photos kept on the phone. */
@@ -28,16 +30,75 @@ export default function CaptureSettings() {
     }
   });
 
+  const [labModel, setLabModel] = useState<PullStatus | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [pullNote, setPullNote] = useState<{ ok: boolean; text: string } | null>(null);
+
   useEffect(() => {
     void visionCapabilities().then((c) => setModel(c.model ? (c.version ?? '?') : null));
+  }, []);
+
+  const checkModel = async (url: string) => {
+    if (!url.trim()) return;
+    setLabModel(null);
+    setLabModel(await checkForModel(url, modelFiles));
+  };
+  useEffect(() => {
+    let live = true;
+    if (labUrl) void checkForModel(labUrl, modelFiles).then((s) => live && setLabModel(s));
+    return () => {
+      live = false;
+    };
+    // Once on opening; a test or a pull checks again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveAddress = () => useCapture.getState().set({ labUrl: address.trim() });
   const runTest = async () => {
     saveAddress();
     setTesting(true);
-    setTest(await checkLab(address));
+    const h = await checkLab(address);
+    setTest(h);
     setTesting(false);
+    if (h.ok) void checkModel(address);
+  };
+
+  const getModel = async () => {
+    if (labModel?.kind !== 'available') return;
+    const m = labModel.model;
+    setPullNote(null);
+    setProgress(0);
+    const r = await pullModel(labUrl, m, modelFiles, reloadModel, (done, total) =>
+      setProgress(total ? Math.round((done / total) * 100) : 0),
+    );
+    setProgress(null);
+    setPullNote(
+      r.ok
+        ? { ok: true, text: t('settings.modelInstalledNow', { name: r.name }) }
+        : { ok: false, text: t('settings.modelFailed', { error: r.error }) },
+    );
+    const caps = await visionCapabilities();
+    setModel(caps.model ? (caps.version ?? '?') : null);
+    await checkModel(labUrl);
+  };
+
+  const labLine = (s: PullStatus) => {
+    switch (s.kind) {
+      case 'unreachable':
+        return t('settings.modelUnreachable', { error: s.error });
+      case 'none':
+        return t('settings.modelLabNone');
+      case 'no-package':
+        return t('settings.modelNoPackage', { name: s.name });
+      case 'current':
+        return t('settings.modelCurrent', { name: s.name });
+      case 'available':
+        return t('settings.modelAvailable', {
+          name: s.model.name,
+          visit:
+            s.model.visitCorrect == null ? 'none' : `${Math.round(s.model.visitCorrect * 100)}%`,
+        });
+    }
   };
 
   return (
@@ -88,6 +149,31 @@ export default function CaptureSettings() {
         <ListRow
           label={model ? t('settings.modelInstalled', { version: model }) : t('settings.modelNone')}
         />
+        {labUrl ? (
+          <View style={styles.block}>
+            <Text variant="caption" tone="muted" testID="settings-lab-model">
+              {labModel ? labLine(labModel) : t('settings.modelChecking')}
+            </Text>
+            {labModel?.kind === 'available' ? (
+              <Button
+                kind="secondary"
+                label={
+                  progress !== null
+                    ? t('settings.modelDownloading', { percent: progress })
+                    : t('settings.modelGet', { name: labModel.model.name })
+                }
+                disabled={progress !== null}
+                onPress={() => void getModel()}
+                testID="settings-get-model"
+              />
+            ) : null}
+            {pullNote ? (
+              <Text tone={pullNote.ok ? 'text' : 'danger'} testID="settings-pull-note">
+                {pullNote.text}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
         <ToggleRow
           label={t('settings.prefill')}
           note={t('settings.prefillNote')}

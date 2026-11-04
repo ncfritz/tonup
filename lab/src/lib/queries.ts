@@ -3,12 +3,16 @@
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, lt, ne, sql } from 'drizzle-orm';
 
 import { db } from './db/client';
+import { CORRECTED } from './prefill';
 import {
   captures,
   conditions,
   labelDarts,
   labelPoints,
   labels,
+  models,
+  prefillPoints,
+  prefills,
   sessions,
   sessionTags,
   type SPLITS,
@@ -99,6 +103,9 @@ function overlaysFor(labelIds: number[]) {
   return { points, darts };
 }
 
+/** In the review queue, labels the player corrected from the model come first. */
+const reviewRank = sql<number>`case when ${captures.review} like ${`%${CORRECTED}%`} then 0 else 1 end`;
+
 export interface CaptureFilter {
   split?: SplitName;
   sessionId?: string;
@@ -163,7 +170,7 @@ export function listCaptures(f: CaptureFilter = {}) {
       .where(where(f))
       .get()?.n ?? 0;
   const rows = base
-    .orderBy(desc(captures.takenAt), asc(captures.id))
+    .orderBy(...(f.review ? [asc(reviewRank)] : []), desc(captures.takenAt), asc(captures.id))
     .limit(pageSize)
     .offset((page - 1) * pageSize)
     .all();
@@ -207,6 +214,81 @@ export interface CaptureDetail extends CaptureCard {
   nextId: string | null;
   /** The next capture that needs a look, after this one. */
   nextReviewId: string | null;
+  /** What the model pre-filled on the phone and how much of it the player kept. */
+  prefill: CapturePrefill | null;
+}
+
+export interface CapturePrefill {
+  model: string;
+  accepted: boolean;
+  boardKept: boolean;
+  boardMovedMm: number | null;
+  tipsNeeded: number;
+  tipsPlaced: number;
+  tipsKept: number;
+  calibration: OverlayPoint[];
+  tips: ({ x: number; y: number } | null)[];
+}
+
+function prefillOf(captureId: string, dartCount: number): CapturePrefill | null {
+  const d = db();
+  const p = d.select().from(prefills).where(eq(prefills.captureId, captureId)).get();
+  if (!p) return null;
+  const pts = d.select().from(prefillPoints).where(eq(prefillPoints.captureId, captureId)).all();
+  const tips: CapturePrefill['tips'] = Array.from({ length: dartCount }, () => null);
+  for (const t of pts) if (t.kind === 'tip') tips[t.idx] = { x: t.x, y: t.y };
+  return {
+    model: p.model,
+    accepted: p.accepted,
+    boardKept: p.boardKept,
+    boardMovedMm: p.boardMovedMm,
+    tipsNeeded: p.tipsNeeded,
+    tipsPlaced: p.tipsPlaced,
+    tipsKept: p.tipsKept,
+    calibration: pts.flatMap((t) => (t.kind === 'tip' ? [] : [{ kind: t.kind, x: t.x, y: t.y }])),
+    tips,
+  };
+}
+
+export interface PrefillStats {
+  model: string;
+  visits: number;
+  accepted: number;
+  boardKept: number;
+  tipsNeeded: number;
+  tipsKept: number;
+}
+
+/** How much of each model's pre-fill players kept, in the order the models were trained. */
+export function prefillStats(): PrefillStats[] {
+  const d = db();
+  const rows = d
+    .select({
+      model: prefills.model,
+      visits: count(),
+      accepted: sql<number>`sum(${prefills.accepted})`,
+      boardKept: sql<number>`sum(${prefills.boardKept})`,
+      tipsNeeded: sql<number>`sum(${prefills.tipsNeeded})`,
+      tipsKept: sql<number>`sum(${prefills.tipsKept})`,
+    })
+    .from(prefills)
+    .innerJoin(captures, eq(captures.id, prefills.captureId))
+    .where(ne(captures.status, 'rejected'))
+    .groupBy(prefills.model)
+    .all();
+  const order = new Map(
+    d
+      .select({ id: models.id, name: models.name })
+      .from(models)
+      .all()
+      .map((m) => [m.name, m.id]),
+  );
+  // Models Lab trained in order; any other version (a bundled one, say) after them.
+  return rows.sort(
+    (a, b) =>
+      (order.get(a.model) ?? Infinity) - (order.get(b.model) ?? Infinity) ||
+      a.model.localeCompare(b.model),
+  );
 }
 
 export function getCapture(id: string): CaptureDetail | null {
@@ -255,6 +337,7 @@ export function getCapture(id: string): CaptureDetail | null {
       .orderBy(dir === 'prev' ? desc(captures.takenAt) : asc(captures.takenAt))
       .limit(1)
       .get()?.id ?? null;
+  const myRank = c.review?.includes(CORRECTED) ? 0 : 1;
   const nextReview =
     d
       .select({ id: captures.id })
@@ -264,10 +347,11 @@ export function getCapture(id: string): CaptureDetail | null {
           isNotNull(captures.review),
           ne(captures.status, 'rejected'),
           ne(captures.id, id),
-          sql`(${captures.takenAt} < ${c.takenAt.getTime()} or (${captures.takenAt} = ${c.takenAt.getTime()} and ${captures.id} > ${id}))`,
+          // After this one in the queue's order: rank, then newest first.
+          sql`(${reviewRank} > ${myRank} or (${reviewRank} = ${myRank} and (${captures.takenAt} < ${c.takenAt.getTime()} or (${captures.takenAt} = ${c.takenAt.getTime()} and ${captures.id} > ${id}))))`,
         ),
       )
-      .orderBy(desc(captures.takenAt), asc(captures.id))
+      .orderBy(asc(reviewRank), desc(captures.takenAt), asc(captures.id))
       .limit(1)
       .get()?.id ?? null;
   return {
@@ -304,6 +388,7 @@ export function getCapture(id: string): CaptureDetail | null {
     prevId: neighbour('prev'),
     nextId: neighbour('next'),
     nextReviewId: nextReview,
+    prefill: prefillOf(c.id, c.labelId ? (darts.get(c.labelId)?.length ?? 0) : 0),
   };
 }
 

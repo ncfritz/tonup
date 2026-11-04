@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { CALIBRATION_IDS } from '@domain/camera';
 import { and, eq, max } from 'drizzle-orm';
 
 import { measure } from './conditions';
@@ -12,12 +13,15 @@ import {
   captures,
   conditions,
   labelDarts,
+  prefillPoints,
+  prefills,
   labelPoints,
   labels,
   sessions,
   sessionTags,
 } from './db/schema';
 import { captureFile, labelFromFile, type CaptureFile, type LabelInput } from './labels';
+import { checkPrefill, CORRECTED } from './prefill';
 import { splitOf, type Split } from './splits';
 import { preparePhoto, savePhoto } from './storage';
 
@@ -181,7 +185,7 @@ export async function ingestCapture(
         createdAt: now,
       })
       .run();
-    writeLabel(
+    const written = writeLabel(
       tx,
       { id, width: prepared.width, height: prepared.height },
       input,
@@ -189,6 +193,29 @@ export async function ingestCapture(
       now,
       prepared.brightness,
     );
+    if (f.prefill && f.prefillModel) {
+      const check = checkPrefill(f.prefill, input);
+      tx.insert(prefills)
+        .values({ captureId: id, model: f.prefillModel, ...check })
+        .run();
+      const points = [
+        ...f.prefill.calibration.flatMap((p, i) =>
+          p ? [{ kind: CALIBRATION_IDS[i]!, idx: 0, x: p.x, y: p.y }] : [],
+        ),
+        ...f.prefill.tips.flatMap((p, i) =>
+          p ? [{ kind: 'tip' as const, idx: i, x: p.x, y: p.y }] : [],
+        ),
+      ];
+      if (points.length)
+        tx.insert(prefillPoints)
+          .values(points.map((p) => ({ captureId: id, ...p })))
+          .run();
+      // A label the player had to correct shows where the model goes wrong: queue it for a look.
+      if (!check.accepted) {
+        const review = [CORRECTED, ...written.measured.review].join(', ');
+        tx.update(captures).set({ review }).where(eq(captures.id, id)).run();
+      }
+    }
     return { id, sessionId: session.id, split: s.split, created: true };
   });
 }
@@ -266,4 +293,23 @@ export async function importFolder(folder: string): Promise<ImportResult> {
     }
   }
   return result;
+}
+
+/**
+ * A corrected-from-model label looked at and found right: drops that reason from the review
+ * queue (any measured reasons stay), without a new label version.
+ */
+export function confirmCorrected(captureId: string) {
+  const d = db();
+  const c = d.select().from(captures).where(eq(captures.id, captureId)).get();
+  if (!c) throw new IngestError(`No capture ${captureId}`);
+  const rest = (c.review ?? '')
+    .split(', ')
+    .filter((r) => r && r !== CORRECTED)
+    .join(', ');
+  d.update(captures)
+    .set({ review: rest || null })
+    .where(eq(captures.id, captureId))
+    .run();
+  return rest || null;
 }

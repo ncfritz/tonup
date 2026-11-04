@@ -2,6 +2,7 @@
 
 import { Tag } from 'antd';
 
+import { CORRECTED } from '~/lib/prefill';
 import type { OverlayDart, OverlayPoint } from '~/lib/queries';
 import { boardDrawing, type Points } from '~/lib/overlay';
 
@@ -32,7 +33,7 @@ export function ReviewTags({ review }: { review: string | null }) {
   return (
     <>
       {review.split(', ').map((r) => (
-        <Tag key={r} color="warning">
+        <Tag key={r} color={r === CORRECTED ? 'volcano' : 'warning'}>
           {r}
         </Tag>
       ))}

@@ -25,6 +25,12 @@ export const BAR = { visit: 0.9, dart: 0.95, board: 0.98 };
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
+/** Legend items in the order the series are drawn (Recharts sorts them by name otherwise). */
+export const legendOrder =
+  (keys: string[]) =>
+  (item: { dataKey?: unknown }): number =>
+    keys.indexOf(String(item.dataKey));
+
 export function AccuracyChart({ metrics, epochs }: { metrics: EpochMetrics[]; epochs: number }) {
   if (!metrics.length) return <Empty description="No epochs finished yet" />;
   const data = metrics.map((m) => ({
@@ -60,7 +66,7 @@ export function AccuracyChart({ metrics, epochs }: { metrics: EpochMetrics[]; ep
           width={48}
         />
         <Tooltip formatter={(v) => pct(Number(v))} labelFormatter={(e) => `Epoch ${e}`} />
-        <Legend />
+        <Legend itemSorter={legendOrder(['visit', 'dart', 'board'])} />
         <ReferenceLine
           y={BAR.visit}
           stroke={AXIS}
@@ -119,7 +125,7 @@ export function LossChart({ metrics, epochs }: { metrics: EpochMetrics[]; epochs
         />
         <YAxis tick={{ fill: AXIS, fontSize: 12 }} width={48} domain={[0, 'auto']} />
         <Tooltip formatter={(v) => Number(v).toFixed(3)} labelFormatter={(e) => `Epoch ${e}`} />
-        <Legend />
+        <Legend itemSorter={legendOrder(['train', 'val'])} />
         <Line
           name="Train"
           dataKey="train"

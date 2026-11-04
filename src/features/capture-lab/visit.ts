@@ -50,6 +50,15 @@ export interface VisitState {
   selected: number | null;
   /** How many tips the model placed. */
   tipsFromModel: number;
+  /**
+   * What the model placed, as it placed it (later edits don't change this), so Lab can tell a
+   * pre-fill the player only confirmed from one they corrected. Null without a usable board.
+   */
+  proposal: {
+    calibration: Partial<Record<CalibrationId, ImagePoint>>;
+    /** One per entered dart once tips are pre-filled. */
+    tips: (ImagePoint | null)[];
+  } | null;
 }
 
 const MIN_CONFIDENCE = 0.3;
@@ -70,6 +79,7 @@ export function start(photo: Photo, detected: DetectResult | null): VisitState {
     onWire: [],
     selected: null,
     tipsFromModel: 0,
+    proposal: null,
   };
   if (!detected) return base;
   const calibration: Partial<Record<CalibrationId, ImagePoint>> = {};
@@ -79,7 +89,14 @@ export function start(photo: Photo, detected: DetectResult | null): VisitState {
   }
   const fit = fitBoard(calibration);
   if (!fit || fit.residual > MAX_RESIDUAL_MM) return base;
-  return { ...base, calibration, fit, marking: null, boardFromModel: true };
+  return {
+    ...base,
+    calibration,
+    fit,
+    marking: null,
+    boardFromModel: true,
+    proposal: { calibration, tips: [] },
+  };
 }
 
 // Values
@@ -171,7 +188,12 @@ function prefillTips(s: VisitState): VisitState {
       tips[i] = found[j]!.image;
     }
   });
-  return { ...s, tips, tipsFromModel: used.size };
+  return {
+    ...s,
+    tips,
+    tipsFromModel: used.size,
+    proposal: s.proposal ? { ...s.proposal, tips } : s.proposal,
+  };
 }
 
 // Tips
@@ -270,8 +292,12 @@ export interface LabelFile {
   darts: { x: number | null; y: number | null; value: string; onWire?: boolean }[];
   valuesOnly: boolean;
   prefillModel: string | null;
+  /** What the model placed (same order as calibration and darts), when it pre-filled. */
+  prefill?: { calibration: (ImagePoint | null)[]; tips: (ImagePoint | null)[] };
   zoom?: number;
 }
+
+const prefillModel = (s: VisitState) => (s.proposal ? (s.detected?.modelVersion ?? null) : null);
 
 const round = (v: number) => Math.round(v * 1e5) / 1e5;
 const pt = (p: ImagePoint) => ({ x: round(p.x), y: round(p.y) });
@@ -308,7 +334,22 @@ export function labelFile(
       };
     }),
     valuesOnly,
-    prefillModel: s.boardFromModel || s.tipsFromModel ? (s.detected?.modelVersion ?? null) : null,
+    // The model proposed a board (even one the player then re-marked): its proposal goes along.
+    prefillModel: prefillModel(s),
+    ...(prefillModel(s) && s.proposal
+      ? {
+          prefill: {
+            calibration: CALIBRATION_IDS.map((id) => {
+              const p = s.proposal!.calibration[id];
+              return p ? pt(p) : null;
+            }),
+            tips: s.entered.map((_, i) => {
+              const p = s.proposal!.tips[i];
+              return p ? pt(p) : null;
+            }),
+          },
+        }
+      : {}),
     ...(meta.zoom ? { zoom: meta.zoom } : {}),
   };
 }

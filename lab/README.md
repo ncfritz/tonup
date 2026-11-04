@@ -30,6 +30,10 @@ macOS asks once whether Node may accept incoming connections when you first use 
 
 Runs › New run snapshots the labels, trains with `ml/` (`../ml/.venv/bin/python`, or `TONUP_LAB_PYTHON`), verifies on the verify set and exports; the result is a candidate on Models. Verification (or Models › Compare) checks chosen models on one fresh snapshot of the verify set, with the breakdown by condition and the worst photos; download a model's Core ML package from Models. Runs go one at a time; use `pnpm start` rather than `pnpm dev` for long runs, since hot reload restarts the server.
 
+## Model pull and review
+
+Capture pulls the active model from `GET /api/models/active` (Settings › Get vN from Lab). Labels pre-filled by a model carry what it placed; Lab measures what the player kept, queues corrected labels first in To review (Looks right clears one), and charts acceptance per model on Overview.
+
 ## Check
 
 ```sh

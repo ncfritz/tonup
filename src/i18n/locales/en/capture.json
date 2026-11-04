@@ -26,7 +26,8 @@
       "test": "VERIFY"
     },
     "start": "Start session",
-    "continue": "Continue session ({count, plural, one {# visit} other {# visits}})"
+    "continue": "Continue session ({count, plural, one {# visit} other {# visits}})",
+    "modelNewer": "Lab's model {name} isn't on this phone yet · Get it in Settings"
   },
   "session": {
     "title": "Session · visit {n}",
@@ -99,6 +100,16 @@
     "model": "Model",
     "modelInstalled": "On this phone: {version}",
     "modelNone": "No model on this phone yet",
+    "modelChecking": "Checking Lab's model…",
+    "modelUnreachable": "Couldn't ask Lab: {error}",
+    "modelLabNone": "Lab has no active model yet. Set one on Lab's Models page.",
+    "modelNoPackage": "Lab's active model {name} has no Core ML package: its export failed on the Mac.",
+    "modelCurrent": "Up to date with Lab ({name}).",
+    "modelAvailable": "Lab's active model is {name}{visit, select, none {} other { · visit total right {visit}}}.",
+    "modelGet": "Get {name} from Lab",
+    "modelDownloading": "Downloading… {percent}%",
+    "modelInstalledNow": "Installed {name}. New visits are pre-filled by it.",
+    "modelFailed": "Couldn't install it: {error}. The model on the phone is unchanged.",
     "prefill": "Pre-fill the board and tips",
     "prefillNote": "The model places them first; you check and correct.",
     "storage": "Storage",
