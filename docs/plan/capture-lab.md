@@ -224,6 +224,8 @@ Not automated: copy the chosen model's `DartKeypoints.mlpackage` into `modules/d
 3. Runs › New run › from scratch with DeepDarts, Epochs 1 first to time an epoch, then the full baseline.
 4. Once there are verify photos: Models › select two › Compare on the verify set.
 
+- **Deleting (after L5):** `DELETE /api/captures/:id` and `DELETE /api/sessions/:id` remove captures with their labels, measurements, pre-fill and photo files (the label editor's Delete, and each row on Sessions, both confirm first). Snapshots hard-link their photos, so past runs and their verification results are untouched; a deleted photo just drops out of the worst-photos gallery. Importing or uploading the same capture again brings it back as new, in the same set.
+
 ### Trying the model pull
 
 1. On Lab's Models page, set a model with a Core ML package active.

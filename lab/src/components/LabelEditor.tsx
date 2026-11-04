@@ -10,6 +10,7 @@ import {
   Descriptions,
   Flex,
   InputNumber,
+  Popconfirm,
   Segmented,
   Space,
   Table,
@@ -167,6 +168,14 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     message.success('Checked: out of the review queue');
     if (capture.nextReviewId) router.push(`/captures/${capture.nextReviewId}`);
     else router.refresh();
+  };
+  const deleteCapture = async () => {
+    const res = await fetch(`/api/captures/${capture.id}`, { method: 'DELETE' });
+    if (!res.ok) return message.error('Couldn’t delete the capture');
+    message.success('Capture deleted');
+    // On to the next photo of the session, or back to its gallery.
+    const next = capture.nextId ?? capture.prevId;
+    router.push(next ? `/captures/${next}` : `/captures?session=${capture.sessionId}`);
   };
   const setLeftOut = async (rejected: boolean) => {
     const res = await fetch(`/api/captures/${capture.id}/status`, {
@@ -534,6 +543,17 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                     Leave out of training
                   </Button>
                 )}
+                <Popconfirm
+                  title="Delete this capture?"
+                  description="Its photo and every label version go. This can’t be undone."
+                  okText="Delete"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={deleteCapture}
+                >
+                  <Button danger type="text" icon={<DeleteOutlined />}>
+                    Delete
+                  </Button>
+                </Popconfirm>
               </Space>
             </Card>
 

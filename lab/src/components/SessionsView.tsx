@@ -1,6 +1,19 @@
 'use client';
 
-import { App, Alert, Button, Card, Flex, Input, Space, Table, Tag, Typography } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
+import {
+  App,
+  Alert,
+  Button,
+  Card,
+  Flex,
+  Input,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -26,6 +39,16 @@ export function SessionsView({
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [ddPath, setDdPath] = useState(deepdarts?.path ?? '');
+
+  const deleteSession = async (sess: SessionRow) => {
+    const res = await fetch(`/api/sessions/${encodeURIComponent(sess.id)}`, { method: 'DELETE' });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) return message.error(body?.error ?? 'Couldn’t delete the session');
+    message.success(
+      `Deleted the session and ${body.captures} ${body.captures === 1 ? 'photo' : 'photos'}`,
+    );
+    router.refresh();
+  };
 
   const runImport = async () => {
     setImporting(true);
@@ -167,6 +190,27 @@ export function SessionsView({
                   title: 'ID',
                   dataIndex: 'id',
                   render: (id: string) => <Typography.Text code>{id}</Typography.Text>,
+                },
+                {
+                  key: 'delete',
+                  width: 48,
+                  render: (_, s) => (
+                    <Popconfirm
+                      title="Delete this session?"
+                      description={`Its ${s.captures} ${s.captures === 1 ? 'photo' : 'photos'} and their labels go too. This can’t be undone.`}
+                      okText="Delete"
+                      okButtonProps={{ danger: true }}
+                      onConfirm={() => deleteSession(s)}
+                    >
+                      <Button
+                        size="small"
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
+                        aria-label={`Delete session ${s.id}`}
+                      />
+                    </Popconfirm>
+                  ),
                 },
               ]}
             />

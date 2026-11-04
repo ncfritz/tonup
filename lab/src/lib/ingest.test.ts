@@ -8,9 +8,18 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { closeDbForTests } from './db/client';
-import { importFolder, ingestCapture, IngestError, saveLabel, setRejected } from './ingest';
+import {
+  deleteCapture,
+  deleteSession,
+  importFolder,
+  ingestCapture,
+  IngestError,
+  saveLabel,
+  setRejected,
+} from './ingest';
 import { getCapture, listCaptures, listSessions, overviewCounts } from './queries';
 import { splitOf } from './splits';
+import { storedFile } from './storage';
 
 const toImage = (p: { x: number; y: number }) => ({
   x: 0.5 + (p.x / 170) * 0.3,
@@ -220,5 +229,39 @@ describe('importFolder', () => {
       ['tonup-2026-11-02', 1],
       ['tonup-2026-11-01', 2],
     ]);
+  });
+});
+
+describe('deleting', () => {
+  it('deletes a capture with its labels and files, and leaves the rest of its session', async () => {
+    await ingestCapture(tonupFile('del-1', '2026-11-03T20:00:00.000Z'), await jpeg(), 'import');
+    await ingestCapture(tonupFile('del-2', '2026-11-03T20:01:00.000Z'), await jpeg(), 'import');
+    saveLabel('del-1', { points: {}, darts: [], missed: 0 });
+    expect(storedFile('photo', 'del-1.jpg')).not.toBeNull();
+
+    expect(deleteCapture('del-1')).toEqual({ id: 'del-1', sessionId: 'tonup-2026-11-03' });
+    expect(getCapture('del-1')).toBeNull();
+    expect(storedFile('photo', 'del-1.jpg')).toBeNull();
+    expect(storedFile('thumb', 'del-1.jpg')).toBeNull();
+    expect(listSessions()).toMatchObject([{ id: 'tonup-2026-11-03', captures: 1 }]);
+    expect(overviewCounts().captures).toBe(1);
+    expect(() => deleteCapture('del-1')).toThrow(IngestError);
+  });
+
+  it('deletes a session with all its captures', async () => {
+    await ingestCapture(tonupFile('s-1', '2026-11-03T20:00:00.000Z'), await jpeg(), 'import');
+    await ingestCapture(tonupFile('s-2', '2026-11-03T21:00:00.000Z'), await jpeg(), 'import');
+    await ingestCapture(tonupFile('other', '2026-11-04T20:00:00.000Z'), await jpeg(), 'import');
+    expect(deleteSession('tonup-2026-11-03')).toEqual({ id: 'tonup-2026-11-03', captures: 2 });
+    expect(listSessions().map((x) => x.id)).toEqual(['tonup-2026-11-04']);
+    expect(storedFile('photo', 's-2.jpg')).toBeNull();
+    expect(getCapture('other')).not.toBeNull();
+    // Gone for good: importing the same file again brings it back as new.
+    const again = await ingestCapture(
+      tonupFile('s-1', '2026-11-03T20:00:00.000Z'),
+      await jpeg(),
+      'import',
+    );
+    expect(again).toMatchObject({ created: true, split: splitOf('tonup-2026-11-03') });
   });
 });

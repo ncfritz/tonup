@@ -22,7 +22,7 @@ Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db`, `photos
 - **Ton Up's kept photos:** copy Files › On My iPhone › Ton Up › captures to the Mac and import the folder on the Sessions page (or `POST /api/import` with `{ "folder": "..." }`). Each day becomes a session.
 - **DeepDarts:** set its folder on the Sessions page; Lab checks it and training reads it in place.
 
-Every session gets its set (train, val or verify) the first time Lab sees it. The label editor saves each change as a new version; the review queue collects labels whose tips disagree with their values, darts flagged on the wire and board marks that don't fit.
+Every session gets its set (train, val or verify) the first time Lab sees it. A capture can be deleted from its label editor and a whole session from the Sessions page: the photos, labels and measurements go, while past runs keep their snapshots and verification results. The label editor saves each change as a new version; the review queue collects labels whose tips disagree with their values, darts flagged on the wire and board marks that don't fit.
 
 macOS asks once whether Node may accept incoming connections when you first use a LAN script.
 

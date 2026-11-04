@@ -23,7 +23,7 @@ import {
 import { captureFile, labelFromFile, type CaptureFile, type LabelInput } from './labels';
 import { checkPrefill, CORRECTED } from './prefill';
 import { splitOf, type Split } from './splits';
-import { preparePhoto, savePhoto } from './storage';
+import { photosDir, preparePhoto, savePhoto, thumbsDir } from './storage';
 
 type Tx = Parameters<Parameters<LabDb['transaction']>[0]>[0];
 
@@ -312,4 +312,41 @@ export function confirmCorrected(captureId: string) {
     .where(eq(captures.id, captureId))
     .run();
   return rest || null;
+}
+
+function removePhotoFiles(name: string) {
+  for (const dir of [photosDir(), thumbsDir()]) fs.rmSync(path.join(dir, name), { force: true });
+}
+
+/**
+ * Deletes a capture: its labels and everything measured from them, its photo and thumbnail.
+ * Past runs keep what they used: their snapshots hold their own copies, and verification
+ * results keep the photo's outcome (it just no longer shows in the worst-photos gallery).
+ * Re-importing the same file, or Capture sending it again, brings it back as new.
+ */
+export function deleteCapture(captureId: string) {
+  const d = db();
+  const c = d.select().from(captures).where(eq(captures.id, captureId)).get();
+  if (!c) throw new IngestError(`No capture ${captureId}`);
+  d.delete(captures).where(eq(captures.id, captureId)).run();
+  removePhotoFiles(c.photo);
+  return { id: captureId, sessionId: c.sessionId };
+}
+
+/** Deletes a session and every capture in it (as deleteCapture does each). */
+export function deleteSession(sessionId: string) {
+  const d = db();
+  const s = d.select().from(sessions).where(eq(sessions.id, sessionId)).get();
+  if (!s) throw new IngestError(`No session ${sessionId}`);
+  const photos = d
+    .select({ photo: captures.photo })
+    .from(captures)
+    .where(eq(captures.sessionId, sessionId))
+    .all();
+  d.transaction((tx) => {
+    tx.delete(captures).where(eq(captures.sessionId, sessionId)).run();
+    tx.delete(sessions).where(eq(sessions.id, sessionId)).run();
+  });
+  for (const p of photos) removePhotoFiles(p.photo);
+  return { id: sessionId, captures: photos.length };
 }
