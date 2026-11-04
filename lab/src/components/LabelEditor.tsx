@@ -1,6 +1,12 @@
 'use client';
 
-import { DeleteOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  LeftOutlined,
+  MinusOutlined,
+  PlusOutlined,
+  RightOutlined,
+} from '@ant-design/icons';
 import {
   App,
   AutoComplete,
@@ -20,7 +26,7 @@ import {
 } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 
 import { CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
@@ -32,6 +38,11 @@ import type { CaptureDetail } from '~/lib/queries';
 
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
 import { PageBody, PageHeader } from './PageHeader';
+
+/** Zoom: the most, a button's step, and how far a press moves before it's a drag (px). */
+const MAX_ZOOM = 8;
+const ZOOM_STEP = 1.5;
+const PAN_SLOP = 4;
 
 /** The model's proposal, in the same colour as predictions on the Verification page. */
 const MODEL = '#eb6834';
@@ -73,9 +84,19 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const [dirty, setDirty] = useState(false);
   const dragging = useRef<Selected>(null);
   const svg = useRef<SVGSVGElement>(null);
+  // The photo zooms by growing inside a scrolling frame: the wheel zooms about the cursor, a drag
+  // on the photo (not on a mark) pans it, and a press that doesn't move is a click.
+  const frame = useRef<HTMLDivElement>(null);
+  const pan = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(
+    null,
+  );
+  const [panning, setPanning] = useState(false);
+  const zoomRef = useRef(zoom);
+  const anchor = useRef<{ fx: number; fy: number; mx: number; my: number } | null>(null);
 
   const { width: W, height: H } = capture;
-  const r = Math.max(W, H) / 90;
+  // Marks in photo units, divided by the zoom so they keep their size on screen.
+  const r = Math.max(W, H) / 90 / zoom;
   const measured = useMemo(() => measure(label, W, H), [label, W, H]);
   const board = useMemo(() => boardDrawing(label.points, W, H), [label.points, W, H]);
   // What the model placed on the phone, drawn under the label (shown by default when corrected).
@@ -85,6 +106,46 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     () => (prefill ? boardDrawing(pointsMap(prefill.calibration), W, H) : null),
     [prefill, W, H],
   );
+
+  /** Zooms to `z`, keeping the photo point under (mx, my) — frame coordinates — where it is. */
+  const zoomTo = (z: number, at?: { mx: number; my: number }) => {
+    const el = frame.current;
+    const next = Math.min(MAX_ZOOM, Math.max(1, z));
+    if (!el || next === zoomRef.current) return;
+    const mx = at?.mx ?? el.clientWidth / 2;
+    const my = at?.my ?? el.clientHeight / 2;
+    anchor.current = {
+      fx: (el.scrollLeft + mx) / el.scrollWidth,
+      fy: (el.scrollTop + my) / el.scrollHeight,
+      mx,
+      my,
+    };
+    zoomRef.current = next;
+    setZoom(next);
+  };
+  // After the photo has grown, scroll so the anchored point is back under the cursor.
+  useLayoutEffect(() => {
+    const el = frame.current;
+    const a = anchor.current;
+    if (!el || !a) return;
+    el.scrollLeft = a.fx * el.scrollWidth - a.mx;
+    el.scrollTop = a.fy * el.scrollHeight - a.my;
+    anchor.current = null;
+  }, [zoom]);
+  // The wheel zooms the photo instead of scrolling the page (a listener React can't make
+  // non-passive). Trackpad pinches arrive as wheel events with ctrl held, and zoom the same way.
+  useEffect(() => {
+    const el = frame.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const box = el.getBoundingClientRect();
+      const step = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
+      zoomTo(zoomRef.current * step, { mx: e.clientX - box.left, my: e.clientY - box.top });
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
 
   const update = (next: LabelInput) => {
     setLabel(next);
@@ -108,9 +169,8 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       });
   };
 
-  const onBackgroundDown = (e: PointerEvent<SVGSVGElement>) => {
-    const p = toImage(e);
-    if (!p) return;
+  /** A click on the photo (not on a mark): place, add, or let go of the selection. */
+  const clickPhoto = (p: ImagePoint) => {
     // A selected point or dart with no position yet goes where you click.
     if (selected?.kind === 'point' && !label.points[selected.id]) return place(selected, p);
     if (selected?.kind === 'dart' && !label.darts[selected.idx]?.tip) return place(selected, p);
@@ -123,6 +183,18 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     }
     setSelected(null);
   };
+  const onBackgroundDown = (e: PointerEvent<SVGSVGElement>) => {
+    const el = frame.current;
+    if (!el || e.button !== 0) return;
+    pan.current = {
+      x: e.clientX,
+      y: e.clientY,
+      left: el.scrollLeft,
+      top: el.scrollTop,
+      moved: false,
+    };
+    svg.current?.setPointerCapture(e.pointerId);
+  };
   const startDrag = (target: Selected) => (e: PointerEvent) => {
     e.stopPropagation();
     setSelected(target);
@@ -130,11 +202,34 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     svg.current?.setPointerCapture(e.pointerId);
   };
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
+    const pn = pan.current;
+    if (pn && frame.current) {
+      const dx = e.clientX - pn.x;
+      const dy = e.clientY - pn.y;
+      if (!pn.moved && Math.hypot(dx, dy) < PAN_SLOP) return;
+      if (!pn.moved) setPanning(true);
+      pn.moved = true;
+      frame.current.scrollLeft = pn.left - dx;
+      frame.current.scrollTop = pn.top - dy;
+      return;
+    }
     if (!dragging.current) return;
     const p = toImage(e);
     if (p) place(dragging.current, p);
   };
-  const endDrag = () => {
+  const endDrag = (e: PointerEvent<SVGSVGElement>) => {
+    const pn = pan.current;
+    pan.current = null;
+    setPanning(false);
+    if (pn && !pn.moved) {
+      const p = toImage(e);
+      if (p) clickPhoto(p);
+    }
+    dragging.current = null;
+  };
+  const cancelDrag = () => {
+    pan.current = null;
+    setPanning(false);
     dragging.current = null;
   };
 
@@ -248,20 +343,36 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                     <span style={{ color: MODEL }}>✕</span> What {prefill.model} placed
                   </Checkbox>
                 ) : null}
-                <Typography.Text type="secondary">Zoom</Typography.Text>
-                <Segmented
-                  value={zoom}
-                  onChange={(v) => setZoom(Number(v))}
-                  options={[
-                    { label: '1×', value: 1 },
-                    { label: '2×', value: 2 },
-                    { label: '3×', value: 3 },
-                  ]}
-                />
+                <Space.Compact>
+                  <Button
+                    icon={<MinusOutlined />}
+                    aria-label="Zoom out"
+                    disabled={zoom <= 1}
+                    onClick={() => zoomTo(zoom / ZOOM_STEP)}
+                  />
+                  <Button style={{ minWidth: 64 }} onClick={() => zoomTo(1)} title="Fit the photo">
+                    {zoom <= 1 ? 'Fit' : `${zoom.toFixed(1)}×`}
+                  </Button>
+                  <Button
+                    icon={<PlusOutlined />}
+                    aria-label="Zoom in"
+                    disabled={zoom >= MAX_ZOOM}
+                    onClick={() => zoomTo(zoom * ZOOM_STEP)}
+                  />
+                </Space.Compact>
               </Space>
             </Flex>
             <div
-              style={{ overflow: 'auto', maxHeight: '75vh', borderRadius: 6, background: '#111' }}
+              ref={frame}
+              // The frame keeps the photo's shape at any zoom, so zooming scrolls inside it
+              // rather than growing it (which would move the point under the cursor).
+              style={{
+                overflow: 'auto',
+                aspectRatio: `${W} / ${H}`,
+                maxHeight: '75vh',
+                borderRadius: 6,
+                background: '#111',
+              }}
             >
               <div
                 style={{
@@ -287,13 +398,19 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                     inset: 0,
                     width: '100%',
                     height: '100%',
-                    cursor: mode === 'add' ? 'crosshair' : 'default',
+                    cursor: panning
+                      ? 'grabbing'
+                      : mode === 'add'
+                        ? 'crosshair'
+                        : zoom > 1
+                          ? 'grab'
+                          : 'default',
                     touchAction: 'none',
                   }}
                   onPointerDown={onBackgroundDown}
                   onPointerMove={onMove}
                   onPointerUp={endDrag}
-                  onPointerCancel={endDrag}
+                  onPointerCancel={cancelDrag}
                 >
                   {showModel && prefill ? (
                     <g pointerEvents="none" stroke={MODEL} strokeLinecap="round">
@@ -407,7 +524,8 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
             </div>
             <Typography.Paragraph type="secondary" style={{ marginTop: 8, marginBottom: 0 }}>
               Drag a point or dart to move it. With a point or dart selected that has no position
-              yet, click the photo to place it. A tip is where the dart enters the board.
+              yet, click the photo to place it. Scroll to zoom, drag the photo to move around. A tip
+              is where the dart enters the board.
             </Typography.Paragraph>
           </Card>
 
