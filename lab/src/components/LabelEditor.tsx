@@ -51,7 +51,9 @@ const ZOOM_STEP = 1.5;
 const PAN_SLOP = 4;
 
 /** The darts column's least width (px). */
-const MIN_SCORES = 400;
+const MIN_SCORES = 460;
+/** The space around the photo (px): its sides and top; the hint line under it has its own. */
+const PHOTO_PAD = 16;
 
 /** The model's proposal, in the same colour as predictions on the Verification page. */
 const MODEL = '#eb6834';
@@ -171,10 +173,10 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       const side = el.lastElementChild as HTMLElement | null;
       const stacked = getComputedStyle(el).flexDirection === 'column';
       const bar = toolbar.current?.offsetHeight ?? 32;
-      const roomW = stacked
-        ? el.clientWidth
-        : el.clientWidth - (side?.offsetWidth ?? 0) - MIN_SCORES;
-      const roomH = stacked ? window.innerHeight * 0.7 : el.clientHeight - bar;
+      const roomW =
+        (stacked ? el.clientWidth : el.clientWidth - (side?.offsetWidth ?? 0) - MIN_SCORES) -
+        PHOTO_PAD * 2;
+      const roomH = (stacked ? window.innerHeight * 0.7 : el.clientHeight - bar) - PHOTO_PAD;
       if (roomW <= 0 || roomH <= 0) return;
       const width = Math.min(roomW, (roomH * W) / H);
       setFit({ width: Math.floor(width), height: Math.floor((width * H) / W) });
@@ -528,7 +530,10 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
         }
       />
       <div ref={work} className={styles.work}>
-        <div className={styles.photoArea} style={fit ? { width: fit.width } : undefined}>
+        <div
+          className={styles.photoArea}
+          style={fit ? { width: fit.width + PHOTO_PAD * 2 } : undefined}
+        >
           {/* The photo fits the space left: the full width when that leaves it short enough,
               otherwise the full height. Zooming scrolls inside this frame rather than growing it. */}
           <div className={styles.stage}>
@@ -774,9 +779,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               {
                 title: 'Entered',
                 render: (_, row) => (
-                  <Space.Compact style={{ width: '100%' }}>
+                  <Space.Compact>
                     <AutoComplete
-                      style={{ width: '100%', minWidth: 72 }}
+                      className={styles.entered}
                       value={row.entered ?? ''}
                       onClick={(e) => e.stopPropagation()}
                       options={VALUE_OPTIONS}

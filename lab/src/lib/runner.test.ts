@@ -14,6 +14,7 @@ import { cancelRun, idleForTests, recoverRuns, tick } from './runner';
 import { activateModel, activeModel, createTrainRun, DEFAULTS, getRun, listModels } from './runs';
 import { db } from './db/client';
 import { captures, verifyItems } from './db/schema';
+import { runComparison } from './phone';
 import { splitOf } from './splits';
 import {
   coverage,
@@ -145,6 +146,11 @@ describe('the runner', () => {
     const train = log().filter((l) => l.startsWith('tonup_ml.train'))[1]!;
     expect(train).toContain(`--resume ${path.join(dir, 'data', 'runs', '1', 'best.pt')}`);
     expect(listModels().map((m) => m.name)).toEqual(['v2', 'v1']);
+    // Capture's past run: what it made, and v1's numbers to compare (not yet on its snapshot).
+    expect(runComparison(2)).toMatchObject({
+      made: { name: 'v2', status: 'candidate' },
+      base: { name: 'v1', sameSnapshot: false },
+    });
   });
 
   it('records a failed step and goes on to the next queued run', async () => {

@@ -127,8 +127,9 @@ export interface Series {
 }
 
 /**
- * Lines over a 0–1 scale: one per series, a dashed line at the visit bar, and labels along
- * the bottom. `slots` spaces the x axis (an epoch count, say) so lines grow as data arrives.
+ * Lines from `floor` to `max` (accuracy, 0–1, by default): one per series, a dashed line at the
+ * visit bar (unless `target` is null), and labels along the bottom. `slots` spaces the x axis
+ * (an epoch count, say) so lines grow as data arrives; `marker` marks one slot (the best epoch).
  */
 export function AccuracyChart({
   series,
@@ -136,6 +137,10 @@ export function AccuracyChart({
   slots,
   width,
   floor,
+  max = 1,
+  format = (v: number) => `${Math.round(v * 100)}%`,
+  target = 0.9,
+  marker,
   accessibilityLabel,
 }: {
   series: Series[];
@@ -143,19 +148,24 @@ export function AccuracyChart({
   slots: number;
   width: number;
   floor: number;
+  max?: number;
+  format?: (v: number) => string;
+  target?: number | null;
+  marker?: { at: number; text: string };
   accessibilityLabel: string;
 }) {
   const { theme } = useUnistyles();
   const { t } = useTranslation('capture');
-  const height = 150;
+  const height = marker ? 162 : 150;
   const left = 34;
   const right = width - 8;
   const top = 10;
-  const bottom = height - 20;
+  const bottom = (marker ? 150 : height) - 20;
   const x = (i: number) =>
     slots <= 1 ? (left + right) / 2 : left + (i * (right - left)) / (slots - 1);
-  const y = (v: number) => bottom - ((Math.max(v, floor) - floor) / (1 - floor)) * (bottom - top);
-  const grid = [1, floor + (1 - floor) / 2, floor];
+  const y = (v: number) =>
+    bottom - ((Math.min(Math.max(v, floor), max) - floor) / (max - floor)) * (bottom - top);
+  const grid = [max, floor + (max - floor) / 2, floor];
   if (width <= 0) return <View style={{ height }} />;
   return (
     <Svg width={width} height={height} accessible accessibilityLabel={accessibilityLabel}>
@@ -179,26 +189,58 @@ export function AccuracyChart({
           fill={theme.colors.muted}
           textAnchor="end"
         >
-          {`${Math.round(g * 100)}%`}
+          {format(g)}
         </SvgText>
       ))}
-      <Line
-        x1={left}
-        x2={right}
-        y1={y(0.9)}
-        y2={y(0.9)}
-        stroke={theme.colors.text}
-        strokeOpacity={0.6}
-        strokeDasharray="4 4"
-      />
-      <SvgText x={right} y={y(0.9) - 5} fontSize={10} fill={theme.colors.muted} textAnchor="end">
-        {t('lab.target')}
-      </SvgText>
+      {target != null ? (
+        <>
+          <Line
+            x1={left}
+            x2={right}
+            y1={y(target)}
+            y2={y(target)}
+            stroke={theme.colors.text}
+            strokeOpacity={0.6}
+            strokeDasharray="4 4"
+          />
+          <SvgText
+            x={right}
+            y={y(target) - 5}
+            fontSize={10}
+            fill={theme.colors.muted}
+            textAnchor="end"
+          >
+            {t('lab.target')}
+          </SvgText>
+        </>
+      ) : null}
+      {marker ? (
+        <>
+          <Line
+            x1={x(marker.at)}
+            x2={x(marker.at)}
+            y1={top}
+            y2={bottom}
+            stroke={theme.colors.accent}
+            strokeDasharray="3 3"
+          />
+          <SvgText
+            x={x(marker.at)}
+            y={height - 2}
+            fontSize={10}
+            fontWeight="600"
+            fill={theme.colors.accent}
+            textAnchor="middle"
+          >
+            {marker.text}
+          </SvgText>
+        </>
+      ) : null}
       {labels.map((l) => (
         <SvgText
           key={l.at}
           x={x(l.at)}
-          y={height - 4}
+          y={(marker ? 150 : height) - 4}
           fontSize={10}
           fill={theme.colors.muted}
           textAnchor="middle"

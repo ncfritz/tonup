@@ -1,7 +1,11 @@
 // What Capture's Overview and Models tabs read (capture-lab.md › API used by Capture). The
 // same numbers as Lab's own pages, without the file paths a phone has no use for.
+import { and, desc, eq } from 'drizzle-orm';
+
+import { db } from './db/client';
+import { models, verifyResults } from './db/schema';
 import { overviewCounts, prefillStats, type OverviewCounts, type PrefillStats } from './queries';
-import { activeModel, listModels } from './runs';
+import { activeModel, getRun, listModels } from './runs';
 import { coverage, modelProgress, type Coverage } from './verify';
 
 export interface PhoneScores {
@@ -72,5 +76,66 @@ export function phoneModels(): PhoneModels {
     models: listModels().map(scores),
     prefill: prefillStats(),
     testPhotos: overviewCounts().bySplit.test,
+  };
+}
+
+export interface RunComparison {
+  /** The model a training run made, with where it stands now. */
+  made: { id: number; name: string; status: PhoneScores['status'] } | null;
+  /** The model it started from, and its numbers to compare with. */
+  base: {
+    id: number;
+    name: string;
+    visitCorrect: number | null;
+    dartCorrect: number | null;
+    boardFound: number | null;
+    /** Measured on the same verify photos as the run's own check (so a fair comparison). */
+    sameSnapshot: boolean;
+  } | null;
+}
+
+/**
+ * For Capture's past run: what it made and the model it started from. The base's numbers are
+ * from the same snapshot when a verification measured it there, else its latest.
+ */
+export function runComparison(runId: number): RunComparison | null {
+  const data = getRun(runId);
+  if (!data) return null;
+  const { run } = data;
+  const d = db();
+  const made = run.modelId
+    ? (d
+        .select({ id: models.id, name: models.name, status: models.status })
+        .from(models)
+        .where(eq(models.id, run.modelId))
+        .get() ?? null)
+    : null;
+  const baseId = run.kind === 'train' ? run.params.baseModelId : undefined;
+  const baseModel = baseId ? d.select().from(models).where(eq(models.id, baseId)).get() : undefined;
+  if (!baseModel) return { made, base: null };
+  const same = run.snapshotId
+    ? d
+        .select()
+        .from(verifyResults)
+        .where(
+          and(
+            eq(verifyResults.modelId, baseModel.id),
+            eq(verifyResults.snapshotId, run.snapshotId),
+          ),
+        )
+        .orderBy(desc(verifyResults.createdAt))
+        .get()
+    : undefined;
+  const from = same ?? baseModel;
+  return {
+    made,
+    base: {
+      id: baseModel.id,
+      name: baseModel.name,
+      visitCorrect: from.visitCorrect,
+      dartCorrect: from.dartCorrect,
+      boardFound: from.boardFound,
+      sameSnapshot: !!same,
+    },
   };
 }

@@ -38,12 +38,14 @@ const OVERHANG = Math.max(0, (PLAY_SIZE + 4 - TAB_BAR_HEIGHT) / 2);
  */
 export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const { theme } = useUnistyles();
-  // Tabs are the routes with an icon, and home; anything else is a screen under a tab.
+  // Tabs are the routes with an icon, and home; anything else is a screen under one.
   const visible = state.routes.filter((r) => r.name === 'index' || r.name in ICONS);
   const current = state.routes[state.index];
+  // A screen under a tab ("runs/[id]") shows that tab as current; anything else, home.
+  const parent = current?.name.split('/')[0];
   const highlighted = visible.some((r) => r.key === current?.key)
     ? current?.key
-    : visible.find((r) => r.name === 'index')?.key;
+    : (visible.find((r) => r.name === parent) ?? visible.find((r) => r.name === 'index'))?.key;
 
   return (
     <View pointerEvents="box-none" style={styles.wrap}>

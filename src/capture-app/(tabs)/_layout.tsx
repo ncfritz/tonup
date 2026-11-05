@@ -24,6 +24,8 @@ export default function CaptureTabs() {
       <Tabs.Screen name="settings" options={{ title: t('tabs.settings') }} />
       {/* A session's photos: under Sessions, with the bar, but not a tab of its own. */}
       <Tabs.Screen name="sessions/[id]" options={{ title: t('tabs.sessions'), href: null }} />
+      {/* A run: under Runs, likewise. */}
+      <Tabs.Screen name="runs/[id]" options={{ title: t('tabs.runs'), href: null }} />
     </Tabs>
   );
 }

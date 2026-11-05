@@ -54,7 +54,7 @@ export interface SideTab {
 export function SideTabs({
   id,
   tabs,
-  width = 340,
+  width = 440,
   defaultOpen = true,
 }: {
   id: string;

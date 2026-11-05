@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
@@ -23,7 +24,7 @@ import {
   type RunSummary,
 } from '@/features/capture-lab/labData';
 import { fetchActiveModel } from '@/features/capture-lab/lab';
-import { Button, Screen, Text } from '@/ui';
+import { Button, Pressable, Screen, Text } from '@/ui';
 
 interface RunsData {
   runs: RunSummary[];
@@ -136,9 +137,11 @@ function RunList({ d, labUrl, reload }: { d: RunsData; labUrl: string; reload: (
           </Text>
           <View style={styles.list}>
             {earlier.slice(0, 20).map((r, i) => (
-              <View
+              <Pressable
                 key={r.id}
+                accessibilityRole="button"
                 style={[styles.runRow, i > 0 && styles.divider]}
+                onPress={() => router.push(`/runs/${r.id}`)}
                 testID={`run-${r.id}`}
               >
                 <View style={styles.flex}>
@@ -173,7 +176,7 @@ function RunList({ d, labUrl, reload }: { d: RunsData; labUrl: string; reload: (
                     </Text>
                   ) : null}
                 </View>
-              </View>
+              </Pressable>
             ))}
           </View>
         </>

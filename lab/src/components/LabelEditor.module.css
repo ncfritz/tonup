@@ -24,6 +24,8 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  padding: 16px 16px 0;
 }
 
 /* The photo, then its line directly under it. */
@@ -35,6 +37,8 @@
 
 .frameWrap {
   position: relative;
+  border-radius: 5px;
+  overflow: hidden;
 }
 
 .frame {
@@ -80,13 +84,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 4px 12px;
-  padding: 10px 16px;
+  padding: 10px 0;
 }
 
 .scores {
   /* The rest of the width, its table edge to edge. */
   flex: 1;
-  min-width: 400px;
+  min-width: 460px;
   min-height: 0;
   overflow: auto;
   border-left: 1px solid var(--ant-color-border-secondary);
@@ -173,4 +177,18 @@
     border-left: none;
     border-top: 1px solid var(--ant-color-border-secondary);
   }
+}
+
+/* A dart's value: monospace, just wide enough for the longest ("Bounce-out"). */
+.entered:global(.ant-select) {
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  width: calc(10ch + 32px);
+  font-family: var(--mono);
+}
+
+.entered:global(.ant-select) :global(.ant-select-selector),
+.entered:global(.ant-select) :global(input.ant-select-selection-search-input),
+.entered:global(.ant-select) :global(.ant-select-selection-item),
+.entered:global(.ant-select) :global(.ant-select-selection-placeholder) {
+  font-family: var(--mono) !important;
 }

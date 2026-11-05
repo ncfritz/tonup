@@ -62,4 +62,16 @@ describe('TabBar', () => {
     await fireEvent.press(screen.getByRole('tab', { name: 'Play' }));
     expect(navigateToTab).toHaveBeenCalledWith('index-key');
   });
+
+  it('shows a screen under a tab as that tab', async () => {
+    const { props: p } = props(2);
+    const routes = [...p.state.routes, { key: 'rule-key', name: 'rules/[id]' }];
+    const under = {
+      ...p,
+      state: { ...p.state, routes, index: routes.length - 1 },
+      descriptors: { ...p.descriptors, 'rule-key': { options: { title: 'Rules' } } },
+    } as unknown as typeof p;
+    await render(<TabBar {...under} />);
+    expect(screen.getByRole('tab', { name: 'Rules' })).toBeSelected();
+  });
 });

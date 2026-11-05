@@ -98,7 +98,25 @@ export interface RunSummary {
   /** A verification's models, by name. */
   models?: string[];
   visitCorrect: number | null;
-  params: { epochs?: number; from?: 'scratch' | 'model'; modelIds?: number[] };
+  dartCorrect: number | null;
+  boardFound: number | null;
+  /** Where its check ran ("verify set, snapshot 7") and on how many photos. */
+  evaluatedOn: string | null;
+  samples: number | null;
+  /** The photos it trained, validated and was checked on. */
+  snapshot: { train: number; val: number; test: number } | null;
+  params: {
+    epochs?: number;
+    from?: 'scratch' | 'model';
+    baseModelId?: number;
+    modelIds?: number[];
+    deepdarts?: boolean;
+    captures?: boolean;
+    lr?: number;
+    batch?: number;
+    captureWeight?: number;
+    deepdartsSample?: number;
+  };
 }
 
 export interface EpochMetrics {
@@ -106,13 +124,43 @@ export interface EpochMetrics {
   visit_correct: number;
   dart_correct: number;
   board_found: number;
+  loss: number;
+  val_loss: number;
   seconds: number;
+  images_per_second?: number;
+  /** The checkpoint kept (best validation visit so far). */
+  best?: boolean;
+}
+
+/** A past run's model and the one it started from (Lab's runComparison). */
+export interface RunComparison {
+  made: { id: number; name: string; status: ModelScores['status'] } | null;
+  base: {
+    id: number;
+    name: string;
+    visitCorrect: number | null;
+    dartCorrect: number | null;
+    boardFound: number | null;
+    /** On the same verify photos as the run's own check. */
+    sameSnapshot: boolean;
+  } | null;
 }
 
 export interface RunDetail {
   run: RunSummary;
   metrics: EpochMetrics[];
-  log: { step: { epoch: number; step: number; of: number } | null };
+  log: { tail?: string; step: { epoch: number; step: number; of: number } | null };
+  comparison?: RunComparison | null;
+}
+
+/** The epoch whose checkpoint was kept: marked by Lab, else the best validation visit. */
+export function bestEpoch(metrics: EpochMetrics[]): EpochMetrics | null {
+  const marked = metrics.filter((m) => m.best).at(-1);
+  if (marked) return marked;
+  return metrics.reduce<EpochMetrics | null>(
+    (b, m) => (!b || m.visit_correct > b.visit_correct ? m : b),
+    null,
+  );
 }
 
 export const fetchOverview = (url: string, f?: typeof fetch) =>
