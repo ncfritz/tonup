@@ -243,9 +243,10 @@
     "verify": "Verify {count}",
     "progress": "Accuracy by model",
     "progressA11y": "Visit, segment and board accuracy for each model, oldest first",
-    "coverage": "What to shoot next",
+    "coverage": "Coverage",
+    "shootNext": "What to shoot next",
     "coverageNote": "share of photos",
-    "thin": "{count, plural, one {Thin, so aim the next sessions here:} other {Thin, so aim the next sessions at these:}}",
+    "thin": "{count, plural, one {Thin in the dataset so far: aim the next sessions here.} other {Thin in the dataset so far: aim the next sessions at these.}}",
     "prefill": "of {model}'s pre-filled visits kept as placed ({count} visits)"
   },
   "models": {
