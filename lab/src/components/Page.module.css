@@ -236,3 +236,8 @@
     border-top: 1px solid var(--ant-color-border-secondary);
   }
 }
+
+/* A part of a drawer, with room before the next. */
+.drawerSection + .drawerSection {
+  margin-top: 32px;
+}

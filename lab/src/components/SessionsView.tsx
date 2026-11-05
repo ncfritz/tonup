@@ -1,7 +1,7 @@
 'use client';
 
-import { DeleteOutlined } from '@ant-design/icons';
-import { App, Alert, Button, Input, Popconfirm, Space, Table, Tag, Typography } from 'antd';
+import { DeleteOutlined, ImportOutlined } from '@ant-design/icons';
+import { App, Alert, Button, Drawer, Input, Popconfirm, Space, Table, Tag, Typography } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -11,20 +11,24 @@ import type { ImportResult } from '~/lib/ingest';
 import type { SessionRow } from '~/lib/queries';
 
 import { SplitTag } from './CaptureBits';
-import { pageStyles, Panel, Panels, Section } from './Page';
+import { pageStyles, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 
-/** Sessions, importing a captures folder, and where the DeepDarts download is. */
+/** Sessions; importing a captures folder and where the DeepDarts download is, in a drawer. */
 export function SessionsView({
   sessions,
   deepdarts,
+  openImport = false,
 }: {
   sessions: SessionRow[];
   deepdarts: DeepdartsSummary | null;
+  /** Open the drawer from the start (`?import=1`, from Overview's links). */
+  openImport?: boolean;
 }) {
   const { message } = App.useApp();
   const router = useRouter();
   const [folder, setFolder] = useState('');
+  const [drawer, setDrawer] = useState(openImport);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [ddPath, setDdPath] = useState(deepdarts?.path ?? '');
@@ -68,79 +72,13 @@ export function SessionsView({
       <PageHeader
         title="Sessions"
         subtitle="Each session’s set is chosen when Lab first sees it, and never changes"
+        extra={
+          <Button icon={<ImportOutlined />} onClick={() => setDrawer(true)}>
+            Import and DeepDarts
+          </Button>
+        }
       />
       <PageBody>
-        <Panels min={420}>
-          <Panel title="Import a captures folder">
-            <Typography.Paragraph type="secondary">
-              Ton Up’s kept photos: copy Files › On My iPhone › Ton Up › captures to this Mac, then
-              give its path. Photos Lab already has are skipped.
-            </Typography.Paragraph>
-            <Space.Compact style={{ width: '100%' }}>
-              <Input
-                placeholder="~/Downloads/captures"
-                value={folder}
-                onChange={(e) => setFolder(e.target.value)}
-                onPressEnter={runImport}
-                aria-label="Folder to import"
-              />
-              <Button type="primary" loading={importing} disabled={!folder} onClick={runImport}>
-                Import
-              </Button>
-            </Space.Compact>
-            {result ? (
-              <Alert
-                style={{ marginTop: 12 }}
-                type={result.failed.length ? 'warning' : 'success'}
-                showIcon
-                title={`Imported ${result.imported}, skipped ${result.skipped} already here${
-                  result.failed.length ? `, ${result.failed.length} failed` : ''
-                }`}
-                description={
-                  result.failed.length ? (
-                    <ul style={{ margin: 0, paddingLeft: 18 }}>
-                      {result.failed.slice(0, 8).map((f) => (
-                        <li key={f.file}>
-                          {f.file}: {f.error}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null
-                }
-              />
-            ) : null}
-          </Panel>
-
-          <Panel title="DeepDarts">
-            <Typography.Paragraph type="secondary">
-              The folder holding labels.pkl and cropped_images/800 (ml/README.md). Training reads it
-              from there; Lab doesn’t copy it.
-            </Typography.Paragraph>
-            <Space.Compact style={{ width: '100%' }}>
-              <Input
-                placeholder="~/Workplace/tonup/ml/data/deepdarts"
-                value={ddPath}
-                onChange={(e) => setDdPath(e.target.value)}
-                aria-label="DeepDarts folder"
-              />
-              <Button onClick={saveDeepdarts} disabled={!ddPath}>
-                Save
-              </Button>
-            </Space.Compact>
-            {deepdarts ? (
-              <div style={{ marginTop: 12 }}>
-                {deepdarts.ok ? (
-                  <Tag color="success">
-                    {deepdarts.photos.toLocaleString()} photos in {deepdarts.folders} folders
-                  </Tag>
-                ) : (
-                  <Tag color="warning">{deepdarts.problem}</Tag>
-                )}
-              </div>
-            ) : null}
-          </Panel>
-        </Panels>
-
         <Section title={`Sessions · ${sessions.length}`} flush>
           <Table
             className={pageStyles.flush}
@@ -205,6 +143,83 @@ export function SessionsView({
           />
         </Section>
       </PageBody>
+      <Drawer
+        title="Import and DeepDarts"
+        open={drawer}
+        onClose={() => setDrawer(false)}
+        size={480}
+      >
+        <section className={pageStyles.drawerSection}>
+          <Typography.Title level={5}>Import a captures folder</Typography.Title>
+          <Typography.Paragraph type="secondary">
+            Ton Up’s kept photos: copy Files › On My iPhone › Ton Up › captures to this Mac, then
+            give its path. Photos Lab already has are skipped.
+          </Typography.Paragraph>
+          <Space.Compact style={{ width: '100%' }}>
+            <Input
+              placeholder="~/Downloads/captures"
+              value={folder}
+              onChange={(e) => setFolder(e.target.value)}
+              onPressEnter={runImport}
+              aria-label="Folder to import"
+            />
+            <Button type="primary" loading={importing} disabled={!folder} onClick={runImport}>
+              Import
+            </Button>
+          </Space.Compact>
+          {result ? (
+            <Alert
+              style={{ marginTop: 12 }}
+              type={result.failed.length ? 'warning' : 'success'}
+              showIcon
+              title={`Imported ${result.imported}, skipped ${result.skipped} already here${
+                result.failed.length ? `, ${result.failed.length} failed` : ''
+              }`}
+              description={
+                result.failed.length ? (
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {result.failed.slice(0, 8).map((f) => (
+                      <li key={f.file}>
+                        {f.file}: {f.error}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null
+              }
+            />
+          ) : null}
+        </section>
+
+        <section className={pageStyles.drawerSection}>
+          <Typography.Title level={5}>DeepDarts</Typography.Title>
+          <Typography.Paragraph type="secondary">
+            The folder holding labels.pkl and cropped_images/800 (ml/README.md). Training reads it
+            from there; Lab doesn’t copy it.
+          </Typography.Paragraph>
+          <Space.Compact style={{ width: '100%' }}>
+            <Input
+              placeholder="~/Workplace/tonup/ml/data/deepdarts"
+              value={ddPath}
+              onChange={(e) => setDdPath(e.target.value)}
+              aria-label="DeepDarts folder"
+            />
+            <Button onClick={saveDeepdarts} disabled={!ddPath}>
+              Save
+            </Button>
+          </Space.Compact>
+          {deepdarts ? (
+            <div style={{ marginTop: 12 }}>
+              {deepdarts.ok ? (
+                <Tag color="success">
+                  {deepdarts.photos.toLocaleString()} photos in {deepdarts.folders} folders
+                </Tag>
+              ) : (
+                <Tag color="warning">{deepdarts.problem}</Tag>
+              )}
+            </div>
+          ) : null}
+        </section>
+      </Drawer>
     </>
   );
 }

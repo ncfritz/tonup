@@ -52,7 +52,7 @@ export function Overview({
             <Count
               title="Sessions"
               value={counts.sessions}
-              note={<Link href="/sessions">Import a folder</Link>}
+              note={<Link href="/sessions?import=1">Import a folder</Link>}
             />
             <Count
               title="To review"
@@ -139,7 +139,7 @@ export function Overview({
                   <Tag color="warning">{deepdarts.problem}</Tag>
                 )
               ) : (
-                <Link href="/sessions">Not set</Link>
+                <Link href="/sessions?import=1">Not set</Link>
               ),
             },
             {

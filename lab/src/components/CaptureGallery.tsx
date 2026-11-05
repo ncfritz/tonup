@@ -94,8 +94,8 @@ export function CaptureGallery({
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 <>
-                  No captures here yet. Import a folder on <Link href="/sessions">Sessions</Link>,
-                  or sync from TU Capture.
+                  No captures here yet. Import a folder on{' '}
+                  <Link href="/sessions?import=1">Sessions</Link>, or sync from TU Capture.
                 </>
               }
             />
