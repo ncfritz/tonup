@@ -2,9 +2,9 @@
 // and a session's set.
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
-import { Text } from '@/ui';
+import { Icon, Pressable, Text, type IconName } from '@/ui';
 
 import type { SessionSummary } from './outbox';
 
@@ -14,6 +14,71 @@ export const TAG_GROUPS = [
   ['left', 'centre', 'right'],
 ] as const;
 export type TagKey = (typeof TAG_GROUPS)[number][number];
+
+const TAG_ICON: Record<TagKey, IconName> = {
+  lightOn: 'lightOn',
+  lightOff: 'lightOff',
+  daylight: 'daylight',
+  left: 'standLeft',
+  centre: 'standCentre',
+  right: 'standRight',
+};
+
+/**
+ * The quick tags as chips, a row per group, every chip the same width with its icon. `on` says
+ * which are set; `tone` is the chips' fill when off (the surface they sit on decides it).
+ */
+export function TagChips({
+  on,
+  onToggle,
+  tone = 'surface',
+  testID = 'tag',
+}: {
+  on: (k: TagKey) => boolean;
+  onToggle: (k: TagKey) => void;
+  tone?: 'surface' | 'surface2';
+  testID?: string;
+}) {
+  const { t } = useTranslation('capture');
+  const { theme } = useUnistyles();
+  return (
+    <View style={styles.tagRows}>
+      {TAG_GROUPS.map((group) => (
+        <View key={group[0]} style={styles.tagRow}>
+          {group.map((k) => {
+            const set = on(k);
+            return (
+              <Pressable
+                key={k}
+                accessibilityRole="button"
+                accessibilityState={{ selected: set }}
+                style={[styles.tag, { backgroundColor: theme.colors[tone] }, set && styles.tagOn]}
+                onPress={() => onToggle(k)}
+                testID={`${testID}-${k}`}
+              >
+                <Icon
+                  name={TAG_ICON[k]}
+                  size={16}
+                  color={set ? theme.colors.onAccent : theme.colors.text}
+                />
+                <Text
+                  variant="caption"
+                  tone={set ? 'onAccent' : 'text'}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
+                  style={styles.tagText}
+                >
+                  {t(`session.tags.${k}`)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
 
 /** Turns one tag on, and the others in its group off (tags are stored as their text). */
 export function toggleTag(tags: string[], k: TagKey, text: (k: TagKey) => string): string[] {
@@ -97,6 +162,21 @@ export function SplitChip({ split }: { split: SessionSummary['split'] }) {
 }
 
 const styles = StyleSheet.create((theme) => ({
+  tagRows: { gap: theme.spacing.xs },
+  tagRow: { flexDirection: 'row', gap: theme.spacing.xs },
+  tag: {
+    flex: 1,
+    flexBasis: 0,
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.s,
+    borderRadius: 18,
+  },
+  tagOn: { backgroundColor: theme.colors.accent },
+  tagText: { flexShrink: 1 },
   bar: {
     flexDirection: 'row',
     gap: 2,

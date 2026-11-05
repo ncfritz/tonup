@@ -19,7 +19,7 @@ import {
   SplitChip,
   StatusBar,
   StatusLine,
-  TAG_GROUPS,
+  TagChips,
   toggleTag,
   type TagKey,
 } from '@/features/capture-lab/SessionBits';
@@ -254,25 +254,12 @@ export default function CaptureHome() {
           <Text variant="caption" tone="muted">
             {t('home.newSessionNote')}
           </Text>
-          <View style={styles.tags}>
-            {TAG_GROUPS.flat().map((k) => {
-              const on = tags.includes(tagText(k));
-              return (
-                <Pressable
-                  key={k}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                  style={[styles.tag, on && styles.tagOn]}
-                  onPress={() => setTags(toggleTag(tags, k, tagText))}
-                  testID={`home-tag-${k}`}
-                >
-                  <Text variant="caption" tone={on ? 'onAccent' : 'text'}>
-                    {tagText(k)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <TagChips
+            tone="surface2"
+            testID="home-tag"
+            on={(k) => tags.includes(tagText(k))}
+            onToggle={(k) => setTags(toggleTag(tags, k, tagText))}
+          />
           <Button label={t('home.start')} onPress={startSession} testID="capture-start" />
         </View>
       )}
@@ -401,15 +388,6 @@ const styles = StyleSheet.create((theme) => ({
   count: { flex: 1, gap: 0 },
   links: { flexDirection: 'row', justifyContent: 'center', gap: theme.spacing.l },
   link: { minHeight: 44, justifyContent: 'center', paddingHorizontal: theme.spacing.xs },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.xs },
-  tag: {
-    minHeight: 36,
-    paddingHorizontal: theme.spacing.m,
-    borderRadius: 18,
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surface2,
-  },
-  tagOn: { backgroundColor: theme.colors.accent },
   strip: {
     flexDirection: 'row',
     gap: theme.spacing.s,

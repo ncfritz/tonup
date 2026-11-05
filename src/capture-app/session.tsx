@@ -8,7 +8,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { sessionPhotos, sessionsOn } from '@/features/capture-lab/outbox';
 import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { prefillFor } from '@/features/capture-lab/queue';
-import { TAG_GROUPS, toggleTag as toggled, type TagKey } from '@/features/capture-lab/SessionBits';
+import { TagChips, toggleTag as toggled, type TagKey } from '@/features/capture-lab/SessionBits';
 import { cropToSquare } from '@/features/capture-lab/square';
 import { useCapture, useLaterNote, useShot } from '@/features/capture-lab/store';
 import { haptics } from '@/services/haptics';
@@ -142,23 +142,7 @@ export default function CaptureSession() {
         </Pressable>
       </View>
       <View accessibilityLabel={t('session.tagsA11y')} style={styles.tags}>
-        {TAG_GROUPS.flat().map((k) => {
-          const on = session.tags.includes(tagText(k));
-          return (
-            <Pressable
-              key={k}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              style={[styles.tag, on && styles.tagOn]}
-              onPress={() => toggleTag(k)}
-              testID={`tag-${k}`}
-            >
-              <Text variant="caption" tone={on ? 'onAccent' : 'text'}>
-                {tagText(k)}
-              </Text>
-            </Pressable>
-          );
-        })}
+        <TagChips on={(k) => session.tags.includes(tagText(k))} onToggle={toggleTag} />
       </View>
       {/* The square viewfinder: exactly what the photo keeps (square.ts). */}
       <View style={{ width, height: width }} testID="session-viewfinder">
@@ -259,20 +243,7 @@ const styles = StyleSheet.create((theme) => ({
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
   },
-  tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.l,
-  },
-  tag: {
-    minHeight: 32,
-    paddingHorizontal: theme.spacing.m,
-    borderRadius: 16,
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surface,
-  },
-  tagOn: { backgroundColor: theme.colors.accent },
+  tags: { paddingHorizontal: theme.spacing.l },
   guideWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   // The board should fill about this circle.
   guide: {

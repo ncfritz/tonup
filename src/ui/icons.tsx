@@ -28,6 +28,41 @@ const paths = {
   // Zoom in and out (Capture's photo).
   plus: ['M12 5v14M5 12h14', []],
   minus: ['M5 12h14', []],
+  // Capture's session tags: the board light on and off, daylight, and where you stand (a board
+  // above the oche, the dot at your spot).
+  lightOn: [
+    'M10 17h4M10.5 20h3M12 4a5 5 0 0 0-3 9c.6.5 1 1.2 1 2h4c0-.8.4-1.5 1-2a5 5 0 0 0-3-9zM3 9h1.5M19.5 9H21M5 3.5l1 1M19 3.5l-1 1',
+    [],
+  ],
+  lightOff: [
+    'M10 17h4M10.5 20h3M12 4a5 5 0 0 0-3 9c.6.5 1 1.2 1 2h4c0-.8.4-1.5 1-2a5 5 0 0 0-3-9zM4 3l16 18',
+    [],
+  ],
+  daylight: [
+    'M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
+    [[12, 12, 4]],
+  ],
+  standLeft: [
+    'M3 21h18',
+    [
+      [12, 7, 4],
+      [5, 17, 1.5],
+    ],
+  ],
+  standCentre: [
+    'M3 21h18',
+    [
+      [12, 7, 4],
+      [12, 17, 1.5],
+    ],
+  ],
+  standRight: [
+    'M3 21h18',
+    [
+      [12, 7, 4],
+      [19, 17, 1.5],
+    ],
+  ],
 } as const satisfies Record<string, readonly [string, readonly (readonly number[])[]]>;
 
 export type IconName = keyof typeof paths;
