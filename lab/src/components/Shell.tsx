@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 
+import { HeaderBoard } from './HeaderBoard';
 import { setColorMode, useColorMode, useDark, type ColorMode } from './colorMode';
 import {
   PREF,
@@ -36,7 +37,7 @@ import styles from './Shell.module.css';
 /** Olympus's chrome colours: the header's navy and the collapsed rail's slate. */
 const NAVY = '#001529';
 const RAIL_BG = '#324354';
-const HEADER_HEIGHT = 56;
+const HEADER_HEIGHT = 72;
 /** Open, and the rail it collapses to. */
 const PAGES_WIDTH = 220;
 const PAGES_RAIL = 80;
@@ -66,29 +67,12 @@ function subscribeNarrow(l: () => void) {
 }
 const readNarrow = () => window.matchMedia(NARROW).matches;
 
+/** The name over the header's board (mockups › Header C). */
 function Wordmark() {
-  const { token } = theme.useToken();
   return (
-    <Link
-      href="/"
-      style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff' }}
-      aria-label="Ton Up Lab, Overview"
-    >
-      <span
-        aria-hidden
-        style={{
-          width: 26,
-          height: 26,
-          borderRadius: 13,
-          background: token.colorPrimary,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <span style={{ width: 9, height: 9, borderRadius: 5, background: '#fff' }} />
-      </span>
-      <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: 0.2 }}>Ton Up Lab</span>
+    <Link href="/" className={styles.wordmark} aria-label="Ton Up Lab, Overview">
+      <span className={styles.name}>Ton Up Lab</span>
+      <span className={styles.tagline}>Snap to score · training</span>
     </Link>
   );
 }
@@ -115,8 +99,11 @@ function Chrome({ children }: { children: ReactNode }) {
           lineHeight: `${HEADER_HEIGHT}px`,
           paddingInline: 24,
           flexShrink: 0,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
+        <HeaderBoard height={HEADER_HEIGHT} />
         <Wordmark />
         <div style={{ flex: 1 }} />
         <ModeSwitch />
