@@ -1,6 +1,6 @@
 'use client';
 
-import { Progress, Typography } from 'antd';
+import { Typography } from 'antd';
 
 import { SEGMENT_ORDER, STEEL_TIP_RADII_MM as R } from '@domain/board';
 
@@ -31,7 +31,7 @@ export const KIND_COLOUR: Record<HitKind, string> = {
 };
 const HEAT = '#fa541c';
 
-const KIND_ORDER: HitKind[] = ['treble', 'double', 'single', 'bull', 'miss'];
+const KIND_ORDER: HitKind[] = ['single', 'double', 'treble', 'bull', 'miss'];
 
 /** A ring sector from r0 to r1 (mm), centred on `deg` (0 up, clockwise), `span` wide. */
 function sector(r0: number, r1: number, deg: number, span: number, k: number, c: number) {
@@ -44,8 +44,8 @@ function sector(r0: number, r1: number, deg: number, span: number, k: number, c:
 
 /**
  * Where the shown captures' darts landed: the board as a heatmap (each bed filled by how many
- * darts it took, a single's two beds alike), and the values as a list, most first, a bar each
- * coloured by kind.
+ * darts it took, a single's two beds alike), and a row per number (1–20, 25, Bull, off the
+ * board) with its singles, doubles and trebles stacked in one bar.
  */
 export function HitBoard({ hits, darts }: { hits: Record<string, number>; darts: number }) {
   const dark = useDark();
@@ -92,10 +92,36 @@ export function HitBoard({ hits, darts }: { hits: Record<string, number>; darts:
       },
     ];
   });
-  const list = Object.entries(hits)
-    .map(([v, n]) => ({ v, n, ...kindOf(v) }))
-    .sort((a, b) => b.n - a.n || KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind));
-  const misses = list.filter((h) => h.kind === 'miss').reduce((s, h) => s + h.n, 0);
+  // A row per number, 1–20, then 25, Bull and off the board: its singles, doubles and trebles
+  // stacked in one bar.
+  const rows = [
+    ...Array.from({ length: 20 }, (_, i) => {
+      const n = i + 1;
+      const parts = {
+        single: hits[String(n)] ?? 0,
+        double: hits[`D${n}`] ?? 0,
+        treble: hits[`T${n}`] ?? 0,
+      };
+      return { key: String(n), label: String(n), parts };
+    }),
+    { key: '25', label: '25', parts: { bull: hits['25'] ?? 0 } },
+    { key: 'Bull', label: 'Bull', parts: { bull: hits.Bull ?? 0 } },
+    {
+      key: 'Miss',
+      label: 'Miss',
+      parts: {
+        miss: Object.entries(hits)
+          .filter(([v]) => kindOf(v).kind === 'miss')
+          .reduce((t, [, n]) => t + n, 0),
+      },
+    },
+  ].map((r) => ({
+    ...r,
+    total: Object.values(r.parts).reduce((t, n) => t + n, 0),
+  }));
+  const top = Math.max(1, ...rows.map((r) => r.total));
+  const misses = rows.at(-1)!.total;
+  const most = [...rows].sort((a, b) => b.total - a.total)[0];
 
   if (!darts) {
     return (
@@ -110,7 +136,7 @@ export function HitBoard({ hits, darts }: { hits: Record<string, number>; darts:
         viewBox={`0 0 ${size} ${size}`}
         className={styles.board}
         role="img"
-        aria-label={`Where ${darts} darts landed: most on ${list[0]?.v}`}
+        aria-label={`Where ${darts} darts landed: most on ${most?.label}`}
       >
         {beds.map((b) => (
           <g key={b.key}>
@@ -174,22 +200,35 @@ export function HitBoard({ hits, darts }: { hits: Record<string, number>; darts:
           </span>
         ))}
       </div>
-      <ul className={styles.list} aria-label="Darts by value">
-        {list.map((h) => (
-          <li key={h.v} className={styles.row}>
-            <span className={styles.value}>{h.v}</span>
-            <Progress
-              percent={(h.n / max) * 100}
-              showInfo={false}
-              strokeColor={KIND_COLOUR[h.kind]}
-              size="small"
-              className={styles.bar}
-            />
+      <ul className={styles.list} aria-label="Darts by number">
+        {rows.map((r) => (
+          <li
+            key={r.key}
+            className={styles.row}
+            aria-label={`${r.label}: ${r.total}${
+              'single' in r.parts
+                ? ` (${r.parts.single} single, ${r.parts.double} double, ${r.parts.treble} treble)`
+                : ''
+            }`}
+          >
+            <span className={styles.value}>{r.label}</span>
+            <span className={styles.track}>
+              {(Object.entries(r.parts) as [HitKind, number][]).map(([kind, n]) =>
+                n ? (
+                  <span
+                    key={kind}
+                    className={styles.part}
+                    style={{ width: `${(n / top) * 100}%`, background: KIND_COLOUR[kind] }}
+                    title={`${kind}: ${n}`}
+                  />
+                ) : null,
+              )}
+            </span>
             <span className={styles.count}>
-              {h.n}
+              {r.total}
               <Typography.Text type="secondary">
                 {' '}
-                · {Math.round((h.n / darts) * 100)}%
+                · {Math.round((r.total / darts) * 100)}%
               </Typography.Text>
             </span>
           </li>

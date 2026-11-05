@@ -46,17 +46,31 @@
   padding: 0 24px 16px;
 }
 
-.stripTile {
-  flex: 0 0 220px;
+/* A photo's card, in the grid and in a session's strip alike. */
+.card {
+  display: block;
+  min-width: 0;
   border-radius: 8px;
   overflow: hidden;
   background: var(--ant-color-fill-quaternary);
   color: inherit;
 }
 
-.stripTile:hover {
+.card:hover {
   background: var(--ant-color-fill-tertiary);
   color: inherit;
+}
+
+.stripTile {
+  flex: 0 0 220px;
+}
+
+/* By date: the same cards in a grid, with the same gaps and margins. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 16px 24px;
 }
 
 .more {

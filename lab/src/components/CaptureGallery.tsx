@@ -76,9 +76,6 @@ export function CaptureGallery({
         ? { review: '1', split: undefined }
         : { review: undefined, split: v === 'all' ? undefined : v },
     );
-  const thin = coverage.flatMap((c) =>
-    c.buckets.filter((b) => b.thin).map((b) => `${c.title}: ${b.bucket}`),
-  );
 
   return (
     <div className={styles.page}>
@@ -164,7 +161,7 @@ export function CaptureGallery({
                   </div>
                   <div className={styles.strip}>
                     {g.cards.map((c) => (
-                      <Tile key={c.id} c={c} className={styles.stripTile} />
+                      <Tile key={c.id} c={c} className={`${styles.card} ${styles.stripTile}`} />
                     ))}
                     {g.total > g.cards.length ? (
                       <Link
@@ -191,9 +188,9 @@ export function CaptureGallery({
             </>
           ) : (
             <>
-              <div className={pageStyles.tiles}>
+              <div className={styles.grid}>
                 {result.cards.map((c) => (
-                  <Tile key={c.id} c={c} className={pageStyles.tile} />
+                  <Tile key={c.id} c={c} className={styles.card} />
                 ))}
               </div>
               {result.total > result.pageSize ? (
@@ -212,7 +209,7 @@ export function CaptureGallery({
         </div>
         <SideTabs
           id="captures"
-          width={360}
+          width={480}
           tabs={[
             {
               key: 'show',
@@ -245,19 +242,6 @@ export function CaptureGallery({
                       <CoverageBlock key={c.key} c={c} />
                     ))}
                   </div>
-                  {thin.length ? (
-                    <div className={styles.paneSection}>
-                      <Typography.Text strong>What to shoot next</Typography.Text>
-                      <Typography.Text type="secondary" className={styles.small}>
-                        Thin in the dataset so far: aim the next sessions at these.
-                      </Typography.Text>
-                      <ul className={styles.thinList}>
-                        {thin.map((t) => (
-                          <li key={t}>{t}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
                 </>
               ),
             },

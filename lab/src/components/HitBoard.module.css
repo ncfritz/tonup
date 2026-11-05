@@ -58,10 +58,10 @@
 
 .row {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) 72px;
+  grid-template-columns: 44px minmax(0, 1fr) 72px;
   align-items: center;
   gap: 10px;
-  padding: 4px 0;
+  padding: 3px 0;
 }
 
 .value {
@@ -69,8 +69,16 @@
   font-weight: 600;
 }
 
-.bar:global(.ant-progress) {
-  margin: 0;
+.track {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--ant-color-fill-secondary);
+}
+
+.part {
+  height: 100%;
 }
 
 .count {
