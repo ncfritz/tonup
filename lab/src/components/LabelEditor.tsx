@@ -29,7 +29,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 
-import { CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
+import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
 import { measure } from '~/lib/conditions';
 import { CORRECTED } from '~/lib/prefill';
@@ -39,6 +39,7 @@ import type { CaptureDetail } from '~/lib/queries';
 
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
 import styles from './LabelEditor.module.css';
+import { MiniBoard } from './MiniBoard';
 import { PageHeader } from './PageHeader';
 import { SideTabs, type SideTab } from './SideTabs';
 
@@ -322,17 +323,30 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       title: 'Board points',
       children: (
         <>
-          <Flex wrap gap={6}>
-            {CALIBRATION_IDS.map((id) => (
-              <Button
-                key={id}
-                size="small"
-                type={isSel({ kind: 'point', id }) ? 'primary' : 'default'}
-                onClick={() => setSelected({ kind: 'point', id })}
-              >
-                {KEYPOINT_LABELS[id]} {label.points[id] ? '✓' : '· place'}
-              </Button>
-            ))}
+          <Flex vertical gap={6}>
+            {CALIBRATION_IDS.map((id) => {
+              const sel = isSel({ kind: 'point', id });
+              return (
+                <Button
+                  key={id}
+                  block
+                  type={sel ? 'primary' : 'default'}
+                  ghost={sel}
+                  onClick={() => setSelected({ kind: 'point', id })}
+                  style={{ height: 'auto', justifyContent: 'flex-start', padding: '6px 10px' }}
+                >
+                  <Flex align="center" gap={10} style={{ width: '100%' }}>
+                    <MiniBoard dot={boardPointOf(id)} size={36} />
+                    <Typography.Text strong style={{ minWidth: 44, textAlign: 'left' }}>
+                      {KEYPOINT_LABELS[id]}
+                    </Typography.Text>
+                    <Typography.Text type={label.points[id] ? 'secondary' : 'warning'}>
+                      {label.points[id] ? 'placed ✓' : 'click the photo to place'}
+                    </Typography.Text>
+                  </Flex>
+                </Button>
+              );
+            })}
           </Flex>
           {selected?.kind === 'point' && label.points[selected.id] ? (
             <Button
@@ -713,7 +727,27 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               isSel({ kind: 'dart', idx: row.idx }) ? 'ant-table-row-selected' : ''
             }
             columns={[
-              { title: '#', render: (_, row) => row.idx + 1, width: 32 },
+              {
+                title: '#',
+                render: (_, row) => (
+                  <Flex align="center" gap={8}>
+                    <MiniBoard
+                      size={40}
+                      lit={row.m?.board ?? row.m?.scored ?? row.entered}
+                      outlined={row.m?.mismatch ? row.entered : null}
+                      title={
+                        row.m?.scored
+                          ? `Dart ${row.idx + 1} scores ${row.m.scored}`
+                          : row.entered
+                            ? `Dart ${row.idx + 1}: ${row.entered}`
+                            : undefined
+                      }
+                    />
+                    {row.idx + 1}
+                  </Flex>
+                ),
+                width: 72,
+              },
               {
                 title: 'Entered',
                 render: (_, row) => (
