@@ -2,6 +2,9 @@ import { checkLab, normaliseLabUrl, outcomeOf } from './lab';
 import {
   labelQueue,
   labStanding,
+  syncAll,
+  waitingToSend,
+  type OutboxItem,
   sessionPhotos,
   sessionsOn,
   syncOutbox,
@@ -74,6 +77,7 @@ function memoryDrafts(): DraftStore & { items: Map<string, Draft> } {
     put: (d) => items.set(d.id, d),
     photoUri: (id) => `file:///drafts/${id}.jpg`,
     remove: (id) => items.delete(id),
+    mark: (id, patch) => items.set(id, { ...items.get(id)!, ...patch }),
   };
 }
 
@@ -133,6 +137,56 @@ describe('sessionsOn', () => {
       expect.objectContaining({ id: 's2', visits: 1, pending: 1 }),
       expect.objectContaining({ id: 's1', visits: 2, pending: 1, sent: 1, split: 'val' }),
     ]);
+  });
+});
+
+describe('Label later photos and Lab', () => {
+  it('sends them as photos to label, then counts them labelled once Lab has', async () => {
+    const store = memoryStore();
+    const drafts = memoryDrafts();
+    drafts.put(draftOf('d1', 's1', '2026-11-01T20:01:00Z'), '');
+    drafts.put(draftOf('d2', 's1', '2026-11-01T20:03:00Z'), '');
+    const sent: OutboxItem[] = [];
+    const r = await syncAll(
+      store,
+      drafts,
+      async (item) => {
+        sent.push(item);
+        return { kind: 'sent' };
+      },
+      async () => ({ d1: 'labelled', d2: 'unlabelled' }),
+    );
+    expect(sent.map((i) => [i.id, i.label.unlabelled, i.label.darts])).toEqual([
+      ['d1', true, []],
+      ['d2', true, []],
+    ]);
+    expect(r).toMatchObject({ sent: 2, labelledInLab: 1, offline: null });
+    expect(waitingToSend(store, drafts)).toBe(0);
+    expect(sessionsOn(store, drafts)).toEqual([
+      expect.objectContaining({ id: 's1', labelled: 1, unlabelled: 1, sent: 2, pending: 0 }),
+    ]);
+    // Labelled in Lab: not in the queue to label here; the other still is.
+    expect(labelQueue(drafts, { session: 's1' })).toEqual(['d2']);
+    expect(sessionPhotos(store, drafts, 's1').map((p) => [p.id, p.status, p.inLab])).toEqual([
+      ['d1', 'labelled', true],
+      ['d2', 'unlabelled', true],
+    ]);
+  });
+
+  it('keeps them to send when Lab can’t be reached, and doesn’t ask after them', async () => {
+    const store = memoryStore();
+    const drafts = memoryDrafts();
+    drafts.put(draftOf('d1', 's1', '2026-11-01T20:01:00Z'), '');
+    const states = jest.fn(async () => ({}));
+    const r = await syncAll(
+      store,
+      drafts,
+      async () => ({ kind: 'offline', error: 'no route' }),
+      states,
+    );
+    expect(r).toMatchObject({ sent: 0, offline: 'no route' });
+    expect(states).not.toHaveBeenCalled();
+    expect(waitingToSend(store, drafts)).toBe(1);
   });
 });
 
@@ -196,7 +250,8 @@ describe('labelling later', () => {
         labelled: 2,
         valuesOnly: 1,
         unlabelled: 2,
-        pending: 1,
+        // One visit, and the two Label later photos not sent yet.
+        pending: 3,
         split: 'val',
       }),
     ]);
@@ -218,6 +273,7 @@ describe('labelling later', () => {
         status: 'unlabelled',
         total: null,
         uri: 'file:///drafts/d1.jpg',
+        inLab: false,
       },
       {
         id: 'd2',
@@ -225,6 +281,7 @@ describe('labelling later', () => {
         status: 'unlabelled',
         total: null,
         uri: 'file:///drafts/d2.jpg',
+        inLab: false,
       },
       {
         id: 'b',

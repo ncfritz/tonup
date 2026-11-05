@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { CALIBRATION_IDS } from '@domain/camera';
-import { asc, eq, inArray, ne } from 'drizzle-orm';
+import { asc, eq, inArray, notInArray } from 'drizzle-orm';
 
 import { db } from './db/client';
 import { captures, labelDarts, labelPoints, sessions, snapshots } from './db/schema';
@@ -55,7 +55,8 @@ export function createSnapshot(now = new Date()): SnapshotInfo {
     })
     .from(captures)
     .innerJoin(sessions, eq(captures.sessionId, sessions.id))
-    .where(ne(captures.status, 'rejected'))
+    // Left out, or still to label: neither is in the dataset.
+    .where(notInArray(captures.status, ['rejected', 'unlabelled']))
     .orderBy(asc(captures.takenAt))
     .all()
     .filter((r) => r.labelId !== null);

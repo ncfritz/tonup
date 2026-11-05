@@ -24,6 +24,7 @@ export function SplitTag({ split }: { split: keyof typeof SPLIT_TAG }) {
 
 export function StatusTag({ status }: { status: string }) {
   if (status === 'values-only') return <Tag>Values only</Tag>;
+  if (status === 'unlabelled') return <Tag color="gold">To label</Tag>;
   if (status === 'rejected') return <Tag color="red">Left out</Tag>;
   return null;
 }

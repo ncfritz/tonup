@@ -196,6 +196,9 @@
     "tileValuesOnly": "Visit {n}, values only, {total}",
     "tileToLabel": "Visit {n}, to label",
     "badgeLabelled": "✓ {total}",
+    "badgeInLab": "✓ Lab",
+    "tileInLab": "Visit {n}, labelled in Lab",
+    "orInLab": "Lab has the photos still to label: label them here, or in Lab's review queue.",
     "badgeValuesOnly": "V {total}"
   },
   "standing": {

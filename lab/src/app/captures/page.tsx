@@ -15,7 +15,10 @@ export default async function CapturesPage({ searchParams }: { searchParams: Pro
     sessionId: one(q.session) || undefined,
     review: one(q.review) === '1',
     status:
-      status === 'labelled' || status === 'values-only' || status === 'rejected'
+      status === 'labelled' ||
+      status === 'values-only' ||
+      status === 'unlabelled' ||
+      status === 'rejected'
         ? status
         : undefined,
     page: Number(one(q.page) ?? 1) || 1,

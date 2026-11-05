@@ -167,6 +167,15 @@ export function bestEpoch(metrics: EpochMetrics[]): EpochMetrics | null {
 export const fetchLabSessions = (url: string, f?: typeof fetch) =>
   call<{ ids: string[] }>(url, '/api/sessions', undefined, f);
 
+/** Where Lab's captures stand, by ID (labelled, values-only, unlabelled, rejected). */
+export const fetchCaptureStates = (url: string, ids: string[], f?: typeof fetch) =>
+  call<{ states: Record<string, string> }>(
+    url,
+    '/api/captures/states',
+    { ...post, body: JSON.stringify({ ids }) },
+    f,
+  );
+
 export const fetchOverview = (url: string, f?: typeof fetch) =>
   call<Overview>(url, '/api/overview', undefined, f);
 export const fetchModels = (url: string, f?: typeof fetch) =>

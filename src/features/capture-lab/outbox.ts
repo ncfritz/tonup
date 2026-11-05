@@ -70,8 +70,9 @@ export async function syncOutbox(
 }
 
 /**
- * A photo saved with "Label later": kept on the phone, and not sent, until it's labelled
- * (docs/plan/capture-lab.md › Label later). Labelling it makes a visit with the same ID.
+ * A photo saved with "Label later" (docs/plan/capture-lab.md › Label later): sent to Lab as it
+ * is, to label there, and kept on the phone to label here instead if wanted. Labelling it here
+ * makes a visit with the same ID, which Lab takes as its label.
  */
 export interface Draft {
   id: string;
@@ -80,6 +81,79 @@ export interface Draft {
   width: number;
   height: number;
   zoom?: number;
+  /** Lab has the photo, to label. */
+  sentToLab?: boolean;
+  /** Labelled in Lab: what it became. */
+  labStatus?: 'labelled' | 'values-only';
+}
+
+/** What a draft is sent to Lab as: the photo, its session, and no label yet. */
+export function draftUpload(d: Draft): OutboxItem {
+  return {
+    id: d.id,
+    label: {
+      id: d.id,
+      image: `${d.id}.jpg`,
+      width: d.width,
+      height: d.height,
+      createdAt: d.createdAt,
+      sessionId: d.session.id,
+      sessionStartedAt: d.session.startedAt,
+      tags: d.session.tags,
+      calibration: [],
+      darts: [],
+      valuesOnly: false,
+      unlabelled: true,
+      prefillModel: null,
+      ...(d.zoom ? { zoom: d.zoom } : {}),
+    },
+  };
+}
+
+/** Sends Lab the drafts it doesn't have yet, oldest first; stops if Lab can't be reached. */
+export async function syncDrafts(
+  drafts: DraftStore,
+  upload: (item: OutboxItem, photoUri: string) => Promise<UploadOutcome>,
+): Promise<SyncResult> {
+  const items = drafts
+    .list()
+    .filter((d) => !d.sentToLab)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const result: SyncResult = { sent: 0, rejected: [], offline: null, left: items.length };
+  for (const d of items) {
+    const outcome = await upload(draftUpload(d), drafts.photoUri(d.id));
+    if (outcome.kind === 'offline') {
+      result.offline = outcome.error;
+      break;
+    }
+    if (outcome.kind === 'rejected') {
+      result.rejected.push({ id: d.id, error: outcome.error });
+      continue;
+    }
+    drafts.mark(d.id, { sentToLab: true });
+    result.sent++;
+    result.left--;
+  }
+  return result;
+}
+
+/** Drafts sent to Lab whose label is still to come: the IDs to ask Lab about. */
+export const draftsAwaitingLab = (drafts: DraftStore) =>
+  drafts
+    .list()
+    .filter((d) => d.sentToLab && !d.labStatus)
+    .map((d) => d.id);
+
+/** Notes the drafts Lab has labelled, from its states by ID; returns how many. */
+export function applyLabStates(drafts: DraftStore, states: Record<string, string>): number {
+  let n = 0;
+  for (const d of drafts.list()) {
+    const s = states[d.id];
+    if (d.labStatus || (s !== 'labelled' && s !== 'values-only')) continue;
+    drafts.mark(d.id, { labStatus: s });
+    n++;
+  }
+  return n;
 }
 
 /** Where drafts live; the app uses Documents/drafts (outboxFiles.ts). */
@@ -89,6 +163,8 @@ export interface DraftStore {
   photoUri(id: string): string;
   /** Drops a draft once it's been labelled (its photo has gone to the outbox). */
   remove(id: string): void;
+  /** Notes what Lab has of it. */
+  mark(id: string, patch: Pick<Draft, 'sentToLab' | 'labStatus'>): void;
 }
 
 export type PhotoStatus = 'labelled' | 'values-only' | 'unlabelled';
@@ -158,7 +234,11 @@ export function sessionsOn(store: OutboxStore, drafts?: DraftStore): SessionSumm
   for (const d of drafts?.list() ?? []) {
     const s = entry(d.session.id, d.session.startedAt, d.session.tags);
     s.visits++;
-    s.unlabelled++;
+    if (d.labStatus === 'labelled') s.labelled++;
+    else if (d.labStatus === 'values-only') s.valuesOnly++;
+    else s.unlabelled++;
+    if (d.sentToLab) s.sent++;
+    else s.pending++;
   }
   return [...byId.values()].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
 }
@@ -171,6 +251,8 @@ export interface SessionPhoto {
   total: number | null;
   /** Null when the photo's been cleared from the phone. */
   uri: string | null;
+  /** A draft Lab has (labelled there, or to label there). */
+  inLab?: boolean;
 }
 
 /** One session's photos, in the order they were taken. */
@@ -197,9 +279,10 @@ export function sessionPhotos(
     out.push({
       id: d.id,
       createdAt: d.createdAt,
-      status: 'unlabelled',
+      status: d.labStatus ?? 'unlabelled',
       total: null,
       uri: drafts.photoUri(d.id),
+      inLab: !!d.sentToLab,
     });
   }
   return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -213,11 +296,49 @@ export function labelQueue(
   drafts: DraftStore,
   which: { session: string } | { except: string | null },
 ): string[] {
-  return drafts
-    .list()
-    .filter((d) =>
-      'session' in which ? d.session.id === which.session : d.session.id !== which.except,
-    )
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .map((d) => d.id);
+  return (
+    drafts
+      .list()
+      // Labelled in Lab already: nothing to do here.
+      .filter((d) => !d.labStatus)
+      .filter((d) =>
+        'session' in which ? d.session.id === which.session : d.session.id !== which.except,
+      )
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .map((d) => d.id)
+  );
+}
+
+/** Visits and Label later photos still to go to Lab. */
+export const waitingToSend = (store: OutboxStore, drafts: DraftStore) =>
+  store.pending().length + drafts.list().filter((d) => !d.sentToLab).length;
+
+/**
+ * One sync: the outbox's visits, then the Label later photos Lab doesn't have, then asks Lab
+ * which of those it has labelled since. Stops at the first sign Lab can't be reached.
+ */
+export async function syncAll(
+  store: OutboxStore,
+  drafts: DraftStore,
+  upload: (item: OutboxItem, photoUri: string) => Promise<UploadOutcome>,
+  states: (ids: string[]) => Promise<Record<string, string> | null>,
+): Promise<SyncResult & { labelledInLab: number }> {
+  const visits = await syncOutbox(store, upload);
+  const photos = visits.offline
+    ? { sent: 0, rejected: [], offline: null, left: 0 }
+    : await syncDrafts(drafts, upload);
+  let labelledInLab = 0;
+  const offline = visits.offline ?? photos.offline;
+  const ask = draftsAwaitingLab(drafts);
+  if (!offline && ask.length) {
+    const got = await states(ask);
+    if (got) labelledInLab = applyLabStates(drafts, got);
+  }
+  return {
+    sent: visits.sent + photos.sent,
+    rejected: [...visits.rejected, ...photos.rejected],
+    offline,
+    left: visits.left + photos.left,
+    labelledInLab,
+  };
 }

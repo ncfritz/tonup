@@ -113,6 +113,13 @@ export const fileDrafts: DraftStore = {
     meta.writeSync(JSON.stringify(draft));
   },
   photoUri: (id) => new File(dir('drafts'), `${id}.jpg`).uri,
+  mark(id, patch) {
+    const meta = new File(dir('drafts'), `${id}.json`);
+    if (!meta.exists) return;
+    const draft = JSON.parse(meta.textSync()) as Draft;
+    meta.create({ overwrite: true });
+    meta.writeSync(JSON.stringify({ ...draft, ...patch }));
+  },
   remove(id) {
     const d = dir('drafts');
     for (const name of [`${id}.jpg`, `${id}.json`]) {

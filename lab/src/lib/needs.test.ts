@@ -74,6 +74,12 @@ describe('needsOf', () => {
     expect(n.list.at(-1)!.key).toBe('corrected');
   });
 
+  it('asks for a photo sent to label here to be labelled', () => {
+    const n = needsOf(label({}), measured({}), false, true);
+    expect(n.list.map((x) => x.key)).toEqual(['unlabelled']);
+    expect(n.list[0]!.target).toEqual({ kind: 'point', id: 'cal20' });
+  });
+
   it('is empty when nothing needs a look', () => {
     expect(needsOf(label({}), measured({}), false).list).toEqual([]);
   });

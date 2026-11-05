@@ -37,6 +37,8 @@ jest.mock('./outboxFiles', () => ({
     put: (d: Draft) => mockDrafts.set(d.id, d),
     photoUri: (id: string) => `file:///drafts/${id}.jpg`,
     remove: (id: string) => mockDrafts.delete(id),
+    mark: (id: string, patch: Partial<Draft>) =>
+      mockDrafts.set(id, { ...mockDrafts.get(id)!, ...patch }),
   },
   fileOutbox: {
     pending: () => [...mockBox.values()].filter((i) => !i.done),
@@ -262,7 +264,14 @@ it('shows Lab’s status, sends what’s waiting, and counts each session’s ph
     await render(<CaptureHome />);
   });
   expect(screen.getByTestId('capture-lab-status')).toHaveTextContent(/Lab connected/);
-  expect(mockUploads.map((u) => u.id).sort()).toEqual(['a', 'b']);
+  // The visits, and the Label later photos as photos to label in Lab.
+  expect(mockUploads.map((u) => u.id).sort()).toEqual(['a', 'b', 'd1', 'd2']);
+  expect(
+    mockUploads
+      .filter((u) => u.label.unlabelled)
+      .map((u) => u.id)
+      .sort(),
+  ).toEqual(['d1', 'd2']);
   expect(screen.getByTestId('capture-pending')).toHaveTextContent('outbox empty');
   // The session being shot: its set, counts, and labelling what's left.
   const current = screen.getByTestId('capture-current');
@@ -281,7 +290,7 @@ it('shows Lab’s status, sends what’s waiting, and counts each session’s ph
 });
 
 it('says which sessions on the phone Lab hasn’t got, and why', async () => {
-  mockLabIds = ['sess-1'];
+  mockLabIds = ['sess-1', 'sess-new'];
   const gone = visitIn('g', 'sess-gone', true);
   mockBox.set('g', { ...gone, done: true });
   mockDrafts.set('n1', draftIn('n1', 'sess-new', '2026-11-03T05:20:00.000Z'));
@@ -291,9 +300,8 @@ it('says which sessions on the phone Lab hasn’t got, and why', async () => {
   expect(screen.getByTestId('standing-sess-gone')).toHaveTextContent(
     'Deleted in Lab: 1 sent photo is still on this phone',
   );
-  expect(screen.getByTestId('standing-sess-new')).toHaveTextContent(
-    'Not on Lab yet: label its photo (or save values only) to send',
-  );
+  // Its Label later photo went to Lab to be labelled there: nothing to say.
+  expect(screen.queryByTestId('standing-sess-new')).toBeNull();
 });
 
 it('saves a photo to label later and goes back to the camera', async () => {

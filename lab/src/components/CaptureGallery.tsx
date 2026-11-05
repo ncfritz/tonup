@@ -83,6 +83,7 @@ export function CaptureGallery({
             options={[
               { value: 'labelled', label: 'Labelled' },
               { value: 'values-only', label: 'Values only' },
+              { value: 'unlabelled', label: 'To label' },
               { value: 'rejected', label: 'Left out' },
             ]}
           />

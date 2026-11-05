@@ -9,6 +9,8 @@ import type { LabelInput } from './labels';
 
 /** Review reason for a label the player corrected from the model's pre-fill. */
 export const CORRECTED = 'corrected from model';
+/** The review reason a photo sent to label in Lab carries until it's labelled. */
+export const NOT_LABELLED = 'not labelled';
 
 /** A point moved further than this (mm on the board) was corrected, not accepted. */
 export const MOVED_MM = 3;

@@ -1,6 +1,19 @@
 // Reads for Lab's pages: counts for the Overview, the Captures gallery, one capture for the
 // label editor, and sessions.
-import { and, asc, count, desc, eq, gt, inArray, isNotNull, lt, ne, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNotNull,
+  lt,
+  ne,
+  notInArray,
+  sql,
+} from 'drizzle-orm';
 
 import { db } from './db/client';
 import { CORRECTED } from './prefill';
@@ -25,6 +38,8 @@ export interface OverviewCounts {
   sessions: number;
   toReview: number;
   valuesOnly: number;
+  /** Sent from Capture to label here. */
+  unlabelled: number;
   rejected: number;
   bySplit: Record<SplitName, number>;
 }
@@ -48,7 +63,7 @@ export function overviewCounts(): OverviewCounts {
     .select({ split: sessions.split, n: count() })
     .from(captures)
     .innerJoin(sessions, eq(captures.sessionId, sessions.id))
-    .where(ne(captures.status, 'rejected'))
+    .where(notInArray(captures.status, ['rejected', 'unlabelled']))
     .groupBy(sessions.split)
     .all();
   const bySplit = { train: 0, val: 0, test: 0 };
@@ -58,6 +73,7 @@ export function overviewCounts(): OverviewCounts {
     sessions: nSessions,
     toReview,
     valuesOnly: byStatus.find((r) => r.status === 'values-only')?.n ?? 0,
+    unlabelled: byStatus.find((r) => r.status === 'unlabelled')?.n ?? 0,
     rejected: byStatus.find((r) => r.status === 'rejected')?.n ?? 0,
     bySplit,
   };
@@ -111,7 +127,7 @@ export interface CaptureFilter {
   sessionId?: string;
   /** Only captures whose label needs a look. */
   review?: boolean;
-  status?: 'labelled' | 'values-only' | 'rejected';
+  status?: 'labelled' | 'values-only' | 'unlabelled' | 'rejected';
   page?: number;
   pageSize?: number;
 }

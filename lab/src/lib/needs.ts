@@ -23,10 +23,25 @@ export interface Needs {
   points: Partial<Record<CalibrationId, NeedTone>>;
 }
 
-export function needsOf(label: LabelInput, m: Measured, corrected: boolean): Needs {
+export function needsOf(
+  label: LabelInput,
+  m: Measured,
+  corrected: boolean,
+  /** Sent from Capture to label here, and not labelled yet. */
+  unlabelled = false,
+): Needs {
   const list: Need[] = [];
   const darts: Record<number, NeedTone> = {};
   const points: Partial<Record<CalibrationId, NeedTone>> = {};
+
+  if (unlabelled) {
+    list.push({
+      key: 'unlabelled',
+      tone: 'warning',
+      text: 'Not labelled yet: place the board points, then add each dart (click its tip) and its value',
+      target: { kind: 'point', id: CALIBRATION_IDS.find((id) => !label.points[id]) ?? 'cal20' },
+    });
+  }
 
   if (m.review.includes('board not marked')) {
     const missing = CALIBRATION_IDS.filter((id) => !label.points[id]);

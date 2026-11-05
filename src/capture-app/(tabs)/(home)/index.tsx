@@ -7,10 +7,12 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import { uploader } from '@/features/capture-lab/lab';
 import { recheckLab, useLabHealth } from '@/features/capture-lab/labHealth';
+import { fetchCaptureStates } from '@/features/capture-lab/labData';
 import {
   labelQueue,
   sessionsOn,
-  syncOutbox,
+  syncAll,
+  waitingToSend,
   type SessionSummary,
 } from '@/features/capture-lab/outbox';
 import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
@@ -47,7 +49,7 @@ export default function CaptureHome() {
 
   const refresh = useCallback(() => {
     try {
-      setPending(fileOutbox.pending().length);
+      setPending(waitingToSend(fileOutbox, fileDrafts));
       setSessions(sessionsOn(fileOutbox, fileDrafts));
     } catch {
       setPending(0);
@@ -61,7 +63,10 @@ export default function CaptureHome() {
     if (!labUrl) return;
     setSyncing(true);
     setSyncNote(null);
-    const r = await syncOutbox(fileOutbox, uploader(labUrl));
+    const r = await syncAll(fileOutbox, fileDrafts, uploader(labUrl), async (ids) => {
+      const got = await fetchCaptureStates(labUrl, ids);
+      return got.ok ? got.data.states : null;
+    });
     setSyncing(false);
     const notes: string[] = [];
     if (r.sent) notes.push(t('home.synced', { sent: r.sent }));
@@ -81,7 +86,8 @@ export default function CaptureHome() {
       if (!labUrl) return;
       let live = true;
       void recheckLab(labUrl).then((h) => {
-        if (live && h.ok && fileOutbox.pending().length) void sync();
+        // Sends what's waiting, and asks after photos sent to label in Lab.
+        if (live && h.ok) void sync();
       });
       return () => {
         live = false;

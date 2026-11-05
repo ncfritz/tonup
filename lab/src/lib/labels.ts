@@ -32,6 +32,8 @@ export const captureFile = z.object({
   sessionStartedAt: z.string().optional(),
   tags: z.array(z.string().max(40)).max(10).optional(),
   valuesOnly: z.boolean().optional(),
+  /** Sent with "Label later": the photo only, to label in Lab (its darts and points empty). */
+  unlabelled: z.boolean().optional(),
   prefillModel: z.string().nullable().optional(),
   /** What the model placed before the player confirmed (same order and shape as the label). */
   prefill: z

@@ -129,6 +129,11 @@ export default function SessionPhotos() {
               ))}
             </View>
             <StatusBar counts={summary} />
+            {summary.unlabelled && photos.some((p) => p.inLab && p.status === 'unlabelled') ? (
+              <Text variant="caption" tone="muted" testID="photos-or-lab">
+                {t('photos.orInLab')}
+              </Text>
+            ) : null}
             <StandingLine s={summary} labIds={labIds} />
             {deleted ? (
               <Button
@@ -146,18 +151,23 @@ export default function SessionPhotos() {
           <View style={styles.grid}>
             {shown.map((p) => {
               const n = photos.indexOf(p) + 1;
+              // A Label later photo labelled in Lab: its label is there, not on the phone.
+              const labLabelled = p.inLab && p.status !== 'unlabelled';
               const label =
                 p.status === 'unlabelled'
                   ? t('photos.tileToLabel', { n })
-                  : p.status === 'values-only'
-                    ? t('photos.tileValuesOnly', { n, total: p.total })
-                    : t('photos.tileLabelled', { n, total: p.total });
+                  : labLabelled
+                    ? t('photos.tileInLab', { n })
+                    : p.status === 'values-only'
+                      ? t('photos.tileValuesOnly', { n, total: p.total })
+                      : t('photos.tileLabelled', { n, total: p.total });
               return (
                 <Pressable
                   key={p.id}
                   accessibilityRole="button"
                   accessibilityLabel={label}
                   style={[styles.tile, { width: tile, height: tile }]}
+                  disabled={labLabelled}
                   onPress={() =>
                     p.status === 'unlabelled'
                       ? void startLabelling(queue(), p.id)
@@ -221,9 +231,11 @@ function Badge({ photo }: { photo: SessionPhoto }) {
   const text =
     photo.status === 'unlabelled'
       ? t('photos.toLabel')
-      : photo.status === 'values-only'
-        ? t('photos.badgeValuesOnly', { total: photo.total ?? 0 })
-        : t('photos.badgeLabelled', { total: photo.total ?? 0 });
+      : photo.total === null
+        ? t('photos.badgeInLab')
+        : photo.status === 'values-only'
+          ? t('photos.badgeValuesOnly', { total: photo.total ?? 0 })
+          : t('photos.badgeLabelled', { total: photo.total ?? 0 });
   const tone =
     photo.status === 'unlabelled' ? 'pending' : photo.status === 'values-only' ? 'info' : 'accent';
   return (

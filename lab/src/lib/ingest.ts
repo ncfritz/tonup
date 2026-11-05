@@ -21,7 +21,7 @@ import {
   sessionTags,
 } from './db/schema';
 import { captureFile, labelFromFile, type CaptureFile, type LabelInput } from './labels';
-import { checkPrefill, CORRECTED } from './prefill';
+import { checkPrefill, CORRECTED, NOT_LABELLED } from './prefill';
 import { splitOf, type Split } from './splits';
 import { photosDir, preparePhoto, savePhoto, thumbsDir } from './storage';
 
@@ -144,14 +144,19 @@ export async function ingestCapture(
   const existing = d.select().from(captures).where(eq(captures.id, id)).get();
   if (existing) {
     const s = d.select().from(sessions).where(eq(sessions.id, existing.sessionId)).get();
-    // Sent again with its tips (a values-only photo labelled later on the phone): the new label
-    // becomes the next version. Anything else sent again is the same visit, and is ignored.
-    if (existing.status === 'values-only' && source === 'phone' && !f.valuesOnly) {
+    // Sent again labelled: a values-only photo with its tips, or a photo sent to label later now
+    // labelled on the phone. The new label becomes the next version. Anything else sent again is
+    // the same visit, and is ignored (a photo labelled here keeps Lab's label).
+    const relabel =
+      source === 'phone' &&
+      !f.unlabelled &&
+      ((existing.status === 'values-only' && !f.valuesOnly) || existing.status === 'unlabelled');
+    if (relabel) {
       const input = labelFromFile(f);
       d.transaction((tx) => {
         writeLabel(tx, existing, input, 'phone', now);
         tx.update(captures)
-          .set({ status: statusOf(input, false) })
+          .set({ status: statusOf(input, f.valuesOnly ?? false) })
           .where(eq(captures.id, id))
           .run();
       });
@@ -196,7 +201,7 @@ export async function ingestCapture(
         zoom: f.zoom ?? null,
         deviceModel: f.deviceModel ?? null,
         typeId: f.typeId ?? null,
-        status: statusOf(input, f.valuesOnly ?? false),
+        status: f.unlabelled ? 'unlabelled' : statusOf(input, f.valuesOnly ?? false),
         prefillModel: f.prefillModel ?? f.modelVersion ?? null,
         createdAt: now,
       })
@@ -209,6 +214,10 @@ export async function ingestCapture(
       now,
       prepared.brightness,
     );
+    // To label here: in the review queue until it is.
+    if (f.unlabelled) {
+      tx.update(captures).set({ review: NOT_LABELLED }).where(eq(captures.id, id)).run();
+    }
     if (f.prefill && f.prefillModel) {
       const check = checkPrefill(f.prefill, input);
       tx.insert(prefills)
@@ -268,7 +277,11 @@ export function setRejected(captureId: string, rejected: boolean) {
           .all()
           .some((r) => r.x !== null)
       : false;
-    status = tips ? 'labelled' : 'values-only';
+    status = (c.review ?? '').split(', ').includes(NOT_LABELLED)
+      ? 'unlabelled'
+      : tips
+        ? 'labelled'
+        : 'values-only';
   }
   d.update(captures).set({ status }).where(eq(captures.id, captureId)).run();
   return status;

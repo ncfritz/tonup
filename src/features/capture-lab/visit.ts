@@ -311,6 +311,8 @@ export interface LabelFile {
   calibration: (ImagePoint | null)[];
   darts: { x: number | null; y: number | null; value: string; onWire?: boolean }[];
   valuesOnly: boolean;
+  /** Sent with "Label later": the photo only, to label in Lab (no points or darts). */
+  unlabelled?: boolean;
   prefillModel: string | null;
   /** What the model placed (same order as calibration and darts), when it pre-filled. */
   prefill?: { calibration: (ImagePoint | null)[]; tips: (ImagePoint | null)[] };

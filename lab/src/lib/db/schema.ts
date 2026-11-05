@@ -12,7 +12,8 @@ import {
 
 export const SPLITS = ['train', 'val', 'test'] as const;
 export const KEYPOINTS = ['cal20', 'cal6', 'cal3', 'cal11', 'bull'] as const;
-export const CAPTURE_STATUS = ['labelled', 'values-only', 'rejected'] as const;
+/** `unlabelled`: a photo Capture sent with "Label later", to label here; not in the dataset yet. */
+export const CAPTURE_STATUS = ['labelled', 'values-only', 'unlabelled', 'rejected'] as const;
 
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),

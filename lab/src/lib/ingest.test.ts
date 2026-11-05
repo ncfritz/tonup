@@ -132,6 +132,67 @@ describe('ingestCapture', () => {
     expect(listCaptures({ review: true }).total).toBe(1);
   });
 
+  it('takes a photo sent to label here, keeps it out of the dataset, then takes its label', async () => {
+    const meta = {
+      id: 'ul-1',
+      image: 'ul-1.jpg',
+      width: 400,
+      height: 300,
+      createdAt: '2026-11-04T05:00:00.000Z',
+      sessionId: 'sess-u',
+      sessionStartedAt: '2026-11-04T04:50:00.000Z',
+      tags: [],
+      calibration: [],
+      darts: [],
+      unlabelled: true,
+    };
+    await ingestCapture(meta, await jpeg(), 'phone');
+    expect(getCapture('ul-1')).toMatchObject({ status: 'unlabelled', review: 'not labelled' });
+    expect(overviewCounts()).toMatchObject({ unlabelled: 1, toReview: 1 });
+    expect(Object.values(overviewCounts().bySplit).reduce((a, b) => a + b, 0)).toBe(0);
+    expect(listSessions().map((x) => x.id)).toEqual(['sess-u']);
+    // Left out and put back, it's still to label.
+    setRejected('ul-1', true);
+    expect(setRejected('ul-1', false)).toBe('unlabelled');
+    // Labelled on the phone after all: the label is taken as its next version.
+    const again = await ingestCapture(
+      {
+        ...meta,
+        unlabelled: undefined,
+        calibration,
+        darts: [{ ...toImage(polar(103, 0)), value: 'T20' }],
+      },
+      await jpeg(),
+      'phone',
+    );
+    expect(again).toMatchObject({ created: false, updated: true });
+    expect(getCapture('ul-1')).toMatchObject({ status: 'labelled', review: null });
+  });
+
+  it('takes the label for a photo sent to label, from the editor', async () => {
+    await ingestCapture(
+      {
+        id: 'ul-2',
+        image: 'ul-2.jpg',
+        width: 400,
+        height: 300,
+        createdAt: '2026-11-04T05:00:00.000Z',
+        sessionId: 'sess-u',
+        calibration: [],
+        darts: [],
+        unlabelled: true,
+      },
+      await jpeg(),
+      'phone',
+    );
+    saveLabel('ul-2', {
+      points: {},
+      darts: [{ entered: 'T20', tip: null, onWire: false }],
+      missed: 0,
+    });
+    expect(getCapture('ul-2')).toMatchObject({ status: 'values-only', review: null });
+  });
+
   it('keeps values-only captures for verification and marks them so', async () => {
     await ingestCapture(
       {

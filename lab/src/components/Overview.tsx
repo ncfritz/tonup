@@ -47,7 +47,7 @@ export function Overview({
             <Count
               title="Captures"
               value={counts.captures}
-              note={`${counts.valuesOnly} values only · ${counts.rejected} left out`}
+              note={`${counts.valuesOnly} values only · ${counts.unlabelled ? `${counts.unlabelled} to label · ` : ''}${counts.rejected} left out`}
             />
             <Count
               title="Sessions"

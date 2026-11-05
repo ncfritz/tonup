@@ -120,7 +120,11 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const measured = useMemo(() => measure(label, W, H), [label, W, H]);
   // What needs a look, pinned to its dart or board point (a corrected label until Looks right).
   const corrected = !!capture.review?.includes(CORRECTED) && !dirty;
-  const needs = useMemo(() => needsOf(label, measured, corrected), [label, measured, corrected]);
+  const unlabelled = capture.status === 'unlabelled' && !dirty;
+  const needs = useMemo(
+    () => needsOf(label, measured, corrected, unlabelled),
+    [label, measured, corrected, unlabelled],
+  );
   const board = useMemo(() => boardDrawing(label.points, W, H), [label.points, W, H]);
   // What the model placed on the phone, drawn under the label (shown by default when corrected).
   const prefill = capture.prefill;
