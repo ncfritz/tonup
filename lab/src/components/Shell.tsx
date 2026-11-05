@@ -13,12 +13,21 @@ import {
   RightOutlined,
   SunOutlined,
 } from '@ant-design/icons';
-import { App, Button, ConfigProvider, Dropdown, Layout, Menu, theme } from 'antd';
+import { App, Button, ConfigProvider, Layout, Menu, theme, Tooltip } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 
 import { setColorMode, useColorMode, useDark, type ColorMode } from './colorMode';
+import {
+  PREF,
+  PrefsContext,
+  readPref,
+  subscribePrefs,
+  useInitialPrefs,
+  writePref,
+  type InitialPrefs,
+} from './prefs';
 import styles from './Shell.module.css';
 
 // Ant Design with Ton Up's teal (the Training theme's light accent) as the primary colour, in
@@ -39,7 +48,6 @@ const HEADER_HEIGHT = 56;
 const PAGES_WIDTH = 220;
 const PAGES_RAIL = 80;
 const TRIGGER_SIZE = 24;
-const COLLAPSED_KEY = 'tonup-lab.pages-collapsed';
 
 const NAV = [
   { key: '/', icon: <DashboardOutlined />, label: 'Overview' },
@@ -50,32 +58,10 @@ const NAV = [
   { key: '/verification', icon: <CheckCircleOutlined />, label: 'Verification' },
 ];
 
-// Per browser: a sider that springs open on every visit is not a choice. Read through
-// useSyncExternalStore so the server renders it open and the browser's choice follows.
-const listeners = new Set<() => void>();
-function readCollapsed() {
-  try {
-    return window.localStorage.getItem(COLLAPSED_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-function writeCollapsed(collapsed: boolean) {
-  try {
-    window.localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
-  } catch {
-    // Storage blocked: it just won't be remembered.
-  }
-  listeners.forEach((l) => l());
-}
-function subscribe(l: () => void) {
-  listeners.add(l);
-  window.addEventListener('storage', l);
-  return () => {
-    listeners.delete(l);
-    window.removeEventListener('storage', l);
-  };
-}
+// Per browser: a sider that springs open on every visit is not a choice. A cookie, so the
+// server draws it as it was left (prefs.ts).
+const readCollapsed = () => readPref(PREF.collapsed) === '1';
+const writeCollapsed = (collapsed: boolean) => writePref(PREF.collapsed, collapsed ? '1' : '0');
 
 // Narrow screens (a phone): the menu starts folded whatever was saved, and opening it there is
 // for this visit only.
@@ -117,7 +103,8 @@ function Chrome({ children }: { children: ReactNode }) {
   const { token } = theme.useToken();
   const pathname = usePathname();
   const selected = NAV.find((n) => n.key !== '/' && pathname.startsWith(n.key))?.key ?? '/';
-  const saved = useSyncExternalStore(subscribe, readCollapsed, () => false);
+  const initial = useInitialPrefs();
+  const saved = useSyncExternalStore(subscribePrefs, readCollapsed, () => initial.collapsed);
   const narrow = useSyncExternalStore(subscribeNarrow, readNarrow, () => false);
   const [openNarrow, setOpenNarrow] = useState(false);
   const collapsed = narrow ? !openNarrow : saved;
@@ -212,37 +199,45 @@ const MODES: { key: ColorMode; label: string; icon: ReactNode }[] = [
   { key: 'dark', label: 'Dark', icon: <MoonOutlined /> },
 ];
 
-/** Light, dark or the system's: on the header's right, as Olympus's settings sit. */
+/** Light, dark or the system's: a pill of three on the header's right. */
 function ModeSwitch() {
   const mode = useColorMode();
-  const dark = useDark();
   return (
-    <Dropdown
-      trigger={['click']}
-      menu={{
-        selectable: true,
-        selectedKeys: [mode],
-        items: MODES.map((m) => ({ key: m.key, label: m.label, icon: m.icon })),
-        onClick: ({ key }) => setColorMode(key as ColorMode),
-      }}
-    >
-      <Button
-        type="text"
-        shape="circle"
-        icon={dark ? <MoonOutlined /> : <SunOutlined />}
-        aria-label={`Colour theme: ${MODES.find((m) => m.key === mode)!.label}`}
-        style={{ color: 'rgba(255,255,255,0.85)' }}
-      />
-    </Dropdown>
+    <div role="radiogroup" aria-label="Colour theme" className={styles.modePill}>
+      {MODES.map((m) => (
+        <Tooltip key={m.key} title={m.label} placement="bottom">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={mode === m.key}
+            aria-label={m.label}
+            className={`${styles.modeButton} ${mode === m.key ? styles.modeOn : ''}`}
+            onClick={() => setColorMode(m.key)}
+          >
+            {m.icon}
+          </button>
+        </Tooltip>
+      ))}
+    </div>
   );
 }
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({ children, initial }: { children: ReactNode; initial: InitialPrefs }) {
+  return (
+    <PrefsContext value={initial}>
+      <Themed>{children}</Themed>
+    </PrefsContext>
+  );
+}
+
+function Themed({ children }: { children: ReactNode }) {
   const dark = useDark();
   // The page behind the app, and the browser's own controls (scrollbars, inputs), follow too.
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    // For the server's next draw of "system" (prefs.ts); quietly, nothing listens for it.
+    document.cookie = `${PREF.dark}=${dark ? 1 : 0}; path=/; max-age=31536000; samesite=lax`;
   }, [dark]);
   return (
     <ConfigProvider

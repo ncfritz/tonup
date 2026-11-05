@@ -18,7 +18,7 @@ Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db`, `photos
 
 ## Light and dark
 
-Lab follows the system's light or dark setting. The moon or sun at the right of the header picks Light, Dark or Match the system for this browser (`components/colorMode.ts`; a small script in `app/layout.tsx` sets it before the page paints, so a dark page doesn't flash white). Colours come from Ant Design's tokens (`var(--ant-…)` in the CSS modules, `useChartTheme` for the charts), so new screens follow without extra work; the header stays navy in both.
+Lab follows the system's light or dark setting. The pill at the right of the header picks Match the system, Light or Dark for this browser. That choice, the menu folded or open and the capture page's side panel are kept in cookies (`components/prefs.ts`, `prefKeys.ts`), which the layout reads so the server draws each page as it was left: no flash of the open menu or the light theme on a reload. Colours come from Ant Design's tokens (`var(--ant-…)` in the CSS modules, `useChartTheme` for the charts), so new screens follow without extra work; the header stays navy in both.
 
 ## Getting captures in
 

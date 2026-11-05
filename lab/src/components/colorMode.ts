@@ -2,60 +2,45 @@
 
 import { useSyncExternalStore } from 'react';
 
-// Light, dark, or the system's choice, per browser (localStorage). `useDark` follows the
-// system's setting live when the choice is "system".
-export type ColorMode = 'system' | 'light' | 'dark';
-export const COLOR_MODE_KEY = 'tonup-lab.color-mode';
+import { PREF, readPref, subscribePrefs, useInitialPrefs, writePref } from './prefs';
 
-const listeners = new Set<() => void>();
+// Light, dark, or the system's choice, per browser (a cookie, so the server draws it too).
+// `useDark` follows the system's setting live when the choice is "system".
+export type ColorMode = 'system' | 'light' | 'dark';
+
 const query = () => window.matchMedia('(prefers-color-scheme: dark)');
 
 function readMode(): ColorMode {
-  try {
-    const v = window.localStorage.getItem(COLOR_MODE_KEY);
-    return v === 'light' || v === 'dark' ? v : 'system';
-  } catch {
-    return 'system';
-  }
+  const v = readPref(PREF.mode);
+  return v === 'light' || v === 'dark' ? v : 'system';
 }
 
-export function setColorMode(mode: ColorMode) {
-  try {
-    if (mode === 'system') window.localStorage.removeItem(COLOR_MODE_KEY);
-    else window.localStorage.setItem(COLOR_MODE_KEY, mode);
-  } catch {
-    // Storage blocked: it holds for this page only.
-  }
-  listeners.forEach((l) => l());
-}
+export const setColorMode = (mode: ColorMode) =>
+  writePref(PREF.mode, mode === 'system' ? null : mode);
 
 function subscribe(l: () => void) {
-  listeners.add(l);
-  window.addEventListener('storage', l);
+  const off = subscribePrefs(l);
   const q = query();
   q.addEventListener('change', l);
   return () => {
-    listeners.delete(l);
-    window.removeEventListener('storage', l);
+    off();
     q.removeEventListener('change', l);
   };
 }
 
-export const useColorMode = () => useSyncExternalStore(subscribe, readMode, () => 'system');
+export function useColorMode() {
+  const initial = useInitialPrefs();
+  return useSyncExternalStore(subscribe, readMode, () => initial.mode);
+}
 
 export function useDark() {
+  const initial = useInitialPrefs();
   return useSyncExternalStore(
     subscribe,
     () => {
       const m = readMode();
       return m === 'dark' || (m === 'system' && query().matches);
     },
-    () => false,
+    () => initial.dark,
   );
 }
-
-/**
- * Run before the page paints (app/layout.tsx), so a dark page doesn't flash white while the
- * app loads: marks <html> with the mode the app is about to draw.
- */
-export const COLOR_MODE_SCRIPT = `(function(){try{var m=localStorage.getItem('${COLOR_MODE_KEY}');var d=m==='dark'||(m!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';}catch(e){}})();`;

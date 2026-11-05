@@ -516,13 +516,13 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
             <Button
               icon={<LeftOutlined />}
               disabled={!capture.prevId}
-              href={capture.prevId ? `/captures/${capture.prevId}` : undefined}
+              onClick={() => capture.prevId && router.push(`/captures/${capture.prevId}`)}
             >
               Previous
             </Button>
             <Button
               disabled={!capture.nextId}
-              href={capture.nextId ? `/captures/${capture.nextId}` : undefined}
+              onClick={() => capture.nextId && router.push(`/captures/${capture.nextId}`)}
             >
               Next <RightOutlined />
             </Button>

@@ -55,3 +55,43 @@
   color: var(--ant-color-text);
   box-shadow: 0 0 0 1px var(--ant-color-border);
 }
+
+/* The colour theme: a pill of three icons on the navy header, the chosen one filled. */
+.modePill {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  line-height: 1;
+}
+
+.modeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.modeButton:hover {
+  color: #fff;
+}
+
+.modeButton:focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 1px;
+}
+
+.modeOn,
+.modeOn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}

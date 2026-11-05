@@ -4,38 +4,19 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Tabs, Tooltip, type TabsProps } from 'antd';
 import { useSyncExternalStore, type ReactNode } from 'react';
 
+import { PREF, readPref, subscribePrefs, useInitialPrefs, writePref } from './prefs';
 import styles from './SideTabs.module.css';
 
 /** The rail's width when closed: the tab icons alone. */
 const RAIL = 62;
 
-// Open or closed per panel and per browser, as Olympus's CollapsibleTabPanel remembers it.
-const listeners = new Set<() => void>();
-const keyOf = (id: string) => `tonup-lab.side.${id}`;
+// Open or closed per panel and per browser, as Olympus's CollapsibleTabPanel remembers it: a
+// cookie, so the server draws it as it was left (prefs.ts).
 function read(id: string, fallback: boolean) {
-  try {
-    const v = window.localStorage.getItem(keyOf(id));
-    return v === null ? fallback : v === '1';
-  } catch {
-    return fallback;
-  }
+  const v = readPref(PREF.side(id));
+  return v === null ? fallback : v === '1';
 }
-function write(id: string, open: boolean) {
-  try {
-    window.localStorage.setItem(keyOf(id), open ? '1' : '0');
-  } catch {
-    // Storage blocked: it just won't be remembered.
-  }
-  listeners.forEach((l) => l());
-}
-function subscribe(l: () => void) {
-  listeners.add(l);
-  window.addEventListener('storage', l);
-  return () => {
-    listeners.delete(l);
-    window.removeEventListener('storage', l);
-  };
-}
+const write = (id: string, open: boolean) => writePref(PREF.side(id), open ? '1' : '0');
 
 export interface SideTab {
   key: string;
@@ -62,10 +43,11 @@ export function SideTabs({
   width?: number;
   defaultOpen?: boolean;
 }) {
+  const initial = useInitialPrefs();
   const open = useSyncExternalStore(
-    subscribe,
+    subscribePrefs,
     () => read(id, defaultOpen),
-    () => defaultOpen,
+    () => initial.sides[id] ?? defaultOpen,
   );
   const items: TabsProps['items'] = tabs.map((t) => ({
     key: t.key,
