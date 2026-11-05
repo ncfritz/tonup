@@ -41,6 +41,8 @@ export interface SideTab {
   key: string;
   icon: ReactNode;
   title: string;
+  /** Its content runs to the panel's edges (rows divided by lines); the title keeps its padding. */
+  flush?: boolean;
   children: ReactNode;
 }
 
@@ -75,7 +77,7 @@ export function SideTabs({
       </Tooltip>
     ),
     children: (
-      <div className={styles.pane}>
+      <div className={t.flush ? styles.paneFlush : styles.pane}>
         <div className={styles.paneTitle}>{t.title}</div>
         {t.children}
       </div>

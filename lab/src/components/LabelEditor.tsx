@@ -48,6 +48,11 @@ const MAX_ZOOM = 8;
 const ZOOM_STEP = 1.5;
 const PAN_SLOP = 4;
 
+/** The darts column's least width, and the photo area's padding across and down (px). */
+const MIN_SCORES = 400;
+const PHOTO_PAD = 40;
+const PHOTO_PAD_Y = 40;
+
 /** The model's proposal, in the same colour as predictions on the Verification page. */
 const MODEL = '#eb6834';
 
@@ -97,7 +102,8 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const [panning, setPanning] = useState(false);
   // The space the photo has, and the photo's size in it: as wide as it is, unless that would
   // be too tall, then as tall as it is.
-  const stage = useRef<HTMLDivElement>(null);
+  const work = useRef<HTMLDivElement>(null);
+  const toolbar = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState<{ width: number; height: number } | null>(null);
   const zoomRef = useRef(zoom);
   const anchor = useRef<{ fx: number; fy: number; mx: number; my: number } | null>(null);
@@ -155,19 +161,28 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
+  // The photo's size: the room left beside a darts column of at least MIN_SCORES and the side
+  // tabs, as wide as that allows unless it would then be too tall, then as tall as there's room.
   useEffect(() => {
-    const el = stage.current;
+    const el = work.current;
     if (!el) return;
     const measureFit = () => {
-      const w = el.clientWidth;
-      const h = el.clientHeight;
-      if (!w || !h) return;
-      const width = Math.min(w, (h * W) / H);
+      const side = el.lastElementChild as HTMLElement | null;
+      const stacked = getComputedStyle(el).flexDirection === 'column';
+      const bar = toolbar.current?.offsetHeight ?? 32;
+      const roomW = stacked
+        ? el.clientWidth - 32
+        : el.clientWidth - (side?.offsetWidth ?? 0) - MIN_SCORES - PHOTO_PAD;
+      const roomH = stacked ? window.innerHeight * 0.7 : el.clientHeight - bar - PHOTO_PAD_Y;
+      if (roomW <= 0 || roomH <= 0) return;
+      const width = Math.min(roomW, (roomH * W) / H);
       setFit({ width: Math.floor(width), height: Math.floor((width * H) / W) });
     };
-    // It reports the stage's size once on observing, then on every change.
+    // Each reports its size once on observing, then on every change.
     const ro = new ResizeObserver(measureFit);
     ro.observe(el);
+    if (el.lastElementChild) ro.observe(el.lastElementChild);
+    if (toolbar.current) ro.observe(toolbar.current);
     return () => ro.disconnect();
   }, [W, H]);
 
@@ -316,57 +331,62 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       ? selected.kind === 'point' && selected.id === t.id
       : selected.kind === 'dart' && selected.idx === t.idx);
 
+  /** Picks a point or dart; picking the one already picked lets it go. */
+  const toggle = (t: Selected) => setSelected(isSel(t) ? null : t);
+
   const sideTabs: SideTab[] = [
     {
       key: 'points',
       icon: <AimOutlined />,
       title: 'Board points',
+      flush: true,
       children: (
         <>
-          <Flex vertical gap={6}>
-            {CALIBRATION_IDS.map((id) => {
-              const sel = isSel({ kind: 'point', id });
-              return (
-                <Button
-                  key={id}
-                  block
-                  type={sel ? 'primary' : 'default'}
-                  ghost={sel}
-                  onClick={() => setSelected({ kind: 'point', id })}
-                  style={{ height: 'auto', justifyContent: 'flex-start', padding: '6px 10px' }}
-                >
-                  <Flex align="center" gap={10} style={{ width: '100%' }}>
-                    <MiniBoard dot={boardPointOf(id)} size={36} />
-                    <Typography.Text strong style={{ minWidth: 44, textAlign: 'left' }}>
-                      {KEYPOINT_LABELS[id]}
-                    </Typography.Text>
-                    <Typography.Text type={label.points[id] ? 'secondary' : 'warning'}>
-                      {label.points[id] ? 'placed ✓' : 'click the photo to place'}
-                    </Typography.Text>
-                  </Flex>
-                </Button>
-              );
-            })}
-          </Flex>
-          {selected?.kind === 'point' && label.points[selected.id] ? (
-            <Button
-              size="small"
-              type="link"
-              style={{ paddingLeft: 0, marginTop: 8 }}
-              onClick={() => {
-                const points = { ...label.points };
-                delete points[selected.id];
-                update({ ...label, points });
-              }}
-            >
-              Clear {KEYPOINT_LABELS[selected.id]} (not visible in the photo)
-            </Button>
-          ) : null}
-          <Typography.Paragraph type="secondary" style={{ marginTop: 8, marginBottom: 0 }}>
-            {measured.fitResidualMm === null
-              ? 'Mark at least four points to fit the board.'
-              : `Fit: points agree to ${measured.fitResidualMm.toFixed(1)} mm.`}
-          </Typography.Paragraph>
+          {CALIBRATION_IDS.map((id) => {
+            const sel = isSel({ kind: 'point', id });
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`${styles.point} ${sel ? styles.pointOn : ''}`}
+                aria-pressed={sel}
+                onClick={() => toggle({ kind: 'point', id })}
+              >
+                <MiniBoard dot={boardPointOf(id)} size={96} />
+                <span className={styles.pointText}>
+                  <Typography.Text strong>{KEYPOINT_LABELS[id]}</Typography.Text>
+                  <Typography.Text type={label.points[id] ? 'secondary' : 'warning'}>
+                    {label.points[id]
+                      ? 'Placed ✓'
+                      : sel
+                        ? 'Click the photo to place it'
+                        : 'Not placed'}
+                  </Typography.Text>
+                </span>
+              </button>
+            );
+          })}
+          <div className={styles.pointsFoot}>
+            {selected?.kind === 'point' && label.points[selected.id] ? (
+              <Button
+                size="small"
+                type="link"
+                style={{ paddingLeft: 0, marginTop: 8 }}
+                onClick={() => {
+                  const points = { ...label.points };
+                  delete points[selected.id];
+                  update({ ...label, points });
+                }}
+              >
+                Clear {KEYPOINT_LABELS[selected.id]} (not visible in the photo)
+              </Button>
+            ) : null}
+            <Typography.Paragraph type="secondary" style={{ marginTop: 8, marginBottom: 0 }}>
+              {measured.fitResidualMm === null
+                ? 'Mark at least four points to fit the board.'
+                : `Fit: points agree to ${measured.fitResidualMm.toFixed(1)} mm.`}
+            </Typography.Paragraph>
+          </div>
         </>
       ),
     },
@@ -506,9 +526,12 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
           </Space>
         }
       />
-      <div className={styles.work}>
-        <div className={styles.photoArea}>
-          <Flex wrap justify="space-between" align="center" gap={8}>
+      <div ref={work} className={styles.work}>
+        <div
+          className={styles.photoArea}
+          style={fit ? { width: fit.width + PHOTO_PAD } : undefined}
+        >
+          <Flex ref={toolbar} wrap justify="space-between" align="center" gap={8}>
             {mode === 'add' ? (
               <Typography.Text strong>Click the photo where the new dart’s tip is</Typography.Text>
             ) : (
@@ -543,11 +566,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
           </Flex>
           {/* The photo fits the space left: the full width when that leaves it short enough,
               otherwise the full height. Zooming scrolls inside this frame rather than growing it. */}
-          <div
-            ref={stage}
-            className={styles.stage}
-            style={{ ['--ratio' as string]: `${W} / ${H}` }}
-          >
+          <div className={styles.stage}>
             <div
               ref={frame}
               className={styles.frame}
@@ -705,7 +724,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
         </div>
 
         <div className={styles.scores}>
-          <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
+          <div className={styles.scoresHead}>
             <Typography.Text strong>Darts</Typography.Text>
             <Button
               size="small"
@@ -716,13 +735,14 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
             >
               {mode === 'add' ? 'Cancel adding' : 'Add dart'}
             </Button>
-          </Flex>
+          </div>
           <Table
+            className={styles.darts}
             size="small"
             pagination={false}
             rowKey={(_, i) => String(i)}
             dataSource={label.darts.map((d, idx) => ({ ...d, idx, m: measured.darts[idx] }))}
-            onRow={(row) => ({ onClick: () => setSelected({ kind: 'dart', idx: row.idx }) })}
+            onRow={(row) => ({ onClick: () => toggle({ kind: 'dart', idx: row.idx }) })}
             rowClassName={(row) =>
               isSel({ kind: 'dart', idx: row.idx }) ? 'ant-table-row-selected' : ''
             }
@@ -730,9 +750,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               {
                 title: '#',
                 render: (_, row) => (
-                  <Flex align="center" gap={8}>
+                  <Flex align="center" gap={12}>
                     <MiniBoard
-                      size={40}
+                      size={96}
                       lit={row.m?.board ?? row.m?.scored ?? row.entered}
                       outlined={row.m?.mismatch ? row.entered : null}
                       title={
@@ -746,15 +766,15 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                     {row.idx + 1}
                   </Flex>
                 ),
-                width: 72,
+                width: 132,
               },
               {
                 title: 'Entered',
                 render: (_, row) => (
                   <AutoComplete
-                    size="small"
-                    style={{ width: 96 }}
+                    style={{ width: '100%', minWidth: 72 }}
                     value={row.entered ?? ''}
+                    onClick={(e) => e.stopPropagation()}
                     options={VALUE_OPTIONS}
                     filterOption={(input, o) =>
                       o!.value.toLowerCase().startsWith(input.toLowerCase())
@@ -784,6 +804,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                 render: (_, row) => (
                   <Checkbox
                     checked={row.onWire}
+                    onClick={(e) => e.stopPropagation()}
                     aria-label={`Dart ${row.idx + 1} on the wire`}
                     onChange={(e) => setDart(row.idx, { onWire: e.target.checked })}
                   />
@@ -807,69 +828,86 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               },
             ]}
           />
-          <Flex align="center" gap={8} style={{ marginTop: 12 }}>
-            <Typography.Text>Missed the board, not in the photo</Typography.Text>
-            <InputNumber
-              size="small"
-              min={0}
-              max={3}
-              value={label.missed}
-              onChange={(v) => update({ ...label, missed: v ?? 0 })}
-            />
-          </Flex>
-          <div style={{ marginTop: 12 }}>
-            {measured.review.length ? (
-              <ReviewTags review={measured.review.join(', ')} />
-            ) : (
-              <Tag color="success">Every tip matches its value</Tag>
-            )}
+          <div className={styles.scoresBody}>
+            <Flex align="center" justify="space-between" gap={8}>
+              <Typography.Text>Missed the board, not in the photo</Typography.Text>
+              <InputNumber
+                min={0}
+                max={3}
+                value={label.missed}
+                onChange={(v) => update({ ...label, missed: v ?? 0 })}
+              />
+            </Flex>
+            <div>
+              {measured.review.length ? (
+                <ReviewTags review={measured.review.join(', ')} />
+              ) : (
+                <Tag color="success">Every tip matches its value</Tag>
+              )}
+            </div>
+            <Flex vertical gap={8}>
+              <Button
+                block
+                type="primary"
+                loading={saving}
+                disabled={!dirty}
+                onClick={() => save(false)}
+              >
+                Save label
+              </Button>
+              {capture.nextReviewId ? (
+                <Button
+                  block
+                  type="primary"
+                  loading={saving}
+                  disabled={!dirty}
+                  onClick={() => save(true)}
+                >
+                  Save, next to review
+                </Button>
+              ) : null}
+              {capture.review?.includes(CORRECTED) && !dirty ? (
+                <Button block onClick={looksRight}>
+                  Looks right{capture.nextReviewId ? ', next' : ''}
+                </Button>
+              ) : null}
+              <Button
+                block
+                disabled={!dirty}
+                onClick={() => {
+                  setLabel(initial(capture));
+                  setDirty(false);
+                }}
+              >
+                Undo changes
+              </Button>
+              {capture.status === 'rejected' ? (
+                <Button block onClick={() => setLeftOut(false)}>
+                  Put back in the dataset
+                </Button>
+              ) : (
+                <Button block color="orange" variant="solid" onClick={() => setLeftOut(true)}>
+                  Leave out of training
+                </Button>
+              )}
+              <Popconfirm
+                title="Delete this capture?"
+                description="Its photo and every label version go. This can’t be undone."
+                okText="Delete"
+                okButtonProps={{ danger: true }}
+                onConfirm={deleteCapture}
+              >
+                <Button block type="primary" danger icon={<DeleteOutlined />}>
+                  Delete
+                </Button>
+              </Popconfirm>
+            </Flex>
+            <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              Click a dart or board point to pick it, again to let it go. Drag one on the photo to
+              move it; one with no position yet goes where you click. A tip is where the dart enters
+              the board.
+            </Typography.Paragraph>
           </div>
-          <Space wrap style={{ marginTop: 12 }}>
-            <Button type="primary" loading={saving} disabled={!dirty} onClick={() => save(false)}>
-              Save label
-            </Button>
-            {capture.nextReviewId ? (
-              <Button loading={saving} onClick={() => save(true)} disabled={!dirty}>
-                Save, next to review
-              </Button>
-            ) : null}
-            {capture.review?.includes(CORRECTED) && !dirty ? (
-              <Button onClick={looksRight}>
-                Looks right{capture.nextReviewId ? ', next' : ''}
-              </Button>
-            ) : null}
-            <Button
-              disabled={!dirty}
-              onClick={() => {
-                setLabel(initial(capture));
-                setDirty(false);
-              }}
-            >
-              Undo changes
-            </Button>
-            {capture.status === 'rejected' ? (
-              <Button onClick={() => setLeftOut(false)}>Put back in the dataset</Button>
-            ) : (
-              <Button danger onClick={() => setLeftOut(true)}>
-                Leave out of training
-              </Button>
-            )}
-            <Popconfirm
-              title="Delete this capture?"
-              description="Its photo and every label version go. This can’t be undone."
-              okText="Delete"
-              okButtonProps={{ danger: true }}
-              onConfirm={deleteCapture}
-            >
-              <Button danger type="text" icon={<DeleteOutlined />}>
-                Delete
-              </Button>
-            </Popconfirm>
-          </Space>
-          <Typography.Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
-            Drag a point or dart to move it. With a point or dart selected that has no position yet,
-            click the photo to place it. A tip is where the dart enters the board.
-          </Typography.Paragraph>
         </div>
 
         <SideTabs id="capture" tabs={sideTabs} />

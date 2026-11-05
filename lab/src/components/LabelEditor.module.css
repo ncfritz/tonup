@@ -17,7 +17,9 @@
 }
 
 .photoArea {
-  flex: 1;
+  /* As wide as the fitted photo (LabelEditor sets it), on the left. */
+  flex: none;
+  max-width: 100%;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -32,7 +34,7 @@
   min-height: 0;
   display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   overflow: hidden;
 }
 
@@ -44,18 +46,75 @@
 }
 
 .scores {
-  flex: none;
-  width: 400px;
+  /* The rest of the width, its table edge to edge. */
+  flex: 1;
+  min-width: 400px;
   min-height: 0;
   overflow: auto;
-  padding: 12px 16px 16px;
   border-left: 1px solid var(--ant-color-border-secondary);
 }
 
-@media (max-width: 1279px) {
-  .scores {
-    width: 330px;
-  }
+.scoresHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.darts :global(.ant-table-thead > tr > th:first-child),
+.darts :global(.ant-table-tbody > tr > td:first-child) {
+  padding-left: 16px !important;
+}
+
+.darts :global(.ant-table-thead > tr > th:last-child),
+.darts :global(.ant-table-tbody > tr > td:last-child) {
+  padding-right: 16px !important;
+}
+
+.darts :global(.ant-table-tbody > tr) {
+  cursor: pointer;
+}
+
+.scoresBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+/* Board points: rows edge to edge, divided by lines; the picked one filled. */
+.point {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.point:hover {
+  background: var(--ant-color-fill-quaternary);
+}
+
+.pointOn,
+.pointOn:hover {
+  background: #e3f1ef;
+}
+
+.pointText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pointsFoot {
+  padding: 12px 16px;
 }
 
 @media (max-width: 767px) {
@@ -71,15 +130,12 @@
     padding: 12px 16px;
   }
 
-  /* The photo's own shape, up to most of the screen. */
   .stage {
     flex: none;
-    aspect-ratio: var(--ratio);
-    max-height: 70vh;
   }
 
   .scores {
-    width: auto;
+    min-width: 0;
     border-left: none;
     border-top: 1px solid var(--ant-color-border-secondary);
   }
