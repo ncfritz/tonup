@@ -25,8 +25,9 @@ import styles from './Shell.module.css';
 // Ant Design's own theme (its default and dark algorithms, no colour overrides), in Olympus's
 // chrome (packages/console/src/shell): a navy header across the top, Olympus's breadcrumb bar
 // under it, and the pages as a navy rail of icons that never opens (their names in tooltips).
-/** Olympus's chrome navy: the header, the breadcrumb bar's end and the rail. */
+/** Olympus's chrome navy: the header and the breadcrumb bar's end; the rail is a shade off it. */
 const NAVY = '#001529';
+const RAIL = '#041527';
 const HEADER_HEIGHT = 56;
 /** The rail's width, as Olympus's. */
 const PAGES_RAIL = 80;
@@ -75,7 +76,6 @@ function Chrome({ children }: { children: ReactNode }) {
         <div style={{ flex: 1 }} />
         <ModeSwitch />
       </Layout.Header>
-      <Crumbs pathname={pathname} />
       <Layout style={{ minHeight: 0 }}>
         <Layout.Sider
           className={styles.pages}
@@ -84,7 +84,7 @@ function Chrome({ children }: { children: ReactNode }) {
           collapsed
           collapsible={false}
           trigger={null}
-          style={{ background: NAVY }}
+          style={{ background: RAIL }}
         >
           <Menu
             theme="dark"
@@ -101,24 +101,28 @@ function Chrome({ children }: { children: ReactNode }) {
               title: n.label,
               label: n.label,
             }))}
-            style={{ background: 'transparent', borderInlineEnd: 'none', paddingBlockStart: 12 }}
+            style={{ background: 'transparent', borderInlineEnd: 'none', paddingBlockStart: 0 }}
           />
         </Layout.Sider>
-        <Layout.Content
-          id="lab-content"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            minHeight: 0,
-            overflow: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            // Card and table colour, so panels don't sit on a subtly different shade.
-            background: token.colorBgContainer,
-          }}
-        >
-          {children}
-        </Layout.Content>
+        {/* The breadcrumbs start beside the rail, as Olympus's do. */}
+        <Layout style={{ minWidth: 0 }}>
+          <Crumbs pathname={pathname} />
+          <Layout.Content
+            id="lab-content"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              minHeight: 0,
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              // Card and table colour, so panels don't sit on a subtly different shade.
+              background: token.colorBgContainer,
+            }}
+          >
+            {children}
+          </Layout.Content>
+        </Layout>
       </Layout>
     </Layout>
   );

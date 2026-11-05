@@ -4,20 +4,20 @@
  * more specific than antd's own (which wraps them in :where), so they win.
  */
 
-/* The rail: icons only, tall rows, no fill; the page you're on white, the rest dimmed. */
+/* The rail, as Olympus's console rail (packages/console/src/shell): antd's collapsed rows, the
+   width of the rail and square, 40px apart from the top, the page you're on in the slate. */
 .pages :global(.ant-menu .ant-menu-item) {
-  height: 64px;
-  line-height: 64px;
+  position: relative;
+  height: 40px;
+  line-height: 40px;
   border-radius: 0;
   margin: 0;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-inline: 0 !important;
-  position: relative;
-  color: rgba(255, 255, 255, 0.45);
-  background: transparent;
+}
+
+.pages :global(.ant-menu .ant-menu-item.ant-menu-item-selected) {
+  background-color: #364452;
+  color: #fff;
 }
 
 .railLink {
@@ -31,21 +31,6 @@
 
 .railLink:hover {
   color: inherit;
-}
-
-.pages :global(.ant-menu .ant-menu-item .anticon) {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.pages :global(.ant-menu .ant-menu-item:hover) {
-  color: rgba(255, 255, 255, 0.85);
-  background: transparent;
-}
-
-.pages :global(.ant-menu .ant-menu-item.ant-menu-item-selected) {
-  color: #fff;
-  background: transparent;
 }
 
 /* ---- Breadcrumbs, as Olympus's (packages/console/src/shell/shell.module.css): a bar below
@@ -97,7 +82,6 @@
 
 .crumbs .root.root {
   margin-inline-start: 0;
-  padding-inline-start: 24px;
 }
 
 .crumbs .level.level:hover {
