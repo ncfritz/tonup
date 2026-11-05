@@ -111,7 +111,6 @@ export function RunView({ initial }: { initial: RunData }) {
           <Progress
             percent={Math.round(progress * 100)}
             status={run.status === 'failed' ? 'exception' : live ? 'active' : undefined}
-            strokeColor="#0F766E"
           />
           {run.error ? <Typography.Text type="danger">{run.error}</Typography.Text> : null}
         </Section>

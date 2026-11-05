@@ -30,16 +30,9 @@ import {
 } from './prefs';
 import styles from './Shell.module.css';
 
-// Ant Design with Ton Up's teal (the Training theme's light accent) as the primary colour, in
-// Olympus's chrome (packages/console/src/shell): a navy header across the top, the pages in a
-// sider beside the content that folds to a rail.
-const PRIMARY = '#0F766E';
-/**
- * Dark mode: buttons keep a teal white text reads on; links and the selection use the Training
- * theme's bright dark-mode teal, which reads on the dark panels.
- */
-const PRIMARY_DARK = '#0F8A7E';
-const LINK_DARK = '#2DD4BF';
+// Ant Design's own theme (its default and dark algorithms, no colour overrides), in Olympus's
+// chrome (packages/console/src/shell): a navy header across the top, the pages in a sider beside
+// the content that folds to a rail.
 /** Olympus's chrome colours: the header's navy and the collapsed rail's slate. */
 const NAVY = '#001529';
 const RAIL_BG = '#324354';
@@ -74,6 +67,7 @@ function subscribeNarrow(l: () => void) {
 const readNarrow = () => window.matchMedia(NARROW).matches;
 
 function Wordmark() {
+  const { token } = theme.useToken();
   return (
     <Link
       href="/"
@@ -86,7 +80,7 @@ function Wordmark() {
           width: 26,
           height: 26,
           borderRadius: 13,
-          background: PRIMARY,
+          background: token.colorPrimary,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -243,20 +237,7 @@ function Themed({ children }: { children: ReactNode }) {
     <ConfigProvider
       theme={{
         algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm,
-        token: dark
-          ? { colorPrimary: PRIMARY_DARK, colorLink: LINK_DARK }
-          : { colorPrimary: PRIMARY, colorLink: PRIMARY },
-        components: {
-          Layout: { headerBg: NAVY, siderBg: NAVY },
-          // The open sider's selection: a clean tint of the teal, not antd's derived grey-green.
-          Menu: dark
-            ? {
-                itemSelectedBg: 'rgba(45, 212, 191, 0.14)',
-                itemSelectedColor: LINK_DARK,
-                itemHoverBg: 'rgba(255, 255, 255, 0.06)',
-              }
-            : { itemSelectedBg: '#E3F1EF', itemSelectedColor: PRIMARY, itemHoverBg: '#F2F7F6' },
-        },
+        components: { Layout: { headerBg: NAVY, siderBg: NAVY } },
       }}
     >
       <App>

@@ -6,9 +6,9 @@ import { CORRECTED } from '~/lib/prefill';
 import type { OverlayDart, OverlayPoint } from '~/lib/queries';
 import { boardDrawing, type Points } from '~/lib/overlay';
 
-// Lab's colours for what's drawn on photos (the mockups): teal label marks, amber for a dart
+// Lab's colours for what's drawn on photos: Ant Design's blue for label marks, amber for a dart
 // flagged on the wire, red for one whose tip disagrees with its value.
-export const MARK = { label: '#2DD4BF', wire: '#faad14', mismatch: '#ff4d4f', ink: '#0B0F13' };
+export const MARK = { label: '#1677ff', wire: '#faad14', mismatch: '#ff4d4f', ink: '#0B0F13' };
 
 const SPLIT_TAG = {
   train: { color: 'blue', text: 'Train' },

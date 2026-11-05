@@ -168,11 +168,7 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
                       ? 'Snapshotting the verify set'
                       : `Verifying model ${Math.min(done + 1, asked)} of ${asked}`}
                 </Typography.Text>
-                <Progress
-                  percent={Math.round((done / asked) * 100)}
-                  status="active"
-                  strokeColor="#0F766E"
-                />
+                <Progress percent={Math.round((done / asked) * 100)} status="active" />
               </>
             ) : null}
             {run.error ? <Typography.Text type="danger">{run.error}</Typography.Text> : null}

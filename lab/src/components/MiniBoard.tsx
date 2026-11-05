@@ -11,7 +11,7 @@ import { useDark } from './colorMode';
  */
 
 /**
- * A grey board in each mode, and a vivid teal for what's lit (the rest of its segment in a
+ * A grey board in each mode, and Ant Design's blue for what's lit (the rest of its segment in a
  * strong tint, so a small treble or double still reads), red for what was entered instead.
  */
 const PALETTES = {
@@ -19,19 +19,19 @@ const PALETTES = {
     edge: '#8c8c8c',
     seg: ['#cfcfcf', '#f0f0f0'],
     ring: ['#9c9c9c', '#bababa'],
-    lit: '#0d9488',
-    litSoft: '#5eead4',
-    danger: '#e11d48',
+    lit: '#1677ff',
+    litSoft: '#91caff',
+    danger: '#ff4d4f',
     dotStroke: '#ffffff',
   },
   dark: {
     edge: '#1f242a',
     seg: ['#2f353d', '#454c56'],
     ring: ['#5c6570', '#6f7883'],
-    lit: '#2dd4bf',
-    litSoft: '#0f766e',
-    danger: '#fb7185',
-    dotStroke: '#0e1217',
+    lit: '#3c89e8',
+    litSoft: '#15417e',
+    danger: '#dc4446',
+    dotStroke: '#141414',
   },
 } as const;
 const EDGE = 196;
