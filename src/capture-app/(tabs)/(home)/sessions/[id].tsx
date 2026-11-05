@@ -16,6 +16,7 @@ import {
 import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { addTips, startLabelling } from '@/features/capture-lab/queue';
 import { sessionWhen, SplitChip, StatusBar } from '@/features/capture-lab/SessionBits';
+import { LabPill } from '@/features/capture-lab/LabPill';
 import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
 type Filter = 'all' | PhotoStatus;
@@ -65,6 +66,7 @@ export default function SessionPhotos() {
           title={summary ? sessionWhen(summary.startedAt) : ''}
           backLabel={t('photos.back')}
           onBack={() => router.back()}
+          right={<LabPill />}
         />
         {summary ? (
           <View style={styles.sub}>

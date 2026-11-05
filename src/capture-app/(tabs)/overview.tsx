@@ -11,6 +11,7 @@ import {
   pct,
   useLab,
   useSeriesColors,
+  ScreenTitle,
 } from '@/features/capture-lab/LabBits';
 import { fetchOverview, MEASURES, type Overview } from '@/features/capture-lab/labData';
 import { Screen, Text } from '@/ui';
@@ -27,17 +28,15 @@ export default function CaptureOverview() {
   const { labUrl, reply, at, reload } = useLab(fetchOverview);
   return (
     <Screen scroll>
-      <View>
-        <Text variant="heading" accessibilityRole="header">
-          {t('overview.title')}
-        </Text>
-        <Text tone="muted">
-          {t('overview.subtitle')}
-          {at
+      <ScreenTitle
+        title={t('overview.title')}
+        subtitle={
+          t('overview.subtitle') +
+          (at
             ? ` · ${t('lab.updated', { time: at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) })}`
-            : ''}
-        </Text>
-      </View>
+            : '')
+        }
+      />
       <LabGate labUrl={labUrl} reply={reply} reload={reload}>
         {(d) => <OverviewBody d={d} />}
       </LabGate>

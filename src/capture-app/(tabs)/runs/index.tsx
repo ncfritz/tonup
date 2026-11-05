@@ -11,6 +11,7 @@ import {
   pct,
   useLab,
   useSeriesColors,
+  ScreenTitle,
 } from '@/features/capture-lab/LabBits';
 import {
   cancelRun,
@@ -68,12 +69,7 @@ export default function CaptureRuns() {
   const { labUrl, reply, reload } = useLab(askRuns, pollRuns);
   return (
     <Screen scroll>
-      <View>
-        <Text variant="heading" accessibilityRole="header">
-          {t('runs.title')}
-        </Text>
-        <Text tone="muted">{t('runs.subtitle')}</Text>
-      </View>
+      <ScreenTitle title={t('runs.title')} subtitle={t('runs.subtitle')} />
       <LabGate labUrl={labUrl} reply={reply} reload={reload}>
         {(d) => <RunList d={d} labUrl={labUrl} reload={reload} />}
       </LabGate>

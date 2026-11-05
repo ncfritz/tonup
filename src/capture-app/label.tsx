@@ -47,6 +47,7 @@ import {
   type VisitState,
 } from '@/features/capture-lab/visit';
 import { ZoomPan } from '@/features/capture-lab/ZoomPan';
+import { LabPill } from '@/features/capture-lab/LabPill';
 import { log } from '@/services/diagnostics';
 import { haptics } from '@/services/haptics';
 import { Board, Button, DartSlots, Icon, Keypad, Pressable, Text } from '@/ui';
@@ -85,6 +86,9 @@ function RunFinished({ run }: { run: LabelRun }) {
   };
   return (
     <SafeAreaView edges={['top', 'bottom']} style={[styles.safe, styles.done]} testID="label-done">
+      <View style={styles.doneTop}>
+        <LabPill />
+      </View>
       <View style={styles.doneBody}>
         <View style={styles.doneMark}>
           <Icon name="check" color={theme.colors.accent} size={34} strokeWidth={2.4} />
@@ -219,9 +223,12 @@ function StepFrame({
         <Text variant="bodyStrong" style={styles.topTitle} accessibilityRole="header">
           {title}
         </Text>
-        <Text variant="caption" tone="muted" style={styles.stepCount}>
-          {t('label.step', { n: STEPS.indexOf(step) + 1 })}
-        </Text>
+        <View style={styles.topRight}>
+          <LabPill />
+          <Text variant="caption" tone="muted">
+            {t('label.step', { n: STEPS.indexOf(step) + 1 })}
+          </Text>
+        </View>
       </View>
       <View style={styles.body}>{children}</View>
       <View style={styles.footer}>{footer}</View>
@@ -693,7 +700,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   flip: { transform: [{ scaleX: -1 }] },
   topTitle: { flex: 1, textAlign: 'center' },
-  stepCount: { minWidth: 72, textAlign: 'right' },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
   // Photo steps run edge to edge; text and controls keep a small margin.
   body: { flex: 1, gap: theme.spacing.s },
   footer: {
@@ -769,6 +776,7 @@ const styles = StyleSheet.create((theme) => ({
   wireOn: { backgroundColor: theme.colors.accent, borderColor: theme.colors.accent },
   reviewRight: { alignItems: 'flex-end', gap: 2 },
   done: { padding: theme.spacing.l },
+  doneTop: { alignItems: 'flex-end' },
   doneBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.m },
   doneMark: {
     width: 72,

@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { checkLab, uploader, type LabHealth } from '@/features/capture-lab/lab';
+import { uploader } from '@/features/capture-lab/lab';
+import { recheckLab, useLabHealth } from '@/features/capture-lab/labHealth';
 import {
   labelQueue,
   sessionsOn,
@@ -36,7 +37,6 @@ export default function CaptureHome() {
   const { t } = useTranslation('capture');
   const labUrl = useCapture((s) => s.labUrl);
   const session = useCapture((s) => s.session);
-  const [health, setHealth] = useState<LabHealth | null>(null);
   const [pending, setPending] = useState(0);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [syncing, setSyncing] = useState(false);
@@ -53,6 +53,7 @@ export default function CaptureHome() {
     }
   }, []);
 
+  const health = useLabHealth((s) => (s.url === labUrl ? s.health : null));
   const sync = useCallback(async () => {
     if (!labUrl) return;
     setSyncing(true);
@@ -73,15 +74,10 @@ export default function CaptureHome() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-      if (!labUrl) {
-        setHealth(null);
-        return;
-      }
+      if (!labUrl) return;
       let live = true;
-      void checkLab(labUrl).then((h) => {
-        if (!live) return;
-        setHealth(h);
-        if (h.ok && fileOutbox.pending().length) void sync();
+      void recheckLab(labUrl).then((h) => {
+        if (live && h.ok && fileOutbox.pending().length) void sync();
       });
       return () => {
         live = false;

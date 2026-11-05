@@ -11,6 +11,7 @@ import { prefillFor } from '@/features/capture-lab/queue';
 import { TagChips, toggleTag as toggled, type TagKey } from '@/features/capture-lab/SessionBits';
 import { cropToSquare } from '@/features/capture-lab/square';
 import { useCapture, useLaterNote, useShot } from '@/features/capture-lab/store';
+import { LabPill } from '@/features/capture-lab/LabPill';
 import { haptics } from '@/services/haptics';
 import { Button, Header, Icon, Pressable, Screen, Text } from '@/ui';
 
@@ -95,6 +96,7 @@ export default function CaptureSession() {
           title={t('session.title', { n: visits + 1 })}
           backLabel={t('label.back')}
           onBack={() => router.back()}
+          right={<LabPill />}
         />
         <Text tone="muted">{t('session.permission')}</Text>
         {permission.canAskAgain ? (
@@ -122,14 +124,17 @@ export default function CaptureSession() {
           <Text variant="bodyStrong" style={styles.center}>
             {t('session.title', { n: visits + 1 })}
           </Text>
-          <Text variant="caption" tone="muted" style={styles.center} testID="session-counts">
-            {t('session.saved', { count: saved })}
-            {toLabel ? (
-              <Text variant="caption" tone="pending">
-                {` · ${t('session.toLabel', { count: toLabel })}`}
-              </Text>
-            ) : null}
-          </Text>
+          <View style={styles.countsRow}>
+            <Text variant="caption" tone="muted" testID="session-counts">
+              {t('session.saved', { count: saved })}
+              {toLabel ? (
+                <Text variant="caption" tone="pending">
+                  {` · ${t('session.toLabel', { count: toLabel })}`}
+                </Text>
+              ) : null}
+            </Text>
+            <LabPill />
+          </View>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -228,6 +233,13 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing.l,
   },
   title: { flex: 1, textAlign: 'center' },
+  countsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.s,
+    marginTop: 2,
+  },
   round: {
     width: 44,
     height: 44,

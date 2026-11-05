@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
-import { LabGate, pct, useLab } from '@/features/capture-lab/LabBits';
+import { LabGate, pct, ScreenTitle, useLab } from '@/features/capture-lab/LabBits';
 import {
   activateModel,
   betterCandidate,
@@ -28,12 +28,7 @@ export default function CaptureModels() {
   const { labUrl, reply, reload } = useLab(fetchModels);
   return (
     <Screen scroll>
-      <View>
-        <Text variant="heading" accessibilityRole="header">
-          {t('models.title')}
-        </Text>
-        <Text tone="muted">{t('models.subtitle')}</Text>
-      </View>
+      <ScreenTitle title={t('models.title')} subtitle={t('models.subtitle')} />
       <LabGate labUrl={labUrl} reply={reply} reload={reload}>
         {(d) => <ModelList d={d} labUrl={labUrl} reload={reload} />}
       </LabGate>

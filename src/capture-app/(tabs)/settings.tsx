@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { TextInput, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
-import { checkLab, type LabHealth } from '@/features/capture-lab/lab';
+import type { LabHealth } from '@/features/capture-lab/lab';
+import { ScreenTitle } from '@/features/capture-lab/LabBits';
+import { recheckLab } from '@/features/capture-lab/labHealth';
 import { modelFiles } from '@/features/capture-lab/modelFiles';
 import { checkForModel, pullModel, type PullStatus } from '@/features/capture-lab/modelPull';
 import { fileOutbox } from '@/features/capture-lab/outboxFiles';
@@ -62,7 +64,7 @@ export default function CaptureSettings() {
   const runTest = async () => {
     saveAddress();
     setTesting(true);
-    const h = await checkLab(address);
+    const h = await recheckLab(address.trim());
     setTest(h);
     setTesting(false);
     if (h.ok) void checkModel(address);
@@ -108,9 +110,7 @@ export default function CaptureSettings() {
 
   return (
     <Screen scroll>
-      <Text variant="heading" accessibilityRole="header">
-        {t('settings.title')}
-      </Text>
+      <ScreenTitle title={t('settings.title')} />
       <Section label={t('settings.lab')}>
         <View style={styles.block}>
           <Text variant="caption" tone="muted">

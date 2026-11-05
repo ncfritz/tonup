@@ -11,6 +11,7 @@ import { fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { addTips } from '@/features/capture-lab/queue';
 import { visitTotal } from '@/features/capture-lab/visit';
 import { ZoomPan } from '@/features/capture-lab/ZoomPan';
+import { LabPill } from '@/features/capture-lab/LabPill';
 import { Button, Header, Text } from '@/ui';
 
 /** A visit as it was saved: the photo with its board and numbered tips, its values and total. */
@@ -53,6 +54,7 @@ export default function SavedPhoto() {
           title={t('saved.title')}
           backLabel={t('photos.back')}
           onBack={() => router.back()}
+          right={<LabPill />}
         />
       </View>
       {label && found?.uri ? (

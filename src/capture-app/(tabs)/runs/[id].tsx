@@ -22,6 +22,7 @@ import {
   verifyModels,
   type RunDetail,
 } from '@/features/capture-lab/labData';
+import { LabPill } from '@/features/capture-lab/LabPill';
 import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
 /** Ask again every 3 seconds while the run is going. */
@@ -55,6 +56,7 @@ export default function PastRun() {
           title={t('run.title', { id })}
           backLabel={t('run.back')}
           onBack={() => router.back()}
+          right={<LabPill />}
         />
       </View>
       <ScrollView contentContainerStyle={styles.body}>

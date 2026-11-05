@@ -199,6 +199,17 @@
     "badgeValuesOnly": "V {total}"
   },
   "lab": {
+    "pill": {
+      "ok": "Lab",
+      "down": "Lab offline",
+      "checking": "Lab…",
+      "unset": "No Lab",
+      "okA11y": "Lab connected",
+      "downA11y": "Lab not reachable",
+      "checkingA11y": "Checking Lab",
+      "unsetA11y": "Lab's address isn't set",
+      "hint": "Checks Lab again"
+    },
     "unset": "Set Lab's address in Settings to see its numbers here.",
     "loading": "Asking Lab…",
     "down": "Lab not reachable: {error}",

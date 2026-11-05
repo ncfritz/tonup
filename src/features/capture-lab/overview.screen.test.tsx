@@ -44,7 +44,11 @@ const mockOverview: Overview = {
       title: 'Angle',
       buckets: [bucket('front', 30, false), bucket('steep', 2, true)],
     },
-    { key: 'light', title: 'Light', buckets: [bucket('dim', 1, true), bucket('bright', 39, false)] },
+    {
+      key: 'light',
+      title: 'Light',
+      buckets: [bucket('dim', 1, true), bucket('bright', 39, false)],
+    },
   ],
   prefill: [],
 };

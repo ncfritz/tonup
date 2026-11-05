@@ -10,7 +10,23 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Button, Text } from '@/ui';
 
 import type { Reply } from './labData';
+import { LabPill } from './LabPill';
 import { useCapture } from './store';
+
+/** A tab's title, its line under it, and Lab's state on the right (as on every screen). */
+export function ScreenTitle({ title, subtitle }: { title: string; subtitle?: ReactNode }) {
+  return (
+    <View style={styles.titleRow}>
+      <View style={styles.flex}>
+        <Text variant="heading" accessibilityRole="header">
+          {title}
+        </Text>
+        {subtitle ? <Text tone="muted">{subtitle}</Text> : null}
+      </View>
+      <LabPill />
+    </View>
+  );
+}
 
 /**
  * Asks Lab while the tab is in view; with `every`, again on that interval (a live run, say).
@@ -298,6 +314,7 @@ export function Legend() {
 
 const styles = StyleSheet.create((theme) => ({
   down: { gap: theme.spacing.s },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: theme.spacing.s },
   flex: { flex: 1 },
   meter: { gap: theme.spacing.xs },
   meterHead: { flexDirection: 'row', alignItems: 'baseline', gap: theme.spacing.s },
