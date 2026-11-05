@@ -12,3 +12,9 @@ body {
 *::-webkit-scrollbar {
   display: none;
 }
+
+/* Behind the app while it loads, in the mode it's about to draw (components/colorMode.ts). */
+html[data-theme='dark'] body {
+  background: #141414;
+  color-scheme: dark;
+}

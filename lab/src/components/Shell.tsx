@@ -5,22 +5,32 @@ import {
   CheckCircleOutlined,
   DashboardOutlined,
   DeploymentUnitOutlined,
+  DesktopOutlined,
   ExperimentOutlined,
   FolderOpenOutlined,
   LeftOutlined,
+  MoonOutlined,
   RightOutlined,
+  SunOutlined,
 } from '@ant-design/icons';
-import { App, Button, ConfigProvider, Layout, Menu, theme } from 'antd';
+import { App, Button, ConfigProvider, Dropdown, Layout, Menu, theme } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 
+import { setColorMode, useColorMode, useDark, type ColorMode } from './colorMode';
 import styles from './Shell.module.css';
 
 // Ant Design with Ton Up's teal (the Training theme's light accent) as the primary colour, in
 // Olympus's chrome (packages/console/src/shell): a navy header across the top, the pages in a
 // sider beside the content that folds to a rail.
 const PRIMARY = '#0F766E';
+/**
+ * Dark mode: buttons keep a teal white text reads on; links and the selection use the Training
+ * theme's bright dark-mode teal, which reads on the dark panels.
+ */
+const PRIMARY_DARK = '#0F8A7E';
+const LINK_DARK = '#2DD4BF';
 /** Olympus's chrome colours: the header's navy and the collapsed rail's slate. */
 const NAVY = '#001529';
 const RAIL_BG = '#324354';
@@ -127,6 +137,8 @@ function Chrome({ children }: { children: ReactNode }) {
         }}
       >
         <Wordmark />
+        <div style={{ flex: 1 }} />
+        <ModeSwitch />
       </Layout.Header>
       <Layout style={{ minHeight: 0 }}>
         <Layout.Sider
@@ -194,15 +206,61 @@ function Chrome({ children }: { children: ReactNode }) {
   );
 }
 
+const MODES: { key: ColorMode; label: string; icon: ReactNode }[] = [
+  { key: 'system', label: 'Match the system', icon: <DesktopOutlined /> },
+  { key: 'light', label: 'Light', icon: <SunOutlined /> },
+  { key: 'dark', label: 'Dark', icon: <MoonOutlined /> },
+];
+
+/** Light, dark or the system's: on the header's right, as Olympus's settings sit. */
+function ModeSwitch() {
+  const mode = useColorMode();
+  const dark = useDark();
+  return (
+    <Dropdown
+      trigger={['click']}
+      menu={{
+        selectable: true,
+        selectedKeys: [mode],
+        items: MODES.map((m) => ({ key: m.key, label: m.label, icon: m.icon })),
+        onClick: ({ key }) => setColorMode(key as ColorMode),
+      }}
+    >
+      <Button
+        type="text"
+        shape="circle"
+        icon={dark ? <MoonOutlined /> : <SunOutlined />}
+        aria-label={`Colour theme: ${MODES.find((m) => m.key === mode)!.label}`}
+        style={{ color: 'rgba(255,255,255,0.85)' }}
+      />
+    </Dropdown>
+  );
+}
+
 export function Shell({ children }: { children: ReactNode }) {
+  const dark = useDark();
+  // The page behind the app, and the browser's own controls (scrollbars, inputs), follow too.
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+  }, [dark]);
   return (
     <ConfigProvider
       theme={{
-        token: { colorPrimary: PRIMARY, colorLink: PRIMARY },
+        algorithm: dark ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: dark
+          ? { colorPrimary: PRIMARY_DARK, colorLink: LINK_DARK }
+          : { colorPrimary: PRIMARY, colorLink: PRIMARY },
         components: {
           Layout: { headerBg: NAVY, siderBg: NAVY },
           // The open sider's selection: a clean tint of the teal, not antd's derived grey-green.
-          Menu: { itemSelectedBg: '#E3F1EF', itemSelectedColor: PRIMARY, itemHoverBg: '#F2F7F6' },
+          Menu: dark
+            ? {
+                itemSelectedBg: 'rgba(45, 212, 191, 0.14)',
+                itemSelectedColor: LINK_DARK,
+                itemHoverBg: 'rgba(255, 255, 255, 0.06)',
+              }
+            : { itemSelectedBg: '#E3F1EF', itemSelectedColor: PRIMARY, itemHoverBg: '#F2F7F6' },
         },
       }}
     >

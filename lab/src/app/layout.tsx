@@ -2,6 +2,7 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
+import { COLOR_MODE_SCRIPT } from '~/components/colorMode';
 import { Shell } from '~/components/Shell';
 
 import './globals.css';
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // The mode is set on <html> before paint (and by the app after), so it differs from the server's.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: COLOR_MODE_SCRIPT }} />
+      </head>
       <body>
         <AntdRegistry>
           <Shell>{children}</Shell>

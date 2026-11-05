@@ -104,7 +104,7 @@
 
 .pointOn,
 .pointOn:hover {
-  background: #e3f1ef;
+  background: var(--ant-color-primary-bg);
 }
 
 .pointText {

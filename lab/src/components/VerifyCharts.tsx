@@ -19,11 +19,8 @@ import {
 import type { PrefillStats } from '~/lib/queries';
 import type { Breakdown, Coverage, ModelProgress } from '~/lib/verify';
 
-import { BAR, legendOrder, SERIES } from './RunCharts';
+import { BAR, legendOrder, SERIES, useChartTheme } from './RunCharts';
 
-const GRID = '#f0f0f0';
-const AXIS = '#595959';
-const WARN = '#ad6800';
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** Models in a comparison take the categorical slots in the order they're listed. */
@@ -48,6 +45,7 @@ export function BreakdownChart({
   models: { id: number; name: string }[];
   measure: Measure;
 }) {
+  const { GRID, AXIS, FAINT, CURSOR } = useChartTheme();
   if (!breakdown.buckets.length) return <Empty description="Not measured on these photos" />;
   const data = breakdown.buckets.map((b) => {
     const row: Record<string, number | string> = { bucket: b.bucket };
@@ -76,7 +74,7 @@ export function BreakdownChart({
                 <text y={12} textAnchor="middle" fill={AXIS} fontSize={11}>
                   {payload.value}
                 </text>
-                <text y={26} textAnchor="middle" fill="#8c8c8c" fontSize={10}>
+                <text y={26} textAnchor="middle" fill={FAINT} fontSize={10}>
                   n={row?.n}
                 </text>
               </g>
@@ -90,7 +88,7 @@ export function BreakdownChart({
         <Tooltip
           formatter={(v, name) => [pct(Number(v)), name]}
           contentStyle={tooltipStyle}
-          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+          cursor={{ fill: CURSOR }}
         />
         {models.length > 1 ? (
           <Legend
@@ -118,6 +116,7 @@ export function BreakdownChart({
 
 /** Photos per bucket of one condition, training (train and val) and verify stacked. */
 export function CoverageChart({ coverage }: { coverage: Coverage }) {
+  const { GRID, AXIS, WARN, CURSOR, GAP } = useChartTheme();
   const total = coverage.buckets.reduce((s, b) => s + b.training + b.verify, 0);
   if (!total) return <Empty description="No labelled photos yet" />;
   const thin = new Set(coverage.buckets.filter((b) => b.thin).map((b) => b.bucket));
@@ -153,7 +152,7 @@ export function CoverageChart({ coverage }: { coverage: Coverage }) {
         />
         <Tooltip
           contentStyle={tooltipStyle}
-          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+          cursor={{ fill: CURSOR }}
           formatter={(v, name) => [v, name]}
           labelFormatter={(b) => (thin.has(String(b)) ? `${b} (thin)` : String(b))}
         />
@@ -167,7 +166,7 @@ export function CoverageChart({ coverage }: { coverage: Coverage }) {
           dataKey="training"
           stackId="a"
           fill={SERIES.visit}
-          stroke="#fff"
+          stroke={GAP}
           strokeWidth={2}
           maxBarSize={20}
           isAnimationActive={false}
@@ -177,7 +176,7 @@ export function CoverageChart({ coverage }: { coverage: Coverage }) {
           dataKey="verify"
           stackId="a"
           fill={SERIES.dart}
-          stroke="#fff"
+          stroke={GAP}
           strokeWidth={2}
           maxBarSize={20}
           radius={[0, 4, 4, 0]}
@@ -189,6 +188,7 @@ export function CoverageChart({ coverage }: { coverage: Coverage }) {
 }
 
 export function ThinNote() {
+  const { WARN } = useChartTheme();
   return (
     <Flex gap={6} align="center">
       <WarningOutlined style={{ color: WARN }} />
@@ -201,6 +201,7 @@ export function ThinNote() {
 
 /** Each model's latest verified numbers, oldest first, against the bar. */
 export function ProgressChart({ models }: { models: ModelProgress }) {
+  const { GRID, AXIS } = useChartTheme();
   if (!models.length)
     return <Empty description="No model verified on our photos yet: run a verification" />;
   const data = models.map((m) => ({
@@ -273,6 +274,7 @@ export function ProgressChart({ models }: { models: ModelProgress }) {
 
 /** How much of each model's pre-fill players kept on the phone (the L5 measure). */
 export function PrefillChart({ stats }: { stats: PrefillStats[] }) {
+  const { GRID, AXIS, FAINT, CURSOR } = useChartTheme();
   if (!stats.length)
     return (
       <Empty description="No pre-filled visits yet: set a model active and pull it into Capture" />
@@ -300,7 +302,7 @@ export function PrefillChart({ stats }: { stats: PrefillStats[] }) {
                 <text y={12} textAnchor="middle" fill={AXIS} fontSize={12}>
                   {payload.value}
                 </text>
-                <text y={26} textAnchor="middle" fill="#8c8c8c" fontSize={10}>
+                <text y={26} textAnchor="middle" fill={FAINT} fontSize={10}>
                   {row?.visits} visits
                 </text>
               </g>
@@ -310,7 +312,7 @@ export function PrefillChart({ stats }: { stats: PrefillStats[] }) {
         <YAxis domain={[0, 1]} tickFormatter={pct} tick={{ fill: AXIS, fontSize: 11 }} width={40} />
         <Tooltip
           contentStyle={tooltipStyle}
-          cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+          cursor={{ fill: CURSOR }}
           formatter={(v, name) => [v == null ? '—' : pct(Number(v)), name]}
         />
         <Legend

@@ -1,6 +1,6 @@
 'use client';
 
-import { Empty } from 'antd';
+import { Empty, theme } from 'antd';
 import {
   CartesianGrid,
   Legend,
@@ -17,10 +17,21 @@ import type { EpochMetrics } from '~/lib/runs';
 
 // The validated categorical order (blue, orange, aqua), one hue per measure on every chart.
 export const SERIES = { visit: '#2a78d6', dart: '#eb6834', board: '#1baf7a' };
-const GRID = '#f0f0f0';
-const AXIS = '#595959';
 
 /** The shipping bar (docs/plan/snap-to-score.md › Accuracy bar). */
+/** Gridlines, axis text and the like in the current theme's colours (light or dark). */
+export function useChartTheme() {
+  const { token } = theme.useToken();
+  return {
+    GRID: token.colorBorderSecondary,
+    AXIS: token.colorTextSecondary,
+    FAINT: token.colorTextTertiary,
+    WARN: token.colorWarningText,
+    CURSOR: token.colorFillTertiary,
+    GAP: token.colorBgContainer,
+  };
+}
+
 export const BAR = { visit: 0.9, dart: 0.95, board: 0.98 };
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
@@ -32,6 +43,7 @@ export const legendOrder =
     keys.indexOf(String(item.dataKey));
 
 export function AccuracyChart({ metrics, epochs }: { metrics: EpochMetrics[]; epochs: number }) {
+  const { GRID, AXIS } = useChartTheme();
   if (!metrics.length) return <Empty description="No epochs finished yet" />;
   const data = metrics.map((m) => ({
     epoch: m.epoch,
@@ -103,6 +115,7 @@ export function AccuracyChart({ metrics, epochs }: { metrics: EpochMetrics[]; ep
 }
 
 export function LossChart({ metrics, epochs }: { metrics: EpochMetrics[]; epochs: number }) {
+  const { GRID, AXIS } = useChartTheme();
   if (!metrics.length) return <Empty description="No epochs finished yet" />;
   const data = metrics.map((m) => ({ epoch: m.epoch, train: m.loss, val: m.val_loss }));
   return (

@@ -16,6 +16,10 @@ pnpm build && pnpm start      # or start:lan
 
 Data lives in `~/TonUpLab/` (set `TONUP_LAB_DATA` to move it): `lab.db`, `photos/` and `thumbs/`, `snapshots/` (what each run trained on), `runs/<id>/` (log, metrics, checkpoint, verification) and `models/<vN>/` (the Core ML package). The database is created and migrated on startup.
 
+## Light and dark
+
+Lab follows the system's light or dark setting. The moon or sun at the right of the header picks Light, Dark or Match the system for this browser (`components/colorMode.ts`; a small script in `app/layout.tsx` sets it before the page paints, so a dark page doesn't flash white). Colours come from Ant Design's tokens (`var(--ant-…)` in the CSS modules, `useChartTheme` for the charts), so new screens follow without extra work; the header stays navy in both.
+
 ## Getting captures in
 
 - **From TU Capture:** it uploads to `POST /api/captures` (multipart: `photo` and `label`, the JSON in docs/plan/capture-lab.md). Start Lab with a LAN script so the phone can reach it.
