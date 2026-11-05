@@ -37,7 +37,7 @@ import styles from './Shell.module.css';
 /** Olympus's chrome colours: the header's navy and the collapsed rail's slate. */
 const NAVY = '#001529';
 const RAIL_BG = '#324354';
-const HEADER_HEIGHT = 72;
+const HEADER_HEIGHT = 56;
 /** Open, and the rail it collapses to. */
 const PAGES_WIDTH = 220;
 const PAGES_RAIL = 80;

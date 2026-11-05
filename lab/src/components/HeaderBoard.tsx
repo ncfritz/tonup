@@ -7,18 +7,11 @@ const RINGS = [6.35, 15.9, 99, 107, 162];
 const EDGE = 170;
 const NUMBER_RING = 212;
 
-export function HeaderBoard({
-  height,
-  radius = 104,
-  cx = 120,
-}: {
-  height: number;
-  /** The double's outer edge, in px. */
-  radius?: number;
-  cx?: number;
-}) {
-  const k = radius / EDGE;
-  const cy = height + 24;
+export function HeaderBoard({ height }: { height: number }) {
+  // Sized to the header: in a 56px header the double's edge is 81px out, the centre 19px below.
+  const k = (height * 1.45) / EDGE;
+  const cx = height * 1.66;
+  const cy = height * 1.33;
   const at = (r: number, deg: number) => {
     const a = ((deg - 90) * Math.PI) / 180;
     return [cx + r * k * Math.cos(a), cy + r * k * Math.sin(a)] as const;
@@ -33,8 +26,8 @@ export function HeaderBoard({
       style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}
     >
       <g fill="none" stroke="#fff" strokeOpacity={0.24}>
-        <circle cx={cx} cy={cy} r={NUMBER_RING * k} strokeWidth={2.5} />
-        <circle cx={cx} cy={cy} r={EDGE * k} strokeWidth={4} />
+        <circle cx={cx} cy={cy} r={NUMBER_RING * k} strokeWidth={2} />
+        <circle cx={cx} cy={cy} r={EDGE * k} strokeWidth={3.5} />
         {RINGS.map((r) => (
           <circle key={r} cx={cx} cy={cy} r={r * k} strokeWidth={1} />
         ))}

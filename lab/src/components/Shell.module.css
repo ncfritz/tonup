@@ -102,7 +102,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-left: 244px;
+  padding-left: 196px;
   line-height: 1.1;
   color: #fff;
 }
@@ -112,13 +112,13 @@
 }
 
 .name {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.3px;
 }
 
 .tagline {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.55);
 }
 
