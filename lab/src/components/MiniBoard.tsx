@@ -1,4 +1,8 @@
+'use client';
+
 import { hitAt, SEGMENT_DEGREES, SEGMENT_ORDER, segmentCentreDegrees } from '@domain/board';
+
+import { useDark } from './colorMode';
 
 /**
  * A small grey dartboard (the label editor's darts and board points): a region lit in the
@@ -6,12 +10,30 @@ import { hitAt, SEGMENT_DEGREES, SEGMENT_ORDER, segmentCentreDegrees } from '@do
  * a tip scores something else), or a dot where a board point goes. Drawn in board millimetres, the 20 at the top.
  */
 
-const ACCENT = '#0F766E';
-const DANGER = '#cf1322';
-const SEG = ['#cfcfcf', '#f0f0f0'];
-const RING = ['#9c9c9c', '#bababa'];
-/** The lit segment's other rings, so a small treble or double still reads. */
-const ACCENT_SOFT = '#9fd3c7';
+/**
+ * A grey board in each mode, and a vivid teal for what's lit (the rest of its segment in a
+ * strong tint, so a small treble or double still reads), red for what was entered instead.
+ */
+const PALETTES = {
+  light: {
+    edge: '#8c8c8c',
+    seg: ['#cfcfcf', '#f0f0f0'],
+    ring: ['#9c9c9c', '#bababa'],
+    lit: '#0d9488',
+    litSoft: '#5eead4',
+    danger: '#e11d48',
+    dotStroke: '#ffffff',
+  },
+  dark: {
+    edge: '#1f242a',
+    seg: ['#2f353d', '#454c56'],
+    ring: ['#5c6570', '#6f7883'],
+    lit: '#2dd4bf',
+    litSoft: '#0f766e',
+    danger: '#fb7185',
+    dotStroke: '#0e1217',
+  },
+} as const;
 const EDGE = 196;
 
 /**
@@ -86,9 +108,9 @@ const BASE = SEGMENT_ORDER.flatMap((_, i) => {
   const from = c - SEGMENT_DEGREES / 2;
   const to = c + SEGMENT_DEGREES / 2;
   return [
-    { d: wedge(D.outerBull, D.doubleOuter, from, to), fill: SEG[i % 2]! },
-    { d: wedge(D.trebleInner, D.trebleOuter, from, to), fill: RING[i % 2]! },
-    { d: wedge(D.doubleInner, D.doubleOuter, from, to), fill: RING[i % 2]! },
+    { d: wedge(D.outerBull, D.doubleOuter, from, to), kind: 'seg' as const, alt: i % 2 },
+    { d: wedge(D.trebleInner, D.trebleOuter, from, to), kind: 'ring' as const, alt: i % 2 },
+    { d: wedge(D.doubleInner, D.doubleOuter, from, to), kind: 'ring' as const, alt: i % 2 },
   ];
 });
 
@@ -108,6 +130,7 @@ export function MiniBoard({
   dot?: { x: number; y: number } | null;
   title?: string;
 }) {
+  const c = PALETTES[useDark() ? 'dark' : 'light'];
   const litRegion =
     lit && typeof lit === 'object'
       ? (() => {
@@ -126,12 +149,12 @@ export function MiniBoard({
       aria-hidden={title ? undefined : true}
       style={{ flex: 'none', display: 'block' }}
     >
-      <circle r={EDGE} fill="#8c8c8c" />
+      <circle r={EDGE} fill={c.edge} />
       {BASE.map((w, i) => (
-        <path key={i} d={w.d} fill={w.fill} />
+        <path key={i} d={w.d} fill={c[w.kind][w.alt]} />
       ))}
-      <circle r={D.outerBull} fill={RING[1]} />
-      <circle r={D.innerBull} fill={RING[0]} />
+      <circle r={D.outerBull} fill={c.ring[1]} />
+      <circle r={D.innerBull} fill={c.ring[0]} />
       {litRegion && litRegion.segment !== 25 ? (
         <path
           d={wedge(
@@ -140,15 +163,15 @@ export function MiniBoard({
             segmentCentreDegrees(litRegion.segment) - SEGMENT_DEGREES / 2,
             segmentCentreDegrees(litRegion.segment) + SEGMENT_DEGREES / 2,
           )}
-          fill={ACCENT_SOFT}
+          fill={c.litSoft}
         />
       ) : null}
-      {litRegion ? <path d={regionPath(litRegion)} fill={ACCENT} /> : null}
+      {litRegion ? <path d={regionPath(litRegion)} fill={c.lit} /> : null}
       {outlinedRegion ? (
-        <path d={regionPath(outlinedRegion)} fill="none" stroke={DANGER} strokeWidth={10} />
+        <path d={regionPath(outlinedRegion)} fill="none" stroke={c.danger} strokeWidth={14} />
       ) : null}
       {dot ? (
-        <circle cx={dot.x} cy={-dot.y} r={22} fill={ACCENT} stroke="#fff" strokeWidth={10} />
+        <circle cx={dot.x} cy={-dot.y} r={26} fill={c.lit} stroke={c.dotStroke} strokeWidth={10} />
       ) : null}
     </svg>
   );

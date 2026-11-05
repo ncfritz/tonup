@@ -20,6 +20,7 @@ import {
   InputNumber,
   Popconfirm,
   Space,
+  Switch,
   Table,
   Tag,
   Timeline,
@@ -41,6 +42,7 @@ import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './
 import styles from './LabelEditor.module.css';
 import { MiniBoard } from './MiniBoard';
 import { PageHeader } from './PageHeader';
+import { ScorePicker } from './ScorePicker';
 import { SideTabs, type SideTab } from './SideTabs';
 
 /** Zoom: the most, a button's step, and how far a press moves before it's a drag (px). */
@@ -48,10 +50,8 @@ const MAX_ZOOM = 8;
 const ZOOM_STEP = 1.5;
 const PAN_SLOP = 4;
 
-/** The darts column's least width, and the photo area's padding across and down (px). */
+/** The darts column's least width (px). */
 const MIN_SCORES = 400;
-const PHOTO_PAD = 40;
-const PHOTO_PAD_Y = 40;
 
 /** The model's proposal, in the same colour as predictions on the Verification page. */
 const MODEL = '#eb6834';
@@ -103,6 +103,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   // The space the photo has, and the photo's size in it: as wide as it is, unless that would
   // be too tall, then as tall as it is.
   const work = useRef<HTMLDivElement>(null);
+  /** The line under the photo (its hint and the model toggle). */
   const toolbar = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState<{ width: number; height: number } | null>(null);
   const zoomRef = useRef(zoom);
@@ -171,9 +172,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       const stacked = getComputedStyle(el).flexDirection === 'column';
       const bar = toolbar.current?.offsetHeight ?? 32;
       const roomW = stacked
-        ? el.clientWidth - 32
-        : el.clientWidth - (side?.offsetWidth ?? 0) - MIN_SCORES - PHOTO_PAD;
-      const roomH = stacked ? window.innerHeight * 0.7 : el.clientHeight - bar - PHOTO_PAD_Y;
+        ? el.clientWidth
+        : el.clientWidth - (side?.offsetWidth ?? 0) - MIN_SCORES;
+      const roomH = stacked ? window.innerHeight * 0.7 : el.clientHeight - bar;
       if (roomW <= 0 || roomH <= 0) return;
       const width = Math.min(roomW, (roomH * W) / H);
       setFit({ width: Math.floor(width), height: Math.floor((width * H) / W) });
@@ -527,102 +528,68 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
         }
       />
       <div ref={work} className={styles.work}>
-        <div
-          className={styles.photoArea}
-          style={fit ? { width: fit.width + PHOTO_PAD } : undefined}
-        >
-          <Flex ref={toolbar} wrap justify="space-between" align="center" gap={8}>
-            {mode === 'add' ? (
-              <Typography.Text strong>Click the photo where the new dart’s tip is</Typography.Text>
-            ) : (
-              <Typography.Text type="secondary">
-                Scroll to zoom, drag the photo to move around
-              </Typography.Text>
-            )}
-            <Space wrap>
-              {prefill ? (
-                <Checkbox checked={showModel} onChange={(e) => setShowModel(e.target.checked)}>
-                  <span style={{ color: MODEL }}>✕</span> What {prefill.model} placed
-                </Checkbox>
-              ) : null}
-              <Space.Compact>
-                <Button
-                  icon={<MinusOutlined />}
-                  aria-label="Zoom out"
-                  disabled={zoom <= 1}
-                  onClick={() => zoomTo(zoom / ZOOM_STEP)}
-                />
-                <Button style={{ minWidth: 64 }} onClick={() => zoomTo(1)} title="Fit the photo">
-                  {zoom <= 1 ? 'Fit' : `${zoom.toFixed(1)}×`}
-                </Button>
-                <Button
-                  icon={<PlusOutlined />}
-                  aria-label="Zoom in"
-                  disabled={zoom >= MAX_ZOOM}
-                  onClick={() => zoomTo(zoom * ZOOM_STEP)}
-                />
-              </Space.Compact>
-            </Space>
-          </Flex>
+        <div className={styles.photoArea} style={fit ? { width: fit.width } : undefined}>
           {/* The photo fits the space left: the full width when that leaves it short enough,
               otherwise the full height. Zooming scrolls inside this frame rather than growing it. */}
           <div className={styles.stage}>
             <div
-              ref={frame}
-              className={styles.frame}
+              className={styles.frameWrap}
               style={fit ? { width: fit.width, height: fit.height } : { visibility: 'hidden' }}
             >
-              <div
-                style={{
-                  position: 'relative',
-                  width: `${zoom * 100}%`,
-                  aspectRatio: `${W} / ${H}`,
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- local photo */}
-                <img
-                  src={`/api/captures/${capture.id}/photo`}
-                  alt={`Capture ${capture.id}`}
-                  draggable={false}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-                />
-                <svg
-                  ref={svg}
-                  viewBox={`0 0 ${W} ${H}`}
-                  role="img"
-                  aria-label="Label marks: drag a point or dart to move it"
+              <div ref={frame} className={styles.frame}>
+                <div
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    cursor: panning
-                      ? 'grabbing'
-                      : mode === 'add'
-                        ? 'crosshair'
-                        : zoom > 1
-                          ? 'grab'
-                          : 'default',
-                    touchAction: 'none',
+                    position: 'relative',
+                    width: `${zoom * 100}%`,
+                    aspectRatio: `${W} / ${H}`,
                   }}
-                  onPointerDown={onBackgroundDown}
-                  onPointerMove={onMove}
-                  onPointerUp={endDrag}
-                  onPointerCancel={cancelDrag}
                 >
-                  {showModel && prefill ? (
-                    <g pointerEvents="none" stroke={MODEL} strokeLinecap="round">
-                      {modelBoard ? (
-                        <path
-                          d={`${modelBoard.rings} ${modelBoard.wires}`}
-                          fill="none"
-                          strokeOpacity={0.8}
-                          strokeWidth={r / 7}
-                          strokeDasharray={`${r / 1.5} ${r / 2}`}
-                        />
-                      ) : null}
-                      {[...prefill.calibration, ...prefill.tips.flatMap((t) => (t ? [t] : []))].map(
-                        (p, i) => (
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local photo */}
+                  <img
+                    src={`/api/captures/${capture.id}/photo`}
+                    alt={`Capture ${capture.id}`}
+                    draggable={false}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                  />
+                  <svg
+                    ref={svg}
+                    viewBox={`0 0 ${W} ${H}`}
+                    role="img"
+                    aria-label="Label marks: drag a point or dart to move it"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      cursor: panning
+                        ? 'grabbing'
+                        : mode === 'add'
+                          ? 'crosshair'
+                          : zoom > 1
+                            ? 'grab'
+                            : 'default',
+                      touchAction: 'none',
+                    }}
+                    onPointerDown={onBackgroundDown}
+                    onPointerMove={onMove}
+                    onPointerUp={endDrag}
+                    onPointerCancel={cancelDrag}
+                  >
+                    {showModel && prefill ? (
+                      <g pointerEvents="none" stroke={MODEL} strokeLinecap="round">
+                        {modelBoard ? (
+                          <path
+                            d={`${modelBoard.rings} ${modelBoard.wires}`}
+                            fill="none"
+                            strokeOpacity={0.8}
+                            strokeWidth={r / 7}
+                            strokeDasharray={`${r / 1.5} ${r / 2}`}
+                          />
+                        ) : null}
+                        {[
+                          ...prefill.calibration,
+                          ...prefill.tips.flatMap((t) => (t ? [t] : [])),
+                        ].map((p, i) => (
                           <g key={i} strokeWidth={r / 3.5}>
                             <line
                               x1={p.x * W - r * 0.8}
@@ -637,89 +604,125 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                               y2={p.y * H - r * 0.8}
                             />
                           </g>
-                        ),
-                      )}
-                    </g>
-                  ) : null}
-                  {board ? (
-                    <path
-                      d={`${board.rings} ${board.wires}`}
-                      fill="none"
-                      stroke={MARK.label}
-                      strokeOpacity={0.75}
-                      strokeWidth={r / 6}
-                      pointerEvents="none"
-                    />
-                  ) : null}
-                  {CALIBRATION_IDS.map((id) => {
-                    const p = label.points[id];
-                    if (!p) return null;
-                    const sel = isSel({ kind: 'point', id });
-                    return (
-                      <g
-                        key={id}
-                        onPointerDown={startDrag({ kind: 'point', id })}
-                        style={{ cursor: 'grab' }}
-                      >
-                        <circle
-                          cx={p.x * W}
-                          cy={p.y * H}
-                          r={r * (sel ? 1.3 : 1)}
-                          fill="rgba(14,18,23,0.35)"
-                          stroke={MARK.label}
-                          strokeWidth={r / (sel ? 2.5 : 3.5)}
-                        />
-                        <text
-                          x={p.x * W + r * 1.5}
-                          y={p.y * H - r * 1.2}
-                          fontSize={r * 1.4}
-                          fontWeight={700}
-                          fill="#fff"
-                          stroke={MARK.ink}
-                          strokeWidth={r / 4}
-                          paintOrder="stroke"
-                          pointerEvents="none"
-                        >
-                          {KEYPOINT_LABELS[id]}
-                        </text>
+                        ))}
                       </g>
-                    );
-                  })}
-                  {label.darts.map((d, idx) => {
-                    if (!d.tip) return null;
-                    const m = measured.darts[idx];
-                    const sel = isSel({ kind: 'dart', idx });
-                    return (
-                      <g
-                        key={idx}
-                        onPointerDown={startDrag({ kind: 'dart', idx })}
-                        style={{ cursor: 'grab' }}
-                      >
-                        <circle
-                          cx={d.tip.x * W}
-                          cy={d.tip.y * H}
-                          r={r * (sel ? 1.5 : 1.2)}
-                          fill={dartColour({ onWire: d.onWire, mismatch: m?.mismatch })}
-                          stroke={sel ? '#fff' : MARK.ink}
-                          strokeWidth={r / 3}
-                        />
-                        <text
-                          x={d.tip.x * W}
-                          y={d.tip.y * H + r * 0.5}
-                          fontSize={r * 1.4}
-                          fontWeight={700}
-                          textAnchor="middle"
-                          fill={MARK.ink}
-                          pointerEvents="none"
+                    ) : null}
+                    {board ? (
+                      <path
+                        d={`${board.rings} ${board.wires}`}
+                        fill="none"
+                        stroke={MARK.label}
+                        strokeOpacity={0.75}
+                        strokeWidth={r / 6}
+                        pointerEvents="none"
+                      />
+                    ) : null}
+                    {CALIBRATION_IDS.map((id) => {
+                      const p = label.points[id];
+                      if (!p) return null;
+                      const sel = isSel({ kind: 'point', id });
+                      return (
+                        <g
+                          key={id}
+                          onPointerDown={startDrag({ kind: 'point', id })}
+                          style={{ cursor: 'grab' }}
                         >
-                          {idx + 1}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
+                          <circle
+                            cx={p.x * W}
+                            cy={p.y * H}
+                            r={r * (sel ? 1.3 : 1)}
+                            fill="rgba(14,18,23,0.35)"
+                            stroke={MARK.label}
+                            strokeWidth={r / (sel ? 2.5 : 3.5)}
+                          />
+                          <text
+                            x={p.x * W + r * 1.5}
+                            y={p.y * H - r * 1.2}
+                            fontSize={r * 1.4}
+                            fontWeight={700}
+                            fill="#fff"
+                            stroke={MARK.ink}
+                            strokeWidth={r / 4}
+                            paintOrder="stroke"
+                            pointerEvents="none"
+                          >
+                            {KEYPOINT_LABELS[id]}
+                          </text>
+                        </g>
+                      );
+                    })}
+                    {label.darts.map((d, idx) => {
+                      if (!d.tip) return null;
+                      const m = measured.darts[idx];
+                      const sel = isSel({ kind: 'dart', idx });
+                      return (
+                        <g
+                          key={idx}
+                          onPointerDown={startDrag({ kind: 'dart', idx })}
+                          style={{ cursor: 'grab' }}
+                        >
+                          <circle
+                            cx={d.tip.x * W}
+                            cy={d.tip.y * H}
+                            r={r * (sel ? 1.5 : 1.2)}
+                            fill={dartColour({ onWire: d.onWire, mismatch: m?.mismatch })}
+                            stroke={sel ? '#fff' : MARK.ink}
+                            strokeWidth={r / 3}
+                          />
+                          <text
+                            x={d.tip.x * W}
+                            y={d.tip.y * H + r * 0.5}
+                            fontSize={r * 1.4}
+                            fontWeight={700}
+                            textAnchor="middle"
+                            fill={MARK.ink}
+                            pointerEvents="none"
+                          >
+                            {idx + 1}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+              </div>
+              {/* Zoom, over the photo: a pill at the bottom, in the middle. */}
+              <div className={styles.zoomPill} role="group" aria-label="Zoom">
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<MinusOutlined />}
+                  aria-label="Zoom out"
+                  disabled={zoom <= 1}
+                  onClick={() => zoomTo(zoom / ZOOM_STEP)}
+                />
+                <Button type="text" shape="round" onClick={() => zoomTo(1)} title="Fit the photo">
+                  {zoom <= 1 ? 'Fit' : `${zoom.toFixed(1)}×`}
+                </Button>
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<PlusOutlined />}
+                  aria-label="Zoom in"
+                  disabled={zoom >= MAX_ZOOM}
+                  onClick={() => zoomTo(zoom * ZOOM_STEP)}
+                />
               </div>
             </div>
+          </div>
+          <div ref={toolbar} className={styles.below}>
+            {mode === 'add' ? (
+              <Typography.Text strong>Click the photo where the new dart’s tip is</Typography.Text>
+            ) : (
+              <Typography.Text type="secondary">
+                Scroll to zoom, drag the photo to move around
+              </Typography.Text>
+            )}
+            {prefill ? (
+              <Checkbox checked={showModel} onChange={(e) => setShowModel(e.target.checked)}>
+                <span style={{ color: MODEL }}>✕</span> What {prefill.model} placed
+              </Checkbox>
+            ) : null}
           </div>
         </div>
 
@@ -771,18 +774,25 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               {
                 title: 'Entered',
                 render: (_, row) => (
-                  <AutoComplete
-                    style={{ width: '100%', minWidth: 72 }}
-                    value={row.entered ?? ''}
-                    onClick={(e) => e.stopPropagation()}
-                    options={VALUE_OPTIONS}
-                    filterOption={(input, o) =>
-                      o!.value.toLowerCase().startsWith(input.toLowerCase())
-                    }
-                    onChange={(v: string) => setDart(row.idx, { entered: v || null })}
-                    placeholder="—"
-                    aria-label={`Dart ${row.idx + 1} value`}
-                  />
+                  <Space.Compact style={{ width: '100%' }}>
+                    <AutoComplete
+                      style={{ width: '100%', minWidth: 72 }}
+                      value={row.entered ?? ''}
+                      onClick={(e) => e.stopPropagation()}
+                      options={VALUE_OPTIONS}
+                      filterOption={(input, o) =>
+                        o!.value.toLowerCase().startsWith(input.toLowerCase())
+                      }
+                      onChange={(v: string) => setDart(row.idx, { entered: v || null })}
+                      placeholder="—"
+                      aria-label={`Dart ${row.idx + 1} value`}
+                    />
+                    <ScorePicker
+                      value={row.entered}
+                      onPick={(v) => setDart(row.idx, { entered: v })}
+                      label={`Pick dart ${row.idx + 1}'s value`}
+                    />
+                  </Space.Compact>
                 ),
               },
               {
@@ -802,11 +812,12 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               {
                 title: 'Wire',
                 render: (_, row) => (
-                  <Checkbox
+                  <Switch
+                    size="small"
                     checked={row.onWire}
-                    onClick={(e) => e.stopPropagation()}
                     aria-label={`Dart ${row.idx + 1} on the wire`}
-                    onChange={(e) => setDart(row.idx, { onWire: e.target.checked })}
+                    onClick={(_, e) => e.stopPropagation()}
+                    onChange={(on) => setDart(row.idx, { onWire: on })}
                   />
                 ),
                 width: 48,

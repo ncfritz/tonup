@@ -1,0 +1,25 @@
+/* Capture's keypad, small: the ring, the numbers five to a row, then the rest. */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 280px;
+}
+
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.extras {
+  display: grid;
+  /* Bounce-out needs the room. */
+  grid-template-columns: 1fr 1fr 1fr 1.6fr;
+  gap: 6px;
+}
+
+.numbers :global(.ant-btn),
+.extras :global(.ant-btn) {
+  padding-inline: 0;
+}
