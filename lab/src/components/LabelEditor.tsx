@@ -2,6 +2,7 @@
 
 import {
   AimOutlined,
+  AlertOutlined,
   CameraOutlined,
   DeleteOutlined,
   HistoryOutlined,
@@ -13,6 +14,7 @@ import {
 import {
   App,
   AutoComplete,
+  Badge,
   Button,
   Checkbox,
   Descriptions,
@@ -33,6 +35,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEven
 import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
 import { measure } from '~/lib/conditions';
+import { needsOf, type NeedTone } from '~/lib/needs';
 import { CORRECTED } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
 import { boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
@@ -115,6 +118,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   // Marks in photo units, divided by the zoom so they keep their size on screen.
   const r = Math.max(W, H) / 90 / zoom;
   const measured = useMemo(() => measure(label, W, H), [label, W, H]);
+  // What needs a look, pinned to its dart or board point (a corrected label until Looks right).
+  const corrected = !!capture.review?.includes(CORRECTED) && !dirty;
+  const needs = useMemo(() => needsOf(label, measured, corrected), [label, measured, corrected]);
   const board = useMemo(() => boardDrawing(label.points, W, H), [label.points, W, H]);
   // What the model placed on the phone, drawn under the label (shown by default when corrected).
   const prefill = capture.prefill;
@@ -340,30 +346,41 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const sideTabs: SideTab[] = [
     {
       key: 'points',
-      icon: <AimOutlined />,
+      icon: Object.keys(needs.points).length ? (
+        <Badge dot>
+          <AimOutlined />
+        </Badge>
+      ) : (
+        <AimOutlined />
+      ),
       title: 'Board points',
       flush: true,
       children: (
         <>
           {CALIBRATION_IDS.map((id) => {
             const sel = isSel({ kind: 'point', id });
+            const flag = needs.points[id];
             return (
               <button
                 key={id}
                 type="button"
-                className={`${styles.point} ${sel ? styles.pointOn : ''}`}
+                className={`${styles.point} ${sel ? styles.pointOn : flag ? FLAG_FILL[flag] : ''}`}
                 aria-pressed={sel}
                 onClick={() => toggle({ kind: 'point', id })}
               >
                 <MiniBoard dot={boardPointOf(id)} size={96} />
                 <span className={styles.pointText}>
                   <Typography.Text strong>{KEYPOINT_LABELS[id]}</Typography.Text>
-                  <Typography.Text type={label.points[id] ? 'secondary' : 'warning'}>
-                    {label.points[id]
-                      ? 'Placed ✓'
-                      : sel
-                        ? 'Click the photo to place it'
-                        : 'Not placed'}
+                  <Typography.Text
+                    type={flag === 'error' ? 'danger' : label.points[id] ? 'secondary' : 'warning'}
+                  >
+                    {flag === 'error'
+                      ? `${measured.fit?.errors[id]?.toFixed(0)} mm out: check it`
+                      : label.points[id]
+                        ? 'Placed ✓'
+                        : sel
+                          ? 'Click the photo to place it'
+                          : 'Not placed'}
                   </Typography.Text>
                 </span>
               </button>
@@ -621,12 +638,14 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                       const p = label.points[id];
                       if (!p) return null;
                       const sel = isSel({ kind: 'point', id });
+                      const flag = needs.points[id];
                       return (
                         <g
                           key={id}
                           onPointerDown={startDrag({ kind: 'point', id })}
                           style={{ cursor: 'grab' }}
                         >
+                          {flag ? <Halo x={p.x * W} y={p.y * H} r={r} tone={flag} /> : null}
                           <circle
                             cx={p.x * W}
                             cy={p.y * H}
@@ -655,12 +674,14 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                       if (!d.tip) return null;
                       const m = measured.darts[idx];
                       const sel = isSel({ kind: 'dart', idx });
+                      const flag = needs.darts[idx];
                       return (
                         <g
                           key={idx}
                           onPointerDown={startDrag({ kind: 'dart', idx })}
                           style={{ cursor: 'grab' }}
                         >
+                          {flag ? <Halo x={d.tip.x * W} y={d.tip.y * H} r={r} tone={flag} /> : null}
                           <circle
                             cx={d.tip.x * W}
                             cy={d.tip.y * H}
@@ -739,6 +760,31 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               {mode === 'add' ? 'Cancel adding' : 'Add dart'}
             </Button>
           </div>
+          {needs.list.length ? (
+            <div
+              className={`${styles.needs} ${needs.list.some((n) => n.tone === 'error') ? styles.needsError : ''}`}
+            >
+              <Typography.Text strong>
+                <AlertOutlined /> Needs review
+              </Typography.Text>
+              {needs.list.map((n) =>
+                n.target ? (
+                  <button
+                    key={n.key}
+                    type="button"
+                    className={styles.need}
+                    onClick={() => setSelected(n.target)}
+                  >
+                    {n.text}
+                  </button>
+                ) : (
+                  <span key={n.key} className={styles.need}>
+                    {n.text}
+                  </span>
+                ),
+              )}
+            </div>
+          ) : null}
           <Table
             className={styles.darts}
             size="small"
@@ -747,7 +793,11 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
             dataSource={label.darts.map((d, idx) => ({ ...d, idx, m: measured.darts[idx] }))}
             onRow={(row) => ({ onClick: () => toggle({ kind: 'dart', idx: row.idx }) })}
             rowClassName={(row) =>
-              isSel({ kind: 'dart', idx: row.idx }) ? 'ant-table-row-selected' : ''
+              isSel({ kind: 'dart', idx: row.idx })
+                ? 'ant-table-row-selected'
+                : needs.darts[row.idx]
+                  ? FLAG_FILL[needs.darts[row.idx]!]
+                  : ''
             }
             columns={[
               {
@@ -924,5 +974,25 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
         <SideTabs id="capture" tabs={sideTabs} />
       </div>
     </div>
+  );
+}
+
+/** A flagged row's fill (the darts table, the board points): fills, not outlines, draw the eye. */
+const FLAG_FILL: Record<NeedTone, string> = {
+  error: styles.flagError!,
+  warning: styles.flagWarning!,
+};
+
+/** A soft disc behind a dart or board point that needs a look, in its reason's colour. */
+function Halo({ x, y, r, tone }: { x: number; y: number; r: number; tone: NeedTone }) {
+  return (
+    <circle
+      cx={x}
+      cy={y}
+      r={r * 2.8}
+      fill={tone === 'error' ? MARK.mismatch : MARK.wire}
+      fillOpacity={0.4}
+      pointerEvents="none"
+    />
   );
 }

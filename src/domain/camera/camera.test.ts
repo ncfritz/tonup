@@ -68,6 +68,10 @@ describe('scoring from a photo', () => {
     // A bull 15 mm out shows up as a large residual.
     const off = fitBoard({ ...k, bull: snap({ x: 15, y: 0 }) })!;
     expect(off.residual).toBeGreaterThan(MAX_RESIDUAL_MM);
+    // ...and the bull is the point furthest out, so Lab can point at it.
+    const worst = Object.entries(off.errors).sort((a, b) => b[1] - a[1])[0]![0];
+    expect(worst).toBe('bull');
+    expect(off.errors.bull).toBe(off.residual);
   });
 
   it('flags darts near a wire', () => {

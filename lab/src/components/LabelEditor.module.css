@@ -118,6 +118,49 @@
   cursor: pointer;
 }
 
+.needs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--ant-color-warning-bg);
+}
+
+.needsError {
+  background: var(--ant-color-error-bg);
+}
+
+/* One thing to look at; clicking it selects the dart or point. */
+.need {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--ant-color-text);
+  text-align: start;
+}
+
+button.need {
+  cursor: pointer;
+}
+
+button.need:hover {
+  text-decoration: underline;
+}
+
+/* A flagged dart row or board point: filled in its reason's colour. */
+.darts :global(.ant-table-tbody > tr).flagError > td,
+.flagError,
+.flagError:hover {
+  background: var(--ant-color-error-bg) !important;
+}
+
+.darts :global(.ant-table-tbody > tr).flagWarning > td,
+.flagWarning,
+.flagWarning:hover {
+  background: var(--ant-color-warning-bg) !important;
+}
+
 .scoresBody {
   display: flex;
   flex-direction: column;

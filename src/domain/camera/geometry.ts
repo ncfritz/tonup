@@ -88,6 +88,8 @@ export interface BoardFit {
   toImage: Homography;
   /** How far, in mm, the furthest keypoint lands from where it should (0 with exactly four). */
   residual: number;
+  /** How far each keypoint used lands from where it should, in mm: the largest is the suspect. */
+  errors: Partial<Record<CalibrationId, number>>;
   /** Which keypoints the fit used. */
   used: CalibrationId[];
 }
@@ -111,14 +113,14 @@ export function fitBoard(points: Partial<Record<CalibrationId, ImagePoint>>): Bo
   // Fold the scale into the matrices.
   const toBoard = scaled.map((v, i) => (i < 6 ? v * S : v));
   const toImage = back.map((v, i) => (i % 3 !== 2 ? v / S : v));
-  const residual = Math.max(
-    ...used.map((id) => {
-      const p = applyHomography(toBoard, points[id]!);
-      const b = boardPointOf(id);
-      return Math.hypot(p.x - b.x, p.y - b.y);
-    }),
-  );
-  return { toBoard, toImage, residual, used };
+  const errors: Partial<Record<CalibrationId, number>> = {};
+  for (const id of used) {
+    const p = applyHomography(toBoard, points[id]!);
+    const b = boardPointOf(id);
+    errors[id] = Math.hypot(p.x - b.x, p.y - b.y);
+  }
+  const residual = Math.max(...used.map((id) => errors[id]!));
+  return { toBoard, toImage, residual, errors, used };
 }
 
 /** Closer than this to a wire, a dart could be either side: the result screen asks. */
