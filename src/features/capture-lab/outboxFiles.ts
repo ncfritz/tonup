@@ -34,10 +34,18 @@ export const fileOutbox: OutboxStore = {
   sent: () => read('sent'),
   put(label, photoUri) {
     const out = dir('outbox');
-    new File(photoUri).copySync(new File(out, `${label.id}.jpg`));
+    const photo = new File(out, `${label.id}.jpg`);
+    // Labelled again while still waiting: the photo is already here.
+    if (new File(photoUri).uri !== photo.uri) new File(photoUri).copySync(photo);
     const meta = new File(out, `${label.id}.json`);
     meta.create({ overwrite: true });
     meta.writeSync(JSON.stringify(label));
+    // Labelled again (tips added to a values-only visit): the copy Lab had goes, the new one waits.
+    const sent = dir('sent');
+    for (const name of [`${label.id}.json`, `${label.id}.jpg`]) {
+      const f = new File(sent, name);
+      if (f.exists) f.delete();
+    }
   },
   photoUri: (id) => new File(dir('outbox'), `${id}.jpg`).uri,
   sentPhotoUri(id) {

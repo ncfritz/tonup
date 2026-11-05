@@ -1,13 +1,12 @@
 // Pieces the Sessions screens share: the labelled / values only / to label bar and counts,
-// a session's set, and the note once a labelling run is done.
+// and a session's set.
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { Pressable, Text } from '@/ui';
+import { Text } from '@/ui';
 
 import type { SessionSummary } from './outbox';
-import { useLabelRun } from './store';
 
 /** Quick tags, one from each group (docs/plan/capture-lab.md › Screens › Session). */
 export const TAG_GROUPS = [
@@ -97,37 +96,6 @@ export function SplitChip({ split }: { split: SessionSummary['split'] }) {
   );
 }
 
-/** After a labelling run: how it went, until dismissed. */
-export function RunDone() {
-  const { t } = useTranslation('capture');
-  const run = useLabelRun((r) => r.run);
-  if (!run || run.index < run.ids.length) return null;
-  return (
-    <View style={styles.done} testID="capture-run-done">
-      <View style={styles.flex}>
-        <Text variant="bodyStrong">{t('home.runDoneTitle')}</Text>
-        <Text variant="caption" tone="muted">
-          {t('home.runDone', {
-            labelled: run.labelled,
-            valuesOnly: run.valuesOnly,
-            skipped: run.skipped,
-          })}
-        </Text>
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        style={styles.dismiss}
-        onPress={() => useLabelRun.getState().setRun(null)}
-        testID="capture-run-dismiss"
-      >
-        <Text variant="caption" tone="accent">
-          {t('home.dismiss')}
-        </Text>
-      </Pressable>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create((theme) => ({
   bar: {
     flexDirection: 'row',
@@ -154,14 +122,4 @@ const styles = StyleSheet.create((theme) => ({
       },
     },
   },
-  done: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.s,
-    padding: theme.spacing.m,
-    borderRadius: theme.radii.m,
-    backgroundColor: theme.colors.accentSoft,
-  },
-  flex: { flex: 1, gap: theme.spacing.xxs },
-  dismiss: { minHeight: 44, justifyContent: 'center', paddingHorizontal: theme.spacing.s },
 }));

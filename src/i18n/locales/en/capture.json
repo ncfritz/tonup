@@ -51,9 +51,6 @@
     "toLabel": "{count} to label",
     "allDone": "All done",
     "barA11y": "{labelled} labelled, {valuesOnly} values only, {unlabelled} to label",
-    "runDoneTitle": "Labelling done",
-    "runDone": "{labelled} labelled · {valuesOnly} values only · {skipped} skipped",
-    "dismiss": "Dismiss",
     "sessionA11y": "{when}, {count, plural, one {# photo} other {# photos}}"
   },
   "session": {
@@ -74,7 +71,11 @@
     "allow": "Allow the camera",
     "openSettings": "Open Settings",
     "reading": "Reading the board…",
-    "laterNote": "Saved to label later · {count} to label"
+    "laterNote": "Saved to label later · {count} to label",
+    "saved": "{count, plural, one {# saved} other {# saved}}",
+    "toLabel": "{count} to label",
+    "photosA11y": "This session's photos, {count} to label",
+    "undo": "Undo"
   },
   "label": {
     "retake": "Retake",
@@ -127,7 +128,15 @@
     "runPlace": "Photo {k} of {n} to label",
     "saveNext": "Save, next photo",
     "saveDone": "Save, all done",
-    "valuesOnlyNext": "Values only, next"
+    "valuesOnlyNext": "Values only, next",
+    "saveTips": "Save with tips",
+    "doneTitle": "All labelled",
+    "doneSomeTitle": "Done for now",
+    "doneNote": "They're in the outbox and go to Lab on the next sync.",
+    "doneSkipped": "{count, plural, one {# photo skipped: it's still to label.} other {# photos skipped: they're still to label.}}",
+    "skipped": "Skipped",
+    "backToCamera": "Back to the camera",
+    "done": "Done"
   },
   "settings": {
     "title": "Settings",
@@ -256,7 +265,7 @@
   "runs": {
     "title": "Runs",
     "subtitle": "One at a time, on the Mac's GPU",
-    "none": "No runs yet. Start one from Lab's Runs page.",
+    "none": "No runs yet.",
     "training": "Training",
     "verifying": "Verifying",
     "queued": "Queued",
@@ -283,6 +292,21 @@
       "running": "Running"
     },
     "made": "→ {model} · {visit}",
-    "waiting": "Waiting for the run ahead of it"
+    "waiting": "Waiting for the run ahead of it",
+    "startTitle": "Fine-tune {name}?",
+    "startBody": "Lab trains on our captures and DeepDarts with its usual fine-tune settings, on the Mac's GPU. It takes a while; follow it here.",
+    "startCancel": "Cancel",
+    "start": "Start",
+    "started": "Training queued: it starts when the Mac is free.",
+    "fineTuneButton": "Fine-tune {model}"
+  },
+  "saved": {
+    "title": "Saved visit",
+    "cleared": "This photo has been cleared from the phone; Lab has it.",
+    "missing": "This visit isn't on the phone any more.",
+    "inLab": "in Lab",
+    "waiting": "waiting to send",
+    "addTips": "Add the tips",
+    "editInLab": "To change it, open it in Lab's Captures."
   }
 }

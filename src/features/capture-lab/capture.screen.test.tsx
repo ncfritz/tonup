@@ -9,8 +9,8 @@ import capture from '@/i18n/locales/en/capture.json';
 import CaptureHome from '../../capture-app/(tabs)';
 import LabelVisit from '../../capture-app/label';
 import type { Draft, OutboxItem, SentItem, UploadOutcome } from './outbox';
-import { startLabelling } from './queue';
-import { useCapture, useLabelRun, useShot } from './store';
+import { addTips, startLabelling } from './queue';
+import { useCapture, useLabelRun, useLaterNote, useShot } from './store';
 import type { LabelFile } from './visit';
 
 // Capture's strings are added by its layout at runtime.
@@ -278,6 +278,8 @@ it('saves a photo to label later and goes back to the camera', async () => {
   expect(draft).toMatchObject({ session: { id: 'sess-1' }, width: W, height: H });
   expect(mockBox.size).toBe(0);
   expect(useCapture.getState().visits).toBe(1);
+  // The camera's note can take it back.
+  expect(useLaterNote.getState().draftId).toBe(draft!.id);
   expect(router.back).toHaveBeenCalled();
 });
 
@@ -306,5 +308,40 @@ it('labels drafts one after another: values only, skip, then done', async () => 
   });
   expect(mockDrafts.has('d2')).toBe(true);
   expect(useLabelRun.getState().run).toMatchObject({ valuesOnly: 1, skipped: 1, labelled: 0 });
+  // The summary, on the same screen; Done goes back where labelling started.
+  expect(screen.getByTestId('label-done')).toHaveTextContent(/Done for now/);
+  expect(screen.getByTestId('label-done')).toHaveTextContent(/1 photo skipped/);
+  await fireEvent.press(screen.getByTestId('label-done-close'));
+  expect(useLabelRun.getState().run).toBeNull();
+  expect(router.back).toHaveBeenCalled();
+});
+
+it('adds the tips to a values-only visit and saves it under its own ID', async () => {
+  const saved = visitIn('vo', 'sess-old', true);
+  saved.label.darts = [
+    { x: null, y: null, value: 'T20' },
+    { x: null, y: null, value: '5' },
+  ];
+  mockBox.set('vo', saved);
+  expect(addTips('vo')).toBe(true);
+  await render(<LabelVisit />);
+  // Its values are already in; no label later, no retake.
+  expect(screen.queryByTestId('label-later')).toBeNull();
+  expect(screen.getByTestId('label-back')).toHaveTextContent('Back');
+  await markBoard();
+  await tapAt(centreOf({ segment: 20, multiplier: 3 }));
+  await tapAt(centreOf({ segment: 5, multiplier: 1 }));
+  expect(screen.queryByTestId('save-values-only')).toBeNull();
+  await fireEvent.press(screen.getByTestId('to-review'));
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('save'));
+  });
+  const again = mockBox.get('vo')!;
+  expect(again.label).toMatchObject({
+    sessionId: 'sess-old',
+    createdAt: saved.label.createdAt,
+    valuesOnly: false,
+  });
+  expect(again.label.darts.every((d) => d.x !== null)).toBe(true);
   expect(router.back).toHaveBeenCalled();
 });

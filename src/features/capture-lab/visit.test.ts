@@ -12,6 +12,7 @@ import {
   labelFile,
   MISS,
   remark,
+  resume,
   selectDart,
   start,
   tapBoard,
@@ -196,6 +197,26 @@ describe('labelFile', () => {
     expect(f.valuesOnly).toBe(true);
     expect(f.darts).toEqual([{ x: null, y: null, value: 'T20' }]);
   });
+});
+
+it('picks up a values-only visit with its values and board, to add the tips', () => {
+  const saved = labelFile(
+    markBoard(toBoard(enter(enter(start(photo, null), 'T20'), '5'))),
+    meta,
+    true,
+  );
+  const s = resume(photo, saved);
+  expect(s.step).toBe('values');
+  expect(s.entered).toEqual(['T20', '5']);
+  expect(s.fit).not.toBeNull();
+  // Straight past the board it already has, to tap the tips.
+  const tips = toTips(toBoard(s));
+  expect(tips.step).toBe('tips');
+  const done = toReview(tapTip(tapTip(tips, img(T20)), img(S5)));
+  expect(done.step).toBe('review');
+  expect(labelFile(done, meta).darts.every((d) => d.x !== null)).toBe(true);
+  // Without a board it starts marking from the first point.
+  expect(resume(photo, { ...saved, calibration: [null, null, null, null, null] }).marking).toBe(0);
 });
 
 it('adds up a visit from its values', () => {

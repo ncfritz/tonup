@@ -38,12 +38,19 @@ const OVERHANG = Math.max(0, (PLAY_SIZE + 4 - TAB_BAR_HEIGHT) / 2);
  */
 export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const { theme } = useUnistyles();
+  // Tabs are the routes with an icon, and home; anything else is a screen under a tab.
+  const visible = state.routes.filter((r) => r.name === 'index' || r.name in ICONS);
+  const current = state.routes[state.index];
+  const highlighted = visible.some((r) => r.key === current?.key)
+    ? current?.key
+    : visible.find((r) => r.name === 'index')?.key;
 
   return (
     <View pointerEvents="box-none" style={styles.wrap}>
       <View style={styles.pill}>
-        {state.routes.map((route, index) => {
-          const focused = state.index === index;
+        {visible.map((route) => {
+          // A screen that isn't a tab (Capture's session photos) shows its home tab as current.
+          const focused = route.key === highlighted;
           const options = descriptors[route.key]?.options;
           const label = typeof options?.title === 'string' ? options.title : route.name;
           const play = route.name === 'index';
@@ -53,7 +60,7 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
               target: route.key,
               canPreventDefault: true,
             });
-            if (!focused && !event.defaultPrevented) {
+            if (route.key !== current?.key && !event.defaultPrevented) {
               haptics.selection();
               navigateToTab(route.key);
             }

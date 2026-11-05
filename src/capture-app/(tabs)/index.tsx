@@ -15,7 +15,6 @@ import {
 import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { startLabelling } from '@/features/capture-lab/queue';
 import {
-  RunDone,
   sessionWhen,
   SplitChip,
   StatusBar,
@@ -24,7 +23,7 @@ import {
   toggleTag,
   type TagKey,
 } from '@/features/capture-lab/SessionBits';
-import { newSessionId, useCapture, useLabelRun } from '@/features/capture-lab/store';
+import { newSessionId, useCapture } from '@/features/capture-lab/store';
 import { Button, Pressable, Screen, Text } from '@/ui';
 
 const EMPTY = { labelled: 0, valuesOnly: 0, unlabelled: 0, visits: 0 };
@@ -37,7 +36,6 @@ export default function CaptureHome() {
   const { t } = useTranslation('capture');
   const labUrl = useCapture((s) => s.labUrl);
   const session = useCapture((s) => s.session);
-  const run = useLabelRun((r) => r.run);
   const [health, setHealth] = useState<LabHealth | null>(null);
   const [pending, setPending] = useState(0);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
@@ -89,13 +87,6 @@ export default function CaptureHome() {
         live = false;
       };
     }, [labUrl, refresh, sync]),
-  );
-  // A labelling run that just finished changes the counts.
-  const runDone = !!run && run.index >= run.ids.length;
-  useFocusEffect(
-    useCallback(() => {
-      if (runDone) refresh();
-    }, [runDone, refresh]),
   );
 
   const current = session
@@ -190,8 +181,6 @@ export default function CaptureHome() {
           </Pressable>
         ) : null}
       </View>
-
-      <RunDone />
 
       {current && session ? (
         <View style={[styles.card, styles.cardOn]} testID="capture-current">

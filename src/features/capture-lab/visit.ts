@@ -99,6 +99,26 @@ export function start(photo: Photo, detected: DetectResult | null): VisitState {
   };
 }
 
+/**
+ * Picks up a visit saved earlier (a values-only one, to add its tips): its values, and its
+ * board when it was marked, on the values step so they can be checked first.
+ */
+export function resume(photo: Photo, saved: LabelFile): VisitState {
+  const s = start(photo, null);
+  const calibration: Partial<Record<CalibrationId, ImagePoint>> = {};
+  CALIBRATION_IDS.forEach((id, i) => {
+    const p = saved.calibration[i];
+    if (p) calibration[id] = { x: p.x, y: p.y };
+  });
+  const fit = fitBoard(calibration);
+  const marked = !!fit && fit.residual <= MAX_RESIDUAL_MM;
+  return {
+    ...s,
+    entered: saved.darts.slice(0, MAX_DARTS).map((d) => d.value),
+    ...(marked ? { calibration, fit, marking: null } : {}),
+  };
+}
+
 // Values
 
 export function enter(s: VisitState, value: Entered): VisitState {

@@ -35,6 +35,8 @@ export interface IngestResult {
   split: Split;
   /** False when Lab already had this capture (uploads are idempotent by ID). */
   created: boolean;
+  /** A values-only capture it had, now labelled with tips: a new label version. */
+  updated?: boolean;
 }
 
 export class IngestError extends Error {}
@@ -120,7 +122,8 @@ function writeLabel(
 
 /**
  * Adds one capture: its session (created with its split the first time Lab sees it), the photo
- * (upright, with a thumbnail) and label version 1. Does nothing for a capture Lab already has.
+ * (upright, with a thumbnail) and label version 1. Does nothing for a capture Lab already has,
+ * except a values-only one sent again from the phone with its tips, which gets a new version.
  */
 export async function ingestCapture(
   rawMeta: unknown,
@@ -141,6 +144,19 @@ export async function ingestCapture(
   const existing = d.select().from(captures).where(eq(captures.id, id)).get();
   if (existing) {
     const s = d.select().from(sessions).where(eq(sessions.id, existing.sessionId)).get();
+    // Sent again with its tips (a values-only photo labelled later on the phone): the new label
+    // becomes the next version. Anything else sent again is the same visit, and is ignored.
+    if (existing.status === 'values-only' && source === 'phone' && !f.valuesOnly) {
+      const input = labelFromFile(f);
+      d.transaction((tx) => {
+        writeLabel(tx, existing, input, 'phone', now);
+        tx.update(captures)
+          .set({ status: statusOf(input, false) })
+          .where(eq(captures.id, id))
+          .run();
+      });
+      return { id, sessionId: existing.sessionId, split: s!.split, created: false, updated: true };
+    }
     return { id, sessionId: existing.sessionId, split: s!.split, created: false };
   }
 

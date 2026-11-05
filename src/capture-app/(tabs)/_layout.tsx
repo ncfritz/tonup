@@ -7,7 +7,8 @@ export const unstable_settings = { initialRouteName: 'index' };
 
 /**
  * Capture's tabs (docs/plan/capture-lab.md › Screens), on Ton Up's tab bar: Overview and Models,
- * Sessions in the middle as the board button (home), Runs and Settings.
+ * Sessions in the middle as the board button (home), Runs and Settings. A session's photos open
+ * under Sessions, with the bar still there.
  */
 export default function CaptureTabs() {
   const { t } = useTranslation('capture');
@@ -21,6 +22,8 @@ export default function CaptureTabs() {
       />
       <Tabs.Screen name="runs" options={{ title: t('tabs.runs') }} />
       <Tabs.Screen name="settings" options={{ title: t('tabs.settings') }} />
+      {/* A session's photos: under Sessions, with the bar, but not a tab of its own. */}
+      <Tabs.Screen name="sessions/[id]" options={{ title: t('tabs.sessions'), href: null }} />
     </Tabs>
   );
 }

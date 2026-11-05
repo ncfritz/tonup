@@ -152,6 +152,50 @@ describe('ingestCapture', () => {
     expect(getCapture('vo-1')!.dartCount).toBe(3); // darts in the board, from the values entered
   });
 
+  it('takes a values-only capture again once the phone has added its tips', async () => {
+    const base = {
+      id: 'vo-2',
+      image: 'vo-2.jpg',
+      width: 400,
+      height: 300,
+      createdAt: '2026-11-04T05:00:00.000Z',
+      sessionId: 'sess-c',
+      calibration,
+    };
+    await ingestCapture(
+      { ...base, valuesOnly: true, darts: [{ value: 'T20' }, { value: '20' }] },
+      await jpeg(),
+      'phone',
+    );
+    // The same values only again: ignored.
+    const again = await ingestCapture(
+      { ...base, valuesOnly: true, darts: [{ value: 'T20' }, { value: '20' }] },
+      await jpeg(),
+      'phone',
+    );
+    expect(again.updated).toBeUndefined();
+    const r = await ingestCapture(
+      {
+        ...base,
+        valuesOnly: false,
+        darts: [
+          { ...toImage(polar(103, 0)), value: 'T20' },
+          { ...toImage(polar(130, 0)), value: '20' },
+        ],
+      },
+      await jpeg(),
+      'phone',
+    );
+    expect(r).toMatchObject({ created: false, updated: true });
+    const c = getCapture('vo-2')!;
+    expect(c.status).toBe('labelled');
+    expect(c.history.map((h) => [h.version, h.source])).toEqual([
+      [2, 'phone'],
+      [1, 'phone'],
+    ]);
+    expect(c.darts.map((d) => d.scored)).toEqual(['T20', '20']);
+  });
+
   it('turns photos upright from their EXIF orientation', async () => {
     const rotated = await sharp(await jpeg(400, 300))
       .withMetadata({ orientation: 6 })

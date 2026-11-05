@@ -38,7 +38,7 @@ export default function CaptureLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="session" options={{ gestureEnabled: false }} />
         <Stack.Screen name="label" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="sessions/[id]" />
+        <Stack.Screen name="photo/[id]" />
       </Stack>
     </GestureHandlerRootView>
   );

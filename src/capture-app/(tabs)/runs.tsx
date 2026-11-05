@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
 import {
@@ -15,17 +15,21 @@ import {
   cancelRun,
   fetchRun,
   fetchRuns,
+  fineTune,
   isLive,
   runProgress,
   type Reply,
   type RunDetail,
   type RunSummary,
 } from '@/features/capture-lab/labData';
+import { fetchActiveModel } from '@/features/capture-lab/lab';
 import { Button, Screen, Text } from '@/ui';
 
 interface RunsData {
   runs: RunSummary[];
   live: RunDetail | null;
+  /** The model a new run fine-tunes: Lab's active one. */
+  active: { id: number; name: string } | null;
   /** When Lab answered, for the time elapsed. */
   now: number;
 }
@@ -35,10 +39,18 @@ async function askRuns(url: string): Promise<Reply<RunsData>> {
   const runs = await fetchRuns(url);
   if (!runs.ok) return runs;
   const current = runs.data.find(isLive);
-  const detail = current ? await fetchRun(url, current.id) : null;
+  const [detail, active] = await Promise.all([
+    current ? fetchRun(url, current.id) : null,
+    fetchActiveModel(url),
+  ]);
   return {
     ok: true,
-    data: { runs: runs.data, live: detail?.ok ? detail.data : null, now: Date.now() },
+    data: {
+      runs: runs.data,
+      live: detail?.ok ? detail.data : null,
+      active: active.ok && active.model ? { id: active.model.id, name: active.model.name } : null,
+      now: Date.now(),
+    },
   };
 }
 
@@ -86,9 +98,36 @@ function RunList({ d, labUrl, reload }: { d: RunsData; labUrl: string; reload: (
   const { t } = useTranslation('capture');
   const title = useTitle();
   const earlier = d.runs.filter((r) => r.id !== d.live?.run.id);
-  if (!d.runs.length) return <Text tone="muted">{t('runs.none')}</Text>;
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const busy = !!d.live || d.runs.some(isLive);
+  const start = (model: { id: number; name: string }) =>
+    Alert.alert(t('runs.startTitle', { name: model.name }), t('runs.startBody'), [
+      { text: t('runs.startCancel'), style: 'cancel' },
+      {
+        text: t('runs.start'),
+        onPress: () =>
+          void fineTune(labUrl, model.id).then((r) => {
+            setNote(r.ok ? { ok: true, text: t('runs.started') } : { ok: false, text: r.error });
+            reload();
+          }),
+      },
+    ]);
   return (
     <>
+      {d.active && !busy ? (
+        <Button
+          kind="secondary"
+          label={t('runs.fineTuneButton', { model: d.active.name })}
+          onPress={() => start(d.active!)}
+          testID="runs-start"
+        />
+      ) : null}
+      {note ? (
+        <Text tone={note.ok ? 'text' : 'danger'} testID="runs-note">
+          {note.text}
+        </Text>
+      ) : null}
+      {!d.runs.length ? <Text tone="muted">{t('runs.none')}</Text> : null}
       {d.live ? <LiveRun d={d.live} now={d.now} labUrl={labUrl} reload={reload} /> : null}
       {earlier.length ? (
         <>

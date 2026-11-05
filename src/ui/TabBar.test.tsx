@@ -47,4 +47,19 @@ describe('TabBar', () => {
     await fireEvent.press(screen.getByRole('tab', { name: 'Play' }));
     expect(navigateToTab).not.toHaveBeenCalled();
   });
+
+  it('shows a screen that isn’t a tab under home, and goes home from it', async () => {
+    const { props: p, navigateToTab } = props(2);
+    const routes = [...p.state.routes, { key: 'photos-key', name: 'sessions/[id]' }];
+    const extra = {
+      ...p,
+      state: { ...p.state, routes, index: routes.length - 1 },
+      descriptors: { ...p.descriptors, 'photos-key': { options: { title: 'Sessions' } } },
+    } as unknown as typeof p;
+    await render(<TabBar {...extra} />);
+    expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(titles);
+    expect(screen.getByRole('tab', { name: 'Play' })).toBeSelected();
+    await fireEvent.press(screen.getByRole('tab', { name: 'Play' }));
+    expect(navigateToTab).toHaveBeenCalledWith('index-key');
+  });
 });

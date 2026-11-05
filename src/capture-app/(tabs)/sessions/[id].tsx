@@ -14,9 +14,9 @@ import {
   type SessionSummary,
 } from '@/features/capture-lab/outbox';
 import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
-import { startLabelling } from '@/features/capture-lab/queue';
-import { RunDone, sessionWhen, SplitChip, StatusBar } from '@/features/capture-lab/SessionBits';
-import { Button, Header, Pressable, Text } from '@/ui';
+import { addTips, startLabelling } from '@/features/capture-lab/queue';
+import { sessionWhen, SplitChip, StatusBar } from '@/features/capture-lab/SessionBits';
+import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
 type Filter = 'all' | PhotoStatus;
 const COLUMNS = 5;
@@ -59,7 +59,7 @@ export default function SessionPhotos() {
     : [];
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
+    <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.pad}>
         <Header
           title={summary ? sessionWhen(summary.startedAt) : ''}
@@ -77,7 +77,6 @@ export default function SessionPhotos() {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
-        <RunDone />
         {summary ? (
           <>
             <View accessibilityRole="radiogroup" style={styles.filters}>
@@ -115,11 +114,16 @@ export default function SessionPhotos() {
               return (
                 <Pressable
                   key={p.id}
-                  accessibilityRole={p.status === 'unlabelled' ? 'button' : 'image'}
+                  accessibilityRole="button"
                   accessibilityLabel={label}
-                  disabled={p.status !== 'unlabelled'}
                   style={[styles.tile, { width: tile, height: tile }]}
-                  onPress={() => void startLabelling(queue(), p.id)}
+                  onPress={() =>
+                    p.status === 'unlabelled'
+                      ? void startLabelling(queue(), p.id)
+                      : p.status === 'values-only' && p.uri
+                        ? addTips(p.id)
+                        : router.push(`/photo/${p.id}`)
+                  }
                   testID={`photo-${p.id}`}
                 >
                   {p.uri ? (
@@ -137,6 +141,8 @@ export default function SessionPhotos() {
             })}
           </View>
         )}
+        {/* With no Label button, the last row still clears the tab bar. */}
+        {summary?.unlabelled ? null : <View style={styles.bodyEnd} />}
       </ScrollView>
 
       {summary?.unlabelled ? (
@@ -208,5 +214,11 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: 6,
     backgroundColor: theme.colors.bg,
   },
-  footer: { paddingHorizontal: theme.spacing.l, paddingTop: theme.spacing.s },
+  // Above the floating tab bar.
+  footer: {
+    paddingHorizontal: theme.spacing.l,
+    paddingTop: theme.spacing.s,
+    paddingBottom: TAB_BAR_SPACE,
+  },
+  bodyEnd: { height: TAB_BAR_SPACE },
 }));

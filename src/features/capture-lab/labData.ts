@@ -133,6 +133,14 @@ export const verifyModels = (url: string, modelIds: number[], f?: typeof fetch) 
     { ...post, body: JSON.stringify({ kind: 'verify', modelIds }) },
     f,
   );
+/** Fine-tunes a model with Lab's usual settings for that (its Runs form's defaults). */
+export const fineTune = (url: string, baseModelId: number, f?: typeof fetch) =>
+  call<RunSummary>(
+    url,
+    '/api/runs',
+    { ...post, body: JSON.stringify({ from: 'model', baseModelId }) },
+    f,
+  );
 export const cancelRun = (url: string, id: number, f?: typeof fetch) =>
   call<unknown>(url, `/api/runs/${id}/cancel`, post, f);
 

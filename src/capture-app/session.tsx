@@ -1,11 +1,12 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Redirect, router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Linking, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, useWindowDimensions, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
-import { fileDrafts } from '@/features/capture-lab/outboxFiles';
+import { sessionPhotos, sessionsOn } from '@/features/capture-lab/outbox';
+import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { prefillFor } from '@/features/capture-lab/queue';
 import { TAG_GROUPS, toggleTag as toggled, type TagKey } from '@/features/capture-lab/SessionBits';
 import { cropToSquare } from '@/features/capture-lab/square';
@@ -23,22 +24,40 @@ export default function CaptureSession() {
   const session = useCapture((s) => s.session);
   const visits = useCapture((s) => s.visits);
   const { width } = useWindowDimensions();
-  const laterNote = useLaterNote((n) => n.note);
+  const laterDraft = useLaterNote((n) => n.draftId);
 
-  // "Saved to label later" shows for a few seconds after Label later.
+  // "Saved to label later" shows for a few seconds after Label later, with Undo.
   useEffect(() => {
-    if (!laterNote) return;
-    const timer = setTimeout(() => useLaterNote.getState().setNote(false), 4000);
+    if (!laterDraft) return;
+    const timer = setTimeout(() => useLaterNote.getState().setNote(null), 5000);
     return () => clearTimeout(timer);
-  }, [laterNote]);
-  const toLabel = (() => {
-    if (!laterNote || !session) return 0;
+  }, [laterDraft]);
+  // The session so far: saved and still to label, and its last photo (read again as visits and
+  // drafts come and go).
+  const sessionId = session?.id;
+  const { saved, toLabel, last } = useMemo(() => {
+    void visits;
+    void laterDraft;
+    if (!sessionId) return { saved: 0, toLabel: 0, last: null };
     try {
-      return fileDrafts.list().filter((d) => d.session.id === session.id).length;
+      const s = sessionsOn(fileOutbox, fileDrafts).find((x) => x.id === sessionId);
+      const photos = sessionPhotos(fileOutbox, fileDrafts, sessionId).filter((p) => p.uri);
+      return {
+        saved: s?.visits ?? 0,
+        toLabel: s?.unlabelled ?? 0,
+        last: photos[photos.length - 1]?.uri ?? null,
+      };
     } catch {
-      return 0;
+      return { saved: 0, toLabel: 0, last: null };
     }
-  })();
+  }, [sessionId, visits, laterDraft]);
+
+  const undoLater = () => {
+    if (!laterDraft) return;
+    fileDrafts.remove(laterDraft);
+    useCapture.getState().unsavedVisit();
+    useLaterNote.getState().setNote(null);
+  };
 
   const tagText = (k: TagKey) => t(`session.tags.${k}`);
   const toggleTag = (k: TagKey) => {
@@ -54,7 +73,7 @@ export default function CaptureSession() {
       const shot = await camera.current.takePictureAsync({ quality: 0.95, shutterSound: false });
       // The square the viewfinder showed.
       const photo = await cropToSquare(shot.uri);
-      useLaterNote.getState().setNote(false);
+      useLaterNote.getState().setNote(null);
       useShot.getState().setShot({ photo, detected: await prefillFor(photo) });
       router.push('/label');
     } finally {
@@ -99,9 +118,19 @@ export default function CaptureSession() {
         >
           <Icon name="close" color={theme.colors.text} />
         </Pressable>
-        <Text variant="bodyStrong" style={styles.title}>
-          {t('session.title', { n: visits + 1 })}
-        </Text>
+        <View style={styles.title}>
+          <Text variant="bodyStrong" style={styles.center}>
+            {t('session.title', { n: visits + 1 })}
+          </Text>
+          <Text variant="caption" tone="muted" style={styles.center} testID="session-counts">
+            {t('session.saved', { count: saved })}
+            {toLabel ? (
+              <Text variant="caption" tone="pending">
+                {` · ${t('session.toLabel', { count: toLabel })}`}
+              </Text>
+            ) : null}
+          </Text>
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('session.end')}
@@ -137,9 +166,21 @@ export default function CaptureSession() {
         <View style={styles.guideWrap} pointerEvents="none">
           <View style={styles.guide} />
         </View>
-        {laterNote ? (
+        {laterDraft ? (
           <View style={styles.note} accessibilityLiveRegion="polite" testID="session-later-note">
-            <Text variant="caption">{t('session.laterNote', { count: toLabel })}</Text>
+            <Text variant="caption" style={styles.noteText}>
+              {t('session.laterNote', { count: toLabel })}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              style={styles.undo}
+              onPress={undoLater}
+              testID="session-later-undo"
+            >
+              <Text variant="caption" tone="accent">
+                {t('session.undo')}
+              </Text>
+            </Pressable>
           </View>
         ) : null}
       </View>
@@ -149,20 +190,39 @@ export default function CaptureSession() {
             {reading ? t('session.reading') : t('session.coach')}
           </Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('session.shutter')}
-          style={styles.shutter}
-          onPress={() => void shoot()}
-          disabled={reading}
-          testID="session-shutter"
-        >
-          {reading ? (
-            <ActivityIndicator color={theme.colors.text} />
-          ) : (
-            <View style={styles.shutterInner} />
-          )}
-        </Pressable>
+        <View style={styles.shutterRow}>
+          {/* The session's last photo: opens its photos, with how many are still to label. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('session.photosA11y', { count: toLabel })}
+            style={styles.thumb}
+            disabled={!saved}
+            onPress={() => router.push(`/sessions/${session.id}`)}
+            testID="session-photos"
+          >
+            {last ? <Image source={{ uri: last }} style={styles.thumbImage} /> : null}
+            {toLabel ? (
+              <View style={styles.badge}>
+                <Text variant="tab" tone="onAccent">{`${toLabel}`}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('session.shutter')}
+            style={styles.shutter}
+            onPress={() => void shoot()}
+            disabled={reading}
+            testID="session-shutter"
+          >
+            {reading ? (
+              <ActivityIndicator color={theme.colors.text} />
+            ) : (
+              <View style={styles.shutterInner} />
+            )}
+          </Pressable>
+          <View style={styles.thumbSpace} />
+        </View>
       </View>
     </View>
   );
@@ -226,11 +286,43 @@ const styles = StyleSheet.create((theme) => ({
   note: {
     position: 'absolute',
     top: theme.spacing.s,
-    alignSelf: 'center',
-    paddingVertical: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.m,
+    left: theme.spacing.l,
+    right: theme.spacing.l,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.s,
+    paddingLeft: theme.spacing.m,
     borderRadius: theme.radii.m,
     backgroundColor: theme.colors.pendingSoft,
+  },
+  noteText: { flex: 1 },
+  undo: { minHeight: 44, justifyContent: 'center', paddingHorizontal: theme.spacing.m },
+  shutterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    paddingHorizontal: theme.spacing.xxxl,
+  },
+  thumb: {
+    width: 56,
+    height: 56,
+    borderRadius: theme.radii.s,
+    backgroundColor: theme.colors.surface,
+  },
+  thumbImage: { width: '100%', height: '100%', borderRadius: theme.radii.s },
+  thumbSpace: { width: 56 },
+  badge: {
+    position: 'absolute',
+    top: -8,
+    right: -10,
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 6,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.pending,
   },
   bottom: { flex: 1, alignItems: 'center', justifyContent: 'space-evenly' },
   coach: {

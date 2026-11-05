@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { db } from '~/lib/db/client';
 import { models } from '~/lib/db/schema';
 import { tick } from '~/lib/runner';
-import { createTrainRun, listRuns, trainParams } from '~/lib/runs';
+import { createTrainRun, DEFAULTS, listRuns, trainParams } from '~/lib/runs';
 import { createVerifyRun, verifyParams } from '~/lib/verify';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,10 @@ export async function POST(req: Request) {
     tick();
     return NextResponse.json(run, { status: 201 });
   }
-  const parsed = trainParams.safeParse(body);
+  // Settings left out take the form's defaults for that start (Capture sends only what to
+  // fine-tune).
+  const from = (body as { from?: string } | null)?.from === 'model' ? 'model' : 'scratch';
+  const parsed = trainParams.safeParse({ ...DEFAULTS[from], ...body });
   if (!parsed.success) return bad(parsed.error.issues[0]?.message ?? 'Bad run settings');
   const run = createTrainRun(parsed.data);
   tick();

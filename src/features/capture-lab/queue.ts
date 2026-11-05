@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { log } from '@/services/diagnostics';
 import { detect, type DetectResult } from '@/services/vision';
 
-import { fileDrafts } from './outboxFiles';
+import { fileDrafts, fileOutbox } from './outboxFiles';
 import { useCapture, useLabelRun, useShot } from './store';
 import type { Photo } from './visit';
 
@@ -48,18 +48,37 @@ export async function startLabelling(ids: string[], first?: string) {
 
 /**
  * The current draft is done (labelled, values only or skipped): on to the next one in place,
- * or back to where labelling started once they've all been seen.
+ * or, once they've all been seen, the summary on the same screen.
  */
 export async function nextDraft(outcome: 'labelled' | 'valuesOnly' | 'skipped') {
   const run = useLabelRun.getState().run;
   if (!run) return;
   useLabelRun.getState().setRun({ ...run, index: run.index + 1, [outcome]: run[outcome] + 1 });
   if (await loadCurrent()) return;
-  stopLabelling();
+  // All seen: the labelling screen shows how it went (the run stays until that's closed).
+  useShot.getState().setShot(null);
 }
 
 /** Leaves the run; drafts not labelled stay as they are. */
 export function stopLabelling() {
   useShot.getState().setShot(null);
   if (router.canGoBack()) router.back();
+}
+
+/**
+ * Opens a visit saved values only to add its tips; false when its photo has been cleared from
+ * the phone. Saving it sends it again, and Lab keeps it as the visit's next label version.
+ */
+export function addTips(id: string): boolean {
+  const pending = fileOutbox.pending().find((i) => i.id === id);
+  const item = pending ?? fileOutbox.sent().find((i) => i.id === id);
+  if (!item) return false;
+  const uri = pending ? fileOutbox.photoUri(id) : fileOutbox.sentPhotoUri(id);
+  if (!uri) return false;
+  const l = item.label;
+  useShot
+    .getState()
+    .setShot({ photo: { uri, width: l.width, height: l.height }, detected: null, saved: l });
+  router.push('/label');
+  return true;
 }

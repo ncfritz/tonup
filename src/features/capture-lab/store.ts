@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import type { DetectResult } from '@/services/vision';
 
 import type { Draft } from './outbox';
-import type { Photo, SessionInfo } from './visit';
+import type { LabelFile, Photo, SessionInfo } from './visit';
 
 export interface CaptureState {
   /** Lab's address, as typed ("my-mac.local:3100"); empty until set. */
@@ -26,6 +26,8 @@ interface Actions {
   startSession(session: SessionInfo): void;
   endSession(): void;
   savedVisit(): void;
+  /** Label later's Undo: the visit wasn't kept after all. */
+  unsavedVisit(): void;
 }
 
 let persist: (s: CaptureState) => void = () => {};
@@ -42,6 +44,7 @@ export const useCapture = create<CaptureState & Actions>((set, get) => {
     startSession: (session) => update({ session, visits: 0 }),
     endSession: () => update({ session: null, visits: 0 }),
     savedVisit: () => update({ visits: get().visits + 1 }),
+    unsavedVisit: () => update({ visits: Math.max(0, get().visits - 1) }),
   };
 });
 
@@ -85,6 +88,8 @@ export interface Shot {
   detected: DetectResult | null;
   /** Set when labelling a photo saved with "Label later": its session, ID and time. */
   draft?: Draft;
+  /** Set when adding the tips to a visit saved values only: its label as saved. */
+  saved?: LabelFile;
 }
 
 export const useShot = create<{
@@ -106,8 +111,12 @@ export const useLabelRun = create<{
   setRun(run: LabelRun | null): void;
 }>((set) => ({ run: null, setRun: (run) => set({ run }) }));
 
-/** The camera's "saved to label later" note, shown once after Label later. */
-export const useLaterNote = create<{ note: boolean; setNote(note: boolean): void }>((set) => ({
-  note: false,
-  setNote: (note) => set({ note }),
+/** The camera's "saved to label later" note, shown for a moment after Label later. */
+export const useLaterNote = create<{
+  /** The draft just saved, which the note's Undo takes back; null when there's no note. */
+  draftId: string | null;
+  setNote(draftId: string | null): void;
+}>((set) => ({
+  draftId: null,
+  setNote: (draftId) => set({ draftId }),
 }));
