@@ -5,13 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 
-import { uploader } from '@/features/capture-lab/lab';
 import { recheckLab, useLabHealth } from '@/features/capture-lab/labHealth';
-import { fetchCaptureStates } from '@/features/capture-lab/labData';
 import {
   labelQueue,
   sessionsOn,
-  syncAll,
   waitingToSend,
   type SessionSummary,
 } from '@/features/capture-lab/outbox';
@@ -29,6 +26,7 @@ import {
   useLabSessionIds,
 } from '@/features/capture-lab/SessionBits';
 import { newSessionId, useCapture } from '@/features/capture-lab/store';
+import { useSyncWithLab, type LabSync } from '@/features/capture-lab/syncLab';
 import { Button, Pressable, Screen, Text } from '@/ui';
 
 const EMPTY = { labelled: 0, valuesOnly: 0, unlabelled: 0, visits: 0, pending: 0, sent: 0 };
@@ -43,8 +41,6 @@ export default function CaptureHome() {
   const session = useCapture((s) => s.session);
   const [pending, setPending] = useState(0);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [syncing, setSyncing] = useState(false);
-  const [syncNote, setSyncNote] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
 
   const refresh = useCallback(() => {
@@ -59,25 +55,14 @@ export default function CaptureHome() {
 
   const health = useLabHealth((s) => (s.url === labUrl ? s.health : null));
   const { ids: labIds, reload: reloadLabIds } = useLabSessionIds();
-  const sync = useCallback(async () => {
-    if (!labUrl) return;
-    setSyncing(true);
-    setSyncNote(null);
-    const r = await syncAll(fileOutbox, fileDrafts, uploader(labUrl), async (ids) => {
-      const got = await fetchCaptureStates(labUrl, ids);
-      return got.ok ? got.data.states : null;
-    });
-    setSyncing(false);
-    const notes: string[] = [];
-    if (r.sent) notes.push(t('home.synced', { sent: r.sent }));
-    if (r.rejected.length) {
-      notes.push(t('home.syncRejected', { count: r.rejected.length, error: r.rejected[0]!.error }));
-    }
-    if (r.offline) notes.push(t('home.syncOffline', { error: r.offline }));
-    setSyncNote(notes.join(' · ') || null);
-    refresh();
-    if (r.sent) reloadLabIds();
-  }, [labUrl, refresh, t, reloadLabIds]);
+  const afterSync = useCallback(
+    (r: LabSync) => {
+      refresh();
+      if (r.sent) reloadLabIds();
+    },
+    [refresh, reloadLabIds],
+  );
+  const { syncing, note: syncNote, sync } = useSyncWithLab(afterSync);
 
   // On opening (and back from labelling): check Lab, then send anything waiting.
   useFocusEffect(
@@ -177,9 +162,9 @@ export default function CaptureHome() {
         {labUrl ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: syncing || pending === 0 }}
-            disabled={syncing || pending === 0}
-            style={[styles.sync, (syncing || pending === 0) && styles.dim]}
+            accessibilityState={{ disabled: syncing }}
+            disabled={syncing}
+            style={[styles.sync, syncing && styles.dim]}
             onPress={() => void sync()}
             testID="capture-sync"
           >

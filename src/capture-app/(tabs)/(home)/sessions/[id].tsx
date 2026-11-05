@@ -26,6 +26,7 @@ import { labStanding } from '@/features/capture-lab/outbox';
 import { labPhotoUrl } from '@/features/capture-lab/lab';
 import { LabPill, useLabState } from '@/features/capture-lab/LabPill';
 import { useCapture } from '@/features/capture-lab/store';
+import { useSyncWithLab } from '@/features/capture-lab/syncLab';
 import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
 type Filter = 'all' | PhotoStatus;
@@ -39,7 +40,7 @@ export default function SessionPhotos() {
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [photos, setPhotos] = useState<SessionPhoto[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
-  const { ids: labIds } = useLabSessionIds();
+  const { ids: labIds, reload: reloadLabIds } = useLabSessionIds();
   const labUrl = useCapture((s) => s.labUrl);
   const labOk = useLabState() === 'ok';
 
@@ -52,6 +53,11 @@ export default function SessionPhotos() {
     }
   }, [id]);
   useFocusEffect(load);
+  const afterSync = useCallback(() => {
+    load();
+    reloadLabIds();
+  }, [load, reloadLabIds]);
+  const { syncing, note: syncNote, sync } = useSyncWithLab(afterSync);
 
   // Deleted in Lab: the sent photos can go from the phone too (what's still to label or send
   // stays). With nothing left, the session goes, so back to the list.
@@ -135,6 +141,25 @@ export default function SessionPhotos() {
               </Text>
             ) : null}
             <StandingLine s={summary} labIds={labIds} />
+            {labUrl ? (
+              <View style={styles.syncRow}>
+                <Text variant="caption" tone="muted" style={styles.flex} testID="photos-sync-note">
+                  {syncNote ?? ''}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: syncing }}
+                  disabled={syncing}
+                  style={[styles.syncButton, syncing && styles.dim]}
+                  onPress={() => void sync()}
+                  testID="photos-sync"
+                >
+                  <Text variant="caption" tone="accent">
+                    {syncing ? t('home.syncing') : t('home.sync')}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
             {deleted ? (
               <Button
                 kind="secondary"
@@ -252,6 +277,9 @@ const styles = StyleSheet.create((theme) => ({
   pad: { paddingHorizontal: theme.spacing.l, gap: theme.spacing.xs },
   sub: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
   flex: { flex: 1 },
+  syncRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
+  syncButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: theme.spacing.s },
+  dim: { opacity: 0.4 },
   body: { gap: theme.spacing.m, padding: theme.spacing.l },
   filters: {
     flexDirection: 'row',

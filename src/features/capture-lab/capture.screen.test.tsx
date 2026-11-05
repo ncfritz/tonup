@@ -68,10 +68,16 @@ jest.mock('./lab', () => ({
 }));
 // The sessions Lab has (Lab's Sessions page): null leaves the list unknown.
 let mockLabIds: string[] | null = null;
+// What Lab says of the photos it was sent to label.
+let mockLabStates: Record<string, string> = {};
 jest.mock('./labData', () => ({
   ...jest.requireActual('./labData'),
   fetchLabSessions: async () =>
     mockLabIds ? { ok: true, data: { ids: mockLabIds } } : { ok: false, error: 'down' },
+  fetchCaptureStates: async (_url: string, ids: string[]) => ({
+    ok: true,
+    data: { states: Object.fromEntries(ids.map((id) => [id, mockLabStates[id] ?? 'unlabelled'])) },
+  }),
 }));
 // Gesture Handler 3's gestures need Reanimated, which doesn't run under Jest: the photo's pinch
 // is inert here (its zoom buttons still work).
@@ -116,6 +122,7 @@ beforeEach(() => {
   useLabelRun.getState().setRun(null);
   mockUploads.length = 0;
   mockLabIds = null;
+  mockLabStates = {};
   router.back.mockClear();
   router.push.mockClear();
   useCapture.setState({
@@ -302,6 +309,26 @@ it('says which sessions on the phone Lab hasn’t got, and why', async () => {
   );
   // Its Label later photo went to Lab to be labelled there: nothing to say.
   expect(screen.queryByTestId('standing-sess-new')).toBeNull();
+});
+
+it('syncs with Lab when nothing is waiting, and counts photos labelled in Lab', async () => {
+  mockDrafts.set('d1', {
+    ...draftIn('d1', 'sess-old', '2026-11-02T05:20:00.000Z'),
+    sentToLab: true,
+  });
+  await act(async () => {
+    await render(<CaptureHome />);
+  });
+  expect(screen.getByTestId('capture-session-sess-old')).toHaveTextContent(/1 to label/);
+  // Labelled in Lab since: Sync with Lab picks it up.
+  mockLabStates = { d1: 'labelled' };
+  expect(screen.getByTestId('capture-sync')).not.toBeDisabled();
+  await act(async () => {
+    await fireEvent.press(screen.getByTestId('capture-sync'));
+  });
+  expect(screen.getByTestId('capture-sync-note')).toHaveTextContent('1 labelled in Lab');
+  expect(screen.getByTestId('capture-session-sess-old')).toHaveTextContent(/1 labelled.*All done/);
+  expect(mockUploads).toEqual([]);
 });
 
 it('saves a photo to label later and goes back to the camera', async () => {
