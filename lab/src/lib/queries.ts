@@ -156,42 +156,37 @@ function where(f: CaptureFilter) {
   );
 }
 
-export function listCaptures(f: CaptureFilter = {}) {
-  const d = db();
-  const pageSize = f.pageSize ?? 24;
-  const page = Math.max(1, f.page ?? 1);
-  const base = d
-    .select({
-      id: captures.id,
-      sessionId: captures.sessionId,
-      split: sessions.split,
-      width: captures.width,
-      height: captures.height,
-      takenAt: captures.takenAt,
-      status: captures.status,
-      review: captures.review,
-      labelId: captures.labelId,
-      angleDeg: conditions.angleDeg,
-      dartCount: conditions.dartCount,
-    })
-    .from(captures)
-    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
-    .leftJoin(conditions, eq(conditions.captureId, captures.id))
-    .where(where(f));
-  const total =
-    d
-      .select({ n: count() })
-      .from(captures)
-      .innerJoin(sessions, eq(captures.sessionId, sessions.id))
-      .where(where(f))
-      .get()?.n ?? 0;
-  const rows = base
-    .orderBy(...(f.review ? [asc(reviewRank)] : []), desc(captures.takenAt), asc(captures.id))
-    .limit(pageSize)
-    .offset((page - 1) * pageSize)
-    .all();
+const cardColumns = {
+  id: captures.id,
+  sessionId: captures.sessionId,
+  split: sessions.split,
+  width: captures.width,
+  height: captures.height,
+  takenAt: captures.takenAt,
+  status: captures.status,
+  review: captures.review,
+  labelId: captures.labelId,
+  angleDeg: conditions.angleDeg,
+  dartCount: conditions.dartCount,
+};
+
+function cardsOf(
+  rows: {
+    id: string;
+    sessionId: string;
+    split: SplitName;
+    width: number;
+    height: number;
+    takenAt: Date;
+    status: CaptureCard['status'];
+    review: string | null;
+    labelId: number | null;
+    angleDeg: number | null;
+    dartCount: number | null;
+  }[],
+): CaptureCard[] {
   const { points, darts } = overlaysFor(rows.flatMap((r) => (r.labelId ? [r.labelId] : [])));
-  const cards: CaptureCard[] = rows.map((r) => ({
+  return rows.map((r) => ({
     id: r.id,
     sessionId: r.sessionId,
     split: r.split,
@@ -205,7 +200,148 @@ export function listCaptures(f: CaptureFilter = {}) {
     points: r.labelId ? (points.get(r.labelId) ?? []) : [],
     darts: r.labelId ? (darts.get(r.labelId) ?? []) : [],
   }));
-  return { cards, total, page, pageSize };
+}
+
+export function listCaptures(f: CaptureFilter = {}) {
+  const d = db();
+  const pageSize = f.pageSize ?? 24;
+  const page = Math.max(1, f.page ?? 1);
+  const total =
+    d
+      .select({ n: count() })
+      .from(captures)
+      .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+      .where(where(f))
+      .get()?.n ?? 0;
+  const rows = d
+    .select(cardColumns)
+    .from(captures)
+    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+    .leftJoin(conditions, eq(conditions.captureId, captures.id))
+    .where(where(f))
+    .orderBy(...(f.review ? [asc(reviewRank)] : []), desc(captures.takenAt), asc(captures.id))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
+    .all();
+  return { cards: cardsOf(rows), total, page, pageSize };
+}
+
+/** The gallery's views (all, a split, the review queue), counted under the other filters. */
+export type CaptureView = 'all' | SplitName | 'review';
+
+export function viewCounts(f: CaptureFilter): Record<CaptureView, number> {
+  const rest = { sessionId: f.sessionId, status: f.status };
+  const n = (g: CaptureFilter) =>
+    db()
+      .select({ n: count() })
+      .from(captures)
+      .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+      .where(where({ ...rest, ...g }))
+      .get()?.n ?? 0;
+  return {
+    all: n({}),
+    train: n({ split: 'train' }),
+    val: n({ split: 'val' }),
+    test: n({ split: 'test' }),
+    review: n({ review: true }),
+  };
+}
+
+/**
+ * Where the shown captures' darts landed, by value ("T20", "D16", "5", "25", "Bull", "Miss",
+ * "Bounce-out"): the value entered, else what its tip scores.
+ */
+export function hitCounts(f: CaptureFilter): { hits: Record<string, number>; darts: number } {
+  const ids = db()
+    .select({ labelId: captures.labelId })
+    .from(captures)
+    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+    .where(and(where(f), isNotNull(captures.labelId)))
+    .all()
+    .map((r) => r.labelId!);
+  const hits: Record<string, number> = {};
+  let darts = 0;
+  for (let i = 0; i < ids.length; i += 500) {
+    for (const r of db()
+      .select({ entered: labelDarts.entered, scored: labelDarts.scored })
+      .from(labelDarts)
+      .where(inArray(labelDarts.labelId, ids.slice(i, i + 500)))
+      .all()) {
+      const v = r.entered ?? r.scored;
+      if (!v) continue;
+      hits[v] = (hits[v] ?? 0) + 1;
+      darts++;
+    }
+  }
+  return { hits, darts };
+}
+
+export interface SessionGroup {
+  session: { id: string; startedAt: number; split: SplitName; tags: string[] };
+  /** Its captures shown, newest first, up to PER_SESSION. */
+  cards: CaptureCard[];
+  total: number;
+}
+
+/** Captures shown per session row; the rest are a link to the session. */
+export const PER_SESSION = 40;
+
+/** The shown captures a row per session, newest session first, a page of sessions at a time. */
+export function listCaptureSessions(f: CaptureFilter = {}) {
+  const d = db();
+  const pageSize = f.pageSize ?? 6;
+  const page = Math.max(1, f.page ?? 1);
+  const all = d
+    .select({
+      id: sessions.id,
+      startedAt: sessions.startedAt,
+      split: sessions.split,
+      n: count(),
+    })
+    .from(captures)
+    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+    .where(where(f))
+    .groupBy(sessions.id)
+    .orderBy(desc(sessions.startedAt))
+    .all();
+  const shown = all.slice((page - 1) * pageSize, page * pageSize);
+  const tags = new Map<string, string[]>();
+  if (shown.length) {
+    for (const t of d
+      .select()
+      .from(sessionTags)
+      .where(
+        inArray(
+          sessionTags.sessionId,
+          shown.map((s) => s.id),
+        ),
+      )
+      .all()) {
+      tags.set(t.sessionId, [...(tags.get(t.sessionId) ?? []), t.tag]);
+    }
+  }
+  const rows: SessionGroup[] = shown.map((s) => {
+    const cards = d
+      .select(cardColumns)
+      .from(captures)
+      .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+      .leftJoin(conditions, eq(conditions.captureId, captures.id))
+      .where(and(where(f), eq(captures.sessionId, s.id)))
+      .orderBy(desc(captures.takenAt), asc(captures.id))
+      .limit(PER_SESSION)
+      .all();
+    return {
+      session: {
+        id: s.id,
+        startedAt: s.startedAt.getTime(),
+        split: s.split,
+        tags: tags.get(s.id) ?? [],
+      },
+      cards: cardsOf(cards),
+      total: s.n,
+    };
+  });
+  return { rows, total: all.length, page, pageSize };
 }
 
 export interface CaptureDetail extends CaptureCard {

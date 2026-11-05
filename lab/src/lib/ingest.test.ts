@@ -17,7 +17,15 @@ import {
   saveLabel,
   setRejected,
 } from './ingest';
-import { getCapture, listCaptures, listSessions, overviewCounts } from './queries';
+import {
+  getCapture,
+  hitCounts,
+  listCaptures,
+  listCaptureSessions,
+  listSessions,
+  overviewCounts,
+  viewCounts,
+} from './queries';
 import { splitOf } from './splits';
 import { storedFile } from './storage';
 
@@ -191,6 +199,50 @@ describe('ingestCapture', () => {
       missed: 0,
     });
     expect(getCapture('ul-2')).toMatchObject({ status: 'values-only', review: null });
+  });
+
+  it('counts the gallery’s views, where darts landed, and groups captures by session', async () => {
+    const visit = (id: string, session: string, at: string, values: string[]) =>
+      ingestCapture(
+        {
+          id,
+          image: `${id}.jpg`,
+          width: 400,
+          height: 300,
+          createdAt: at,
+          sessionId: session,
+          sessionStartedAt: at,
+          calibration,
+          darts: values.map((value, i) => ({ ...toImage(polar(103, i * 18)), value })),
+        },
+        jpegSync,
+        'phone',
+      );
+    const jpegSync = await jpeg();
+    await visit('g1', 'sa', '2026-11-01T20:00:00.000Z', ['T20', 'T20', '1']);
+    await visit('g2', 'sa', '2026-11-01T20:05:00.000Z', ['T20', 'D18', 'Miss']);
+    await visit('g3', 'sb', '2026-11-02T20:00:00.000Z', ['5', 'Bull', '25']);
+    const counts = viewCounts({});
+    expect(counts.all).toBe(3);
+    expect(counts.train + counts.val + counts.test).toBe(3);
+    expect(hitCounts({}).hits).toMatchObject({
+      T20: 3,
+      D18: 1,
+      '1': 1,
+      Miss: 1,
+      '5': 1,
+      Bull: 1,
+      '25': 1,
+    });
+    expect(hitCounts({ sessionId: 'sb' })).toEqual({
+      hits: { '5': 1, Bull: 1, '25': 1 },
+      darts: 3,
+    });
+    const groups = listCaptureSessions({});
+    expect(groups.rows.map((r) => [r.session.id, r.total, r.cards.map((c) => c.id)])).toEqual([
+      ['sb', 1, ['g3']],
+      ['sa', 2, ['g2', 'g1']],
+    ]);
   });
 
   it('keeps values-only captures for verification and marks them so', async () => {

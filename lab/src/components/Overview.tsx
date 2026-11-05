@@ -91,38 +91,6 @@ export function Overview({
         </>
       }
     >
-      <Panels min={560}>
-        <Panel title="Accuracy by model" extra={<Link href="/verification">Verification</Link>}>
-          <ProgressChart models={progress} />
-        </Panel>
-        <Panel
-          title="Labelling with the model: how much of its pre-fill was kept"
-          extra={<Link href="/captures?review=1">Corrected labels</Link>}
-        >
-          <PrefillChart stats={prefill} />
-        </Panel>
-      </Panels>
-
-      <Section title="Coverage by condition" extra={<ThinNote />} flush>
-        <Panels min={420} edge={false}>
-          {coverage.map((c) => (
-            <Panel
-              key={c.key}
-              title={c.title}
-              extra={
-                c.unmeasured ? (
-                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                    {c.unmeasured} not measured
-                  </Typography.Text>
-                ) : null
-              }
-            >
-              <CoverageChart coverage={c} />
-            </Panel>
-          ))}
-        </Panels>
-      </Section>
-
       <Section title="Lab">
         <Descriptions
           size="small"
@@ -157,6 +125,38 @@ export function Overview({
         <Typography.Paragraph type="secondary" style={{ margin: '8px 0 0' }}>
           Sets are chosen by session, 80/10/10. Verify is never trained on.
         </Typography.Paragraph>
+      </Section>
+
+      <Panels min={560}>
+        <Panel title="Accuracy by model" extra={<Link href="/verification">Verification</Link>}>
+          <ProgressChart models={progress} />
+        </Panel>
+        <Panel
+          title="Labelling with the model: how much of its pre-fill was kept"
+          extra={<Link href="/captures?review=1">Corrected labels</Link>}
+        >
+          <PrefillChart stats={prefill} />
+        </Panel>
+      </Panels>
+
+      <Section title="Coverage by condition" extra={<ThinNote />} flush>
+        <Panels min={420} edge={false}>
+          {coverage.map((c) => (
+            <Panel
+              key={c.key}
+              title={c.title}
+              extra={
+                c.unmeasured ? (
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    {c.unmeasured} not measured
+                  </Typography.Text>
+                ) : null
+              }
+            >
+              <CoverageChart coverage={c} />
+            </Panel>
+          ))}
+        </Panels>
       </Section>
     </EdgePage>
   );

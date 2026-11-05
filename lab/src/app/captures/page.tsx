@@ -1,5 +1,13 @@
 import { CaptureGallery } from '~/components/CaptureGallery';
-import { listCaptures, listSessions, type CaptureFilter } from '~/lib/queries';
+import {
+  hitCounts,
+  listCaptures,
+  listCaptureSessions,
+  listSessions,
+  viewCounts,
+  type CaptureFilter,
+} from '~/lib/queries';
+import { coverage } from '~/lib/verify';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +31,20 @@ export default async function CapturesPage({ searchParams }: { searchParams: Pro
         : undefined,
     page: Number(one(q.page) ?? 1) || 1,
   };
-  const result = listCaptures(filter);
+  const layout = one(q.layout) === 'sessions' ? 'sessions' : 'grid';
+  const result = listCaptures(layout === 'grid' ? filter : { ...filter, page: 1, pageSize: 0 });
+  const groups = layout === 'sessions' ? listCaptureSessions(filter) : null;
   const sessions = listSessions().map((s) => ({ id: s.id, startedAt: s.startedAt }));
-  return <CaptureGallery filter={filter} result={result} sessions={sessions} />;
+  return (
+    <CaptureGallery
+      filter={filter}
+      layout={layout}
+      result={result}
+      groups={groups}
+      sessions={sessions}
+      counts={viewCounts(filter)}
+      coverage={coverage()}
+      hits={hitCounts(filter)}
+    />
+  );
 }

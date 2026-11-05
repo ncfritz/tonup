@@ -1,0 +1,154 @@
+/* The gallery fills the content area: the photos scroll beside the side panel. */
+.page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.work {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.scroll {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.flex {
+  flex: 1;
+}
+
+.small {
+  font-size: 12px;
+}
+
+/* By session: a row each, its photos in a strip that scrolls sideways. */
+.sessionRow {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.sessionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px 8px;
+}
+
+.strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 24px 16px;
+}
+
+.stripTile {
+  flex: 0 0 220px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ant-color-fill-quaternary);
+  color: inherit;
+}
+
+.stripTile:hover {
+  background: var(--ant-color-fill-tertiary);
+  color: inherit;
+}
+
+.more {
+  flex: 0 0 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+/* The views, a row each: the name on the left, how many on the right. */
+.views {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.view {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--ant-color-text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.view:hover {
+  background: var(--ant-color-fill-quaternary);
+}
+
+.viewOn,
+.viewOn:hover {
+  background: var(--ant-color-primary-bg);
+  color: var(--ant-color-primary);
+  font-weight: 600;
+}
+
+.viewCount {
+  font-variant-numeric: tabular-nums;
+}
+
+.paneSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.coverageHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 600;
+}
+
+.bucket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.bucketName {
+  min-width: 0;
+}
+
+.bucketBar:global(.ant-progress) {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0 0 6px;
+}
+
+.bucketCount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.thinList {
+  margin: 0;
+  padding-inline-start: 18px;
+}
