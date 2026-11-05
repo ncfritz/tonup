@@ -1,11 +1,31 @@
-// Removes Xcode workspaces in ios/ whose project is gone. Switching app variants regenerates
-// ios/ (TonUp.xcodeproj ↔ TUCapture.xcodeproj), and an Xcode window still open on the other
-// variant saves its workspace back; `expo run:ios` may then pick that one and fail with
-// "does not contain a scheme". Run before every `expo run:ios`.
+// Run before every `expo run:ios`. Two checks, because both app variants (ADR 0012) share ios/:
+//
+// 1. ios/ must be generated for the variant being built. `expo run:ios` builds whatever native
+//    project is there and never regenerates it, so after `capture:sync` a plain `ios:release`
+//    would build TU Capture (and the other way round). If ios/ holds the other variant's
+//    project, regenerate it with `expo prebuild --clean` for this one.
+// 2. Remove Xcode workspaces whose project is gone. An Xcode window still open on the other
+//    variant saves its workspace back; `expo run:ios` may then pick that one and fail with
+//    "does not contain a scheme".
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const ios = path.resolve(import.meta.dirname, '..', 'ios');
+const variant = process.env.APP_VARIANT === 'capture' ? 'capture' : 'tonup';
+const projects = { tonup: 'TonUp.xcodeproj', capture: 'TUCapture.xcodeproj' };
+
+if (fs.existsSync(ios) && !fs.existsSync(path.join(ios, projects[variant]))) {
+  console.log(
+    `ios/ was generated for the other app variant; regenerating it for ${variant === 'capture' ? 'TU Capture' : 'Ton Up'}…`,
+  );
+  execSync('npx expo prebuild --platform ios --clean', {
+    stdio: 'inherit',
+    cwd: path.resolve(import.meta.dirname, '..'),
+    env: process.env,
+  });
+}
+
 if (fs.existsSync(ios)) {
   for (const name of fs.readdirSync(ios)) {
     if (!name.endsWith('.xcworkspace')) continue;
