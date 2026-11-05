@@ -382,25 +382,29 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
         onBack={onBack}
         run={run}
         footer={
-          <View style={styles.row}>
+          // Full width, a row each: put it off, keep just the values, or go on to the board.
+          <View style={styles.stack}>
             {draft || saved ? null : (
-              <View style={styles.flex}>
-                <Button
-                  kind="secondary"
-                  label={t('label.labelLater')}
-                  onPress={labelLater}
-                  testID="label-later"
-                />
-              </View>
-            )}
-            <View style={draft || saved ? styles.flex : styles.flexWide}>
               <Button
-                label={t('label.toBoard')}
-                onPress={() => setS(toBoard(s))}
-                disabled={!canLeaveValues(s)}
-                testID="to-board"
+                kind="secondary"
+                label={t('label.labelLater')}
+                onPress={labelLater}
+                testID="label-later"
               />
-            </View>
+            )}
+            <Button
+              kind="secondary"
+              label={run && !last ? t('label.valuesOnlyNext') : t('label.saveValuesOnly')}
+              onPress={() => save(true)}
+              disabled={!canLeaveValues(s)}
+              testID="values-save-values-only"
+            />
+            <Button
+              label={t('label.toBoard')}
+              onPress={() => setS(toBoard(s))}
+              disabled={!canLeaveValues(s)}
+              testID="to-board"
+            />
           </View>
         }
       >
@@ -414,7 +418,7 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
               <DartSlots darts={s.entered} total={visitTotal(s.entered)} bust={false} />
             </View>
           </View>
-          <Keypad onHit={(hit) => setS(enter(s, labelOf(hit)))} disabled={full} />
+          <Keypad onHit={(hit) => setS(enter(s, labelOf(hit)))} disabled={full} fill={false} />
           <View style={styles.row}>
             <View style={styles.flex}>
               <Button
@@ -459,24 +463,33 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
         onBack={onBack}
         run={run}
         footer={
-          <View style={styles.row}>
-            {!step ? (
+          <View style={styles.stack}>
+            {/* The values without the board or tips: both can be added later, here or in Lab. */}
+            <Button
+              kind="secondary"
+              label={run && !last ? t('label.valuesOnlyNext') : t('label.saveValuesOnly')}
+              onPress={() => save(true)}
+              testID="board-save-values-only"
+            />
+            <View style={styles.row}>
+              {!step ? (
+                <View style={styles.flex}>
+                  <Button
+                    kind="secondary"
+                    label={t('label.markByHand')}
+                    onPress={() => setS(remark(s))}
+                    testID="label-remark"
+                  />
+                </View>
+              ) : null}
               <View style={styles.flex}>
                 <Button
-                  kind="secondary"
-                  label={t('label.markByHand')}
-                  onPress={() => setS(remark(s))}
-                  testID="label-remark"
+                  label={t('label.toTips')}
+                  onPress={() => setS(toTips(s))}
+                  disabled={!s.fit}
+                  testID="to-tips"
                 />
               </View>
-            ) : null}
-            <View style={styles.flex}>
-              <Button
-                label={t('label.toTips')}
-                onPress={() => setS(toTips(s))}
-                disabled={!s.fit}
-                testID="to-tips"
-              />
             </View>
           </View>
         }
@@ -710,7 +723,6 @@ const styles = StyleSheet.create((theme) => ({
   },
   footerStack: { gap: theme.spacing.s },
   flex: { flex: 1 },
-  flexWide: { flex: 1.4 },
   runBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -741,6 +753,7 @@ const styles = StyleSheet.create((theme) => ({
     borderColor: theme.colors.line,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
+  stack: { gap: theme.spacing.s },
   pad: { paddingHorizontal: theme.spacing.m },
   values: { flex: 1, gap: theme.spacing.s, paddingHorizontal: theme.spacing.s },
   thumb: { width: 72, height: 72, borderRadius: theme.radii.s },

@@ -343,6 +343,38 @@ it('saves a photo to label later and goes back to the camera', async () => {
   expect(router.back).toHaveBeenCalled();
 });
 
+it('saves the values alone, from the values step or the board step, to add the rest later', async () => {
+  await render(<LabelVisit />);
+  expect(screen.getByTestId('values-save-values-only')).toBeDisabled();
+  await enterValues(['T20', '5']);
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('values-save-values-only'));
+  });
+  const [first] = [...mockBox.values()];
+  expect(first!.label).toMatchObject({
+    valuesOnly: true,
+    calibration: [null, null, null, null, null],
+  });
+  expect(first!.label.darts.map((d) => [d.value, d.x])).toEqual([
+    ['T20', null],
+    ['5', null],
+  ]);
+  // From the board step, before any point is placed.
+  mockBox.clear();
+  useShot
+    .getState()
+    .setShot({ photo: { uri: 'file:///p.jpg', width: W, height: H }, detected: null });
+  await act(async () => {
+    await render(<LabelVisit />);
+  });
+  await enterValues(['20']);
+  await fireEvent.press(screen.getByTestId('to-board'));
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('board-save-values-only'));
+  });
+  expect([...mockBox.values()][0]!.label).toMatchObject({ valuesOnly: true });
+});
+
 it('labels drafts one after another: values only, skip, then done', async () => {
   mockDrafts.set('d1', draftIn('d1', 'sess-old', '2026-11-02T05:10:00.000Z'));
   mockDrafts.set('d2', draftIn('d2', 'sess-old', '2026-11-02T05:20:00.000Z'));

@@ -15,7 +15,16 @@ const NUMBERS = Array.from({ length: 20 }, (_, i) => i + 1);
  * Score entry without the board: pick Single, Double or Treble, then the number; the ring goes
  * back to Single after each dart. The bulls have their own keys.
  */
-export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disabled?: boolean }) {
+export function Keypad({
+  onHit,
+  disabled,
+  fill = true,
+}: {
+  onHit: (hit: Hit) => void;
+  disabled?: boolean;
+  /** Stretch the keys to the space given; false keeps them their own height, the bulls right under. */
+  fill?: boolean;
+}) {
   const { t } = useTranslation('game');
   const [mult, setMult] = useState<1 | 2 | 3>(1);
   const enter = (hit: Hit) => {
@@ -29,7 +38,7 @@ export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disable
     { m: 3 as const, label: t('keypad.treble') },
   ];
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, !fill && styles.wrapFit]}>
       <View accessibilityRole="radiogroup" accessibilityLabel={t('keypad.ring')} style={styles.row}>
         {rings.map((r) => {
           const on = r.m === mult;
@@ -48,7 +57,7 @@ export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disable
           );
         })}
       </View>
-      <View style={styles.grid}>
+      <View style={[styles.grid, !fill && styles.gridFit]}>
         {NUMBERS.map((n) => {
           const name = mult === 3 ? `T${n}` : mult === 2 ? `D${n}` : `${n}`;
           // Spoken in full: "Treble 20", not "T 20".
@@ -60,7 +69,11 @@ export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disable
               accessibilityRole="button"
               accessibilityLabel={spoken}
               testID={`key-${name}`}
-              style={({ pressed }) => [styles.key, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.key,
+                !fill && styles.keyFit,
+                pressed && styles.pressed,
+              ]}
               onPress={() => enter(hitOf(n, mult))}
             >
               <Text variant="title">{n}</Text>
@@ -96,6 +109,7 @@ export function Keypad({ onHit, disabled }: { onHit: (hit: Hit) => void; disable
 
 const styles = StyleSheet.create((theme) => ({
   wrap: { flex: 1, gap: 6 },
+  wrapFit: { flex: 0 },
   row: { flexDirection: 'row', gap: 6 },
   ring: {
     flex: 1,
@@ -107,6 +121,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   ringOn: { backgroundColor: theme.colors.accent },
   grid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  gridFit: { flex: 0 },
   key: {
     flexBasis: '18%',
     flexGrow: 1,
@@ -124,5 +139,6 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  keyFit: { minHeight: 52 },
   pressed: { opacity: 0.7 },
 }));
