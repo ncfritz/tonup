@@ -327,7 +327,8 @@
   },
   "saved": {
     "title": "Saved visit",
-    "cleared": "This photo has been cleared from the phone; Lab has it.",
+    "fromLab": "Cleared from this phone: the photo is Lab's copy.",
+    "blank": "Cleared from this phone, and Lab's copy isn't available: the board and tips are drawn from the label.",
     "missing": "This visit isn't on the phone any more.",
     "inLab": "in Lab",
     "waiting": "waiting to send",

@@ -23,7 +23,9 @@ import {
   useLabSessionIds,
 } from '@/features/capture-lab/SessionBits';
 import { labStanding } from '@/features/capture-lab/outbox';
-import { LabPill } from '@/features/capture-lab/LabPill';
+import { labPhotoUrl } from '@/features/capture-lab/lab';
+import { LabPill, useLabState } from '@/features/capture-lab/LabPill';
+import { useCapture } from '@/features/capture-lab/store';
 import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
 type Filter = 'all' | PhotoStatus;
@@ -38,6 +40,8 @@ export default function SessionPhotos() {
   const [photos, setPhotos] = useState<SessionPhoto[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
   const { ids: labIds } = useLabSessionIds();
+  const labUrl = useCapture((s) => s.labUrl);
+  const labOk = useLabState() === 'ok';
 
   const load = useCallback(() => {
     try {
@@ -163,15 +167,7 @@ export default function SessionPhotos() {
                   }
                   testID={`photo-${p.id}`}
                 >
-                  {p.uri ? (
-                    <Image source={{ uri: p.uri }} style={styles.fill} resizeMode="cover" />
-                  ) : (
-                    <View style={styles.cleared}>
-                      <Text variant="caption" tone="muted">
-                        {t('photos.cleared')}
-                      </Text>
-                    </View>
-                  )}
+                  <Thumb photo={p} fromLab={labOk && labIds?.has(id) ? labUrl : null} />
                   <Badge photo={p} />
                 </Pressable>
               );
@@ -192,6 +188,30 @@ export default function SessionPhotos() {
         </View>
       ) : null}
     </SafeAreaView>
+  );
+}
+
+/**
+ * A photo's tile: the phone's copy; once cleared, Lab's thumbnail (when Lab's up and has the
+ * session); else "Cleared".
+ */
+function Thumb({ photo, fromLab }: { photo: SessionPhoto; fromLab: string | null }) {
+  const { t } = useTranslation('capture');
+  const [failed, setFailed] = useState(false);
+  const uri = photo.uri ?? (fromLab && !failed ? labPhotoUrl(fromLab, photo.id, 'thumb') : null);
+  return uri ? (
+    <Image
+      source={{ uri }}
+      style={styles.fill}
+      resizeMode="cover"
+      onError={() => setFailed(true)}
+    />
+  ) : (
+    <View style={styles.cleared}>
+      <Text variant="caption" tone="muted">
+        {t('photos.cleared')}
+      </Text>
+    </View>
   );
 }
 

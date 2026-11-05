@@ -7,11 +7,13 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import { CALIBRATION_IDS, fitBoard, type CalibrationId, type ImagePoint } from '@/domain/camera';
 import { PhotoMarkup, type MarkupDart } from '@/features/camera/PhotoMarkup';
+import { labPhotoUrl } from '@/features/capture-lab/lab';
 import { fileOutbox } from '@/features/capture-lab/outboxFiles';
+import { useCapture } from '@/features/capture-lab/store';
 import { addTips } from '@/features/capture-lab/queue';
 import { visitTotal } from '@/features/capture-lab/visit';
 import { ZoomPan } from '@/features/capture-lab/ZoomPan';
-import { LabPill } from '@/features/capture-lab/LabPill';
+import { LabPill, useLabState } from '@/features/capture-lab/LabPill';
 import { Button, Header, Text } from '@/ui';
 
 /** A visit as it was saved: the photo with its board and numbered tips, its values and total. */
@@ -47,6 +49,18 @@ export default function SavedPhoto() {
   );
   const values = (label?.darts ?? []).map((d) => d.value);
 
+  // The photo: the phone's while it has it; once cleared, Lab's (when Lab's up and has it); else
+  // the markup on a blank, which the label alone is enough to draw.
+  const labUrl = useCapture((s) => s.labUrl);
+  const labOk = useLabState() === 'ok';
+  const [labFailed, setLabFailed] = useState(false);
+  const source: 'phone' | 'lab' | 'blank' = found?.uri
+    ? 'phone'
+    : found?.sent && labOk && !labFailed
+      ? 'lab'
+      : 'blank';
+  const uri = source === 'phone' ? found!.uri : source === 'lab' ? labPhotoUrl(labUrl, id) : null;
+
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
       <View style={styles.pad}>
@@ -57,10 +71,11 @@ export default function SavedPhoto() {
           right={<LabPill />}
         />
       </View>
-      {label && found?.uri ? (
+      {label ? (
         <ZoomPan onZoom={setScale} testID="saved-zoom">
           <PhotoMarkup
-            photo={{ uri: found.uri, width: label.width, height: label.height }}
+            photo={{ uri, width: label.width, height: label.height }}
+            onPhotoError={() => setLabFailed(true)}
             fit={fit}
             calibration={calibration}
             darts={darts}
@@ -73,9 +88,14 @@ export default function SavedPhoto() {
         </ZoomPan>
       ) : (
         <View style={[styles.pad, styles.fill]}>
-          <Text tone="muted">{label ? t('saved.cleared') : t('saved.missing')}</Text>
+          <Text tone="muted">{t('saved.missing')}</Text>
         </View>
       )}
+      {label && source !== 'phone' ? (
+        <Text variant="caption" tone="muted" style={styles.pad} testID="saved-source">
+          {source === 'lab' ? t('saved.fromLab') : t('saved.blank')}
+        </Text>
+      ) : null}
       {label ? (
         <View style={styles.info}>
           <View style={styles.row}>

@@ -44,8 +44,10 @@ export function PhotoMarkup({
   onTap,
   onSelect,
   scale = 1,
+  onPhotoError,
 }: {
-  photo: Photo;
+  /** With no `uri` (the photo's gone), the markup is drawn on a blank the photo's shape. */
+  photo: Omit<Photo, 'uri'> & { uri: string | null };
   fit: BoardFit | null;
   calibration: Partial<Record<CalibrationId, ImagePoint>>;
   darts: MarkupDart[];
@@ -57,6 +59,8 @@ export function PhotoMarkup({
   onSelect: (i: number) => void;
   /** How far the photo is zoomed (ZoomPan): marks and the magnifier keep their size on screen. */
   scale?: number;
+  /** The photo couldn't be loaded (one from Lab, say): the caller can fall back to a blank. */
+  onPhotoError?: () => void;
 }) {
   const { t } = useTranslation('game');
   const { theme } = useUnistyles();
@@ -117,7 +121,16 @@ export function PhotoMarkup({
           onResponderTerminate={() => setTouch(null)}
           testID="snap-photo"
         >
-          <Image source={{ uri: photo.uri }} style={{ width: w, height: h }} />
+          {photo.uri ? (
+            <Image
+              source={{ uri: photo.uri }}
+              style={{ width: w, height: h }}
+              onError={onPhotoError}
+              testID="snap-photo-image"
+            />
+          ) : (
+            <View style={[styles.blank, { width: w, height: h }]} testID="snap-photo-blank" />
+          )}
           <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
             {fit ? (
               <>
@@ -204,16 +217,18 @@ export function PhotoMarkup({
                 },
               ]}
             >
-              <Image
-                source={{ uri: photo.uri }}
-                style={{
-                  position: 'absolute',
-                  width: w * ZOOM,
-                  height: h * ZOOM,
-                  left: loupe / 2 - touch.x * ZOOM,
-                  top: loupe / 2 - touch.y * ZOOM,
-                }}
-              />
+              {photo.uri ? (
+                <Image
+                  source={{ uri: photo.uri }}
+                  style={{
+                    position: 'absolute',
+                    width: w * ZOOM,
+                    height: h * ZOOM,
+                    left: loupe / 2 - touch.x * ZOOM,
+                    top: loupe / 2 - touch.y * ZOOM,
+                  }}
+                />
+              ) : null}
               <Svg width={loupe} height={loupe} style={StyleSheet.absoluteFill}>
                 <Line
                   x1={loupe / 2 - 10 * k}
@@ -242,6 +257,7 @@ export function PhotoMarkup({
 
 const styles = StyleSheet.create((theme) => ({
   wrap: { alignSelf: 'stretch', borderRadius: theme.radii.m, overflow: 'hidden' },
+  blank: { backgroundColor: theme.colors.surface2 },
   loupe: {
     position: 'absolute',
     overflow: 'hidden',

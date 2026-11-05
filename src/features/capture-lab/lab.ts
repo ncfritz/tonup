@@ -108,5 +108,9 @@ export async function fetchActiveModel(
 }
 
 /** Where one file of a model's package is served. */
+/** A capture's photo, and its thumbnail, as Lab keeps them (the ID is the visit's). */
+export const labPhotoUrl = (url: string, id: string, kind: 'photo' | 'thumb' = 'photo') =>
+  `${normaliseLabUrl(url)}/api/captures/${encodeURIComponent(id)}/${kind}`;
+
 export const modelFileUrl = (url: string, id: number, path: string) =>
   `${normaliseLabUrl(url)}/api/models/${id}/files/${path.split('/').map(encodeURIComponent).join('/')}`;

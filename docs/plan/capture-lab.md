@@ -60,7 +60,7 @@ A values-only visit can still get its tips: opened from its session's photos, it
 
 ### Outbox and upload
 
-- No database: a saved capture is `Documents/outbox/<id>.jpg` and `<id>.json`. Upload moves them to `Documents/sent/` (kept until cleared from Settings).
+- No database: a saved capture is `Documents/outbox/<id>.jpg` and `<id>.json`. Upload moves them to `Documents/sent/` (kept until cleared from Settings). A cleared photo still shows: Lab's copy (`/api/captures/:id/photo` and `/thumb`) when Lab is up and has it, else its board, points and tips drawn from the label on a blank, with a line saying which.
 - Sync runs on save, on opening Home, and from the button; failures stay in the outbox. Uploads are idempotent by capture ID.
 - The label JSON is the existing capture format (`src/domain/camera/labels.ts`) with Capture's additions. Lab parses it in `lab/src/lib/labels.ts`:
 
