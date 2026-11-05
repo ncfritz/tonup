@@ -92,6 +92,7 @@ export function BreakdownChart({
         />
         {models.length > 1 ? (
           <Legend
+            align="right"
             iconSize={10}
             wrapperStyle={{ fontSize: 12 }}
             itemSorter={legendOrder(models.map((m) => `m${m.id}`))}
@@ -157,6 +158,7 @@ export function CoverageChart({ coverage }: { coverage: Coverage }) {
           labelFormatter={(b) => (thin.has(String(b)) ? `${b} (thin)` : String(b))}
         />
         <Legend
+          align="right"
           iconSize={10}
           wrapperStyle={{ fontSize: 12 }}
           itemSorter={legendOrder(['training', 'verify'])}
@@ -234,6 +236,7 @@ export function ProgressChart({ models }: { models: ModelProgress }) {
           labelFormatter={(n, p) => `${n} · ${p[0]?.payload.samples ?? '—'} photos`}
         />
         <Legend
+          align="right"
           wrapperStyle={{ fontSize: 12 }}
           itemSorter={legendOrder(['visit', 'dart', 'board'])}
         />
@@ -316,6 +319,7 @@ export function PrefillChart({ stats }: { stats: PrefillStats[] }) {
           formatter={(v, name) => [v == null ? '—' : pct(Number(v)), name]}
         />
         <Legend
+          align="right"
           iconSize={10}
           wrapperStyle={{ fontSize: 12 }}
           itemSorter={legendOrder(['accepted', 'tips', 'board'])}

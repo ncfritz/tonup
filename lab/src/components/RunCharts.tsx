@@ -78,7 +78,7 @@ export function AccuracyChart({ metrics, epochs }: { metrics: EpochMetrics[]; ep
           width={48}
         />
         <Tooltip formatter={(v) => pct(Number(v))} labelFormatter={(e) => `Epoch ${e}`} />
-        <Legend itemSorter={legendOrder(['visit', 'dart', 'board'])} />
+        <Legend align="right" itemSorter={legendOrder(['visit', 'dart', 'board'])} />
         <ReferenceLine
           y={BAR.visit}
           stroke={AXIS}
@@ -138,7 +138,7 @@ export function LossChart({ metrics, epochs }: { metrics: EpochMetrics[]; epochs
         />
         <YAxis tick={{ fill: AXIS, fontSize: 12 }} width={48} domain={[0, 'auto']} />
         <Tooltip formatter={(v) => Number(v).toFixed(3)} labelFormatter={(e) => `Epoch ${e}`} />
-        <Legend itemSorter={legendOrder(['train', 'val'])} />
+        <Legend align="right" itemSorter={legendOrder(['train', 'val'])} />
         <Line
           name="Train"
           dataKey="train"
