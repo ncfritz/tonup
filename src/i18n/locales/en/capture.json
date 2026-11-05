@@ -233,7 +233,7 @@
     "progressA11y": "Visit, segment and board accuracy for each model, oldest first",
     "coverage": "What to shoot next",
     "coverageNote": "share of photos",
-    "thin": "{conditions} are thin: aim the next sessions there.",
+    "thin": "{count, plural, one {Thin, so aim the next sessions here:} other {Thin, so aim the next sessions at these:}}",
     "prefill": "of {model}'s pre-filled visits kept as placed ({count} visits)"
   },
   "models": {

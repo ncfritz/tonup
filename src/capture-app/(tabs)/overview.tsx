@@ -181,9 +181,21 @@ function OverviewBody({ d }: { d: Overview }) {
             </View>
           ))}
           {thin.length ? (
-            <Text variant="caption" tone="pending">
-              {t('overview.thin', { conditions: thin.map((b) => b.name).join(', ') })}
-            </Text>
+            <View style={styles.thinList} testID="overview-thin">
+              <Text variant="caption" tone="pending">
+                {t('overview.thin', { count: thin.length })}
+              </Text>
+              {thin.map((b) => (
+                <View key={b.key} style={styles.thinItem}>
+                  <Text variant="caption" tone="pending" accessibilityElementsHidden>
+                    {'\u2022'}
+                  </Text>
+                  <Text variant="caption" tone="pending" style={styles.flex}>
+                    {b.name}
+                  </Text>
+                </View>
+              ))}
+            </View>
           ) : null}
         </View>
       ) : null}
@@ -263,4 +275,6 @@ const styles = StyleSheet.create((theme) => ({
   okFill: { height: '100%', backgroundColor: theme.colors.accent },
   thinFill: { height: '100%', backgroundColor: theme.colors.pending },
   bucketValue: { width: 40, textAlign: 'right' },
+  thinList: { gap: theme.spacing.xs },
+  thinItem: { flexDirection: 'row', gap: theme.spacing.s, paddingLeft: theme.spacing.xs },
 }));
