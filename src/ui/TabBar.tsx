@@ -36,16 +36,25 @@ const OVERHANG = Math.max(0, (PLAY_SIZE + 4 - TAB_BAR_HEIGHT) / 2);
  * button centred in the middle, a little larger than the bar. Play is the home screen (the `index` route).
  * Ton Up Capture uses the same bar: Overview and Models, Sessions in the middle, Runs and Settings.
  */
-export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
+export function TabBar({
+  state,
+  descriptors,
+  emitter,
+  navigateToTab,
+  home = 'index',
+}: BottomTabBarProps & {
+  /** The route the Play button is: Ton Up's `index`; Capture's Sessions stack, `(home)`. */
+  home?: string;
+}) {
   const { theme } = useUnistyles();
   // Tabs are the routes with an icon, and home; anything else is a screen under one.
-  const visible = state.routes.filter((r) => r.name === 'index' || r.name in ICONS);
+  const visible = state.routes.filter((r) => r.name === home || r.name in ICONS);
   const current = state.routes[state.index];
   // A screen under a tab ("runs/[id]") shows that tab as current; anything else, home.
   const parent = current?.name.split('/')[0];
   const highlighted = visible.some((r) => r.key === current?.key)
     ? current?.key
-    : (visible.find((r) => r.name === parent) ?? visible.find((r) => r.name === 'index'))?.key;
+    : (visible.find((r) => r.name === parent) ?? visible.find((r) => r.name === home))?.key;
 
   return (
     <View pointerEvents="box-none" style={styles.wrap}>
@@ -55,7 +64,7 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
           const focused = route.key === highlighted;
           const options = descriptors[route.key]?.options;
           const label = typeof options?.title === 'string' ? options.title : route.name;
-          const play = route.name === 'index';
+          const play = route.name === home;
           const onPress = () => {
             const event = emitter.emit({
               type: 'tabPress',

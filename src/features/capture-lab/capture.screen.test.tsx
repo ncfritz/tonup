@@ -6,7 +6,7 @@ import type { Point } from '@/domain/darts';
 import i18next from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
 
-import CaptureHome from '../../capture-app/(tabs)';
+import CaptureHome from '../../capture-app/(tabs)/(home)';
 import LabelVisit from '../../capture-app/label';
 import type { Draft, OutboxItem, SentItem, UploadOutcome } from './outbox';
 import { addTips, startLabelling } from './queue';
