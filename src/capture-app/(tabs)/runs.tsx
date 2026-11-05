@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import {
   AccuracyChart,
@@ -24,7 +24,7 @@ import {
   type RunSummary,
 } from '@/features/capture-lab/labData';
 import { fetchActiveModel } from '@/features/capture-lab/lab';
-import { Button, Pressable, Screen, Text } from '@/ui';
+import { Button, Icon, Pressable, Screen, Text } from '@/ui';
 
 interface RunsData {
   runs: RunSummary[];
@@ -97,6 +97,7 @@ function useTitle() {
 
 function RunList({ d, labUrl, reload }: { d: RunsData; labUrl: string; reload: () => void }) {
   const { t } = useTranslation('capture');
+  const { theme } = useUnistyles();
   const title = useTitle();
   const earlier = d.runs.filter((r) => r.id !== d.live?.run.id);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -176,6 +177,7 @@ function RunList({ d, labUrl, reload }: { d: RunsData; labUrl: string; reload: (
                     </Text>
                   ) : null}
                 </View>
+                <Icon name="chevron" color={theme.colors.muted} size={16} />
               </Pressable>
             ))}
           </View>
@@ -197,6 +199,7 @@ function LiveRun({
   reload: () => void;
 }) {
   const { t } = useTranslation('capture');
+  const { theme } = useUnistyles();
   const title = useTitle();
   const colors = useSeriesColors();
   const [width, setWidth] = useState(0);
@@ -302,6 +305,17 @@ function LiveRun({
           ) : null}
         </>
       ) : null}
+      <Pressable
+        accessibilityRole="link"
+        style={styles.details}
+        onPress={() => router.push(`/runs/${run.id}`)}
+        testID="run-live-details"
+      >
+        <Text variant="caption" tone="accent">
+          {t('runs.details')}
+        </Text>
+        <Icon name="chevron" color={theme.colors.accent} size={14} />
+      </Pressable>
     </View>
   );
 }
@@ -349,4 +363,11 @@ const styles = StyleSheet.create((theme) => ({
   },
   divider: { borderTopWidth: 1, borderTopColor: theme.colors.line },
   right: { alignItems: 'flex-end', gap: 2 },
+  details: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+    minHeight: 44,
+  },
 }));

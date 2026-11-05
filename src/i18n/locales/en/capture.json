@@ -298,7 +298,8 @@
     "startCancel": "Cancel",
     "start": "Start",
     "started": "Training queued: it starts when the Mac is free.",
-    "fineTuneButton": "Fine-tune {model}"
+    "fineTuneButton": "Fine-tune {model}",
+    "details": "See the whole run"
   },
   "saved": {
     "title": "Saved visit",

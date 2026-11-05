@@ -1,8 +1,9 @@
-import { act, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import i18next from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
 
+import CaptureRuns from '../../capture-app/(tabs)/runs';
 import PastRun from '../../capture-app/(tabs)/runs/[id]';
 import type { RunDetail } from './labData';
 import { useCapture } from './store';
@@ -84,7 +85,22 @@ const mockDetail: RunDetail = {
 jest.mock('./labData', () => ({
   ...jest.requireActual('./labData'),
   fetchRun: async () => ({ ok: true, data: mockDetail }),
+  fetchRuns: async () => ({ ok: true, data: [mockDetail.run] }),
 }));
+jest.mock('./lab', () => ({
+  ...jest.requireActual('./lab'),
+  fetchActiveModel: async () => ({ ok: true, model: null }),
+}));
+const router = jest.requireMock<{ router: { push: jest.Mock } }>('expo-router').router;
+
+it('opens an earlier run from the Runs tab', async () => {
+  useCapture.setState({ labUrl: 'mac.local:3100' });
+  await act(async () => {
+    await render(<CaptureRuns />);
+  });
+  await fireEvent.press(screen.getByTestId('run-12'));
+  expect(router.push).toHaveBeenCalledWith('/runs/12');
+});
 
 it('shows a past run: what it made, its numbers against the model it started from, settings', async () => {
   useCapture.setState({ labUrl: 'mac.local:3100' });
