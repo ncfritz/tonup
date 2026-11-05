@@ -4,8 +4,7 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Pressable } from './Pressable';
 import { Text } from './Text';
 
-/** `inset`: a secondary button on a surface (a card), in the page's background colour. */
-type Kind = 'primary' | 'secondary' | 'inset';
+type Kind = 'primary' | 'secondary';
 
 export function Button({
   label,
@@ -42,7 +41,6 @@ const styles = StyleSheet.create((theme) => ({
       kind: {
         primary: { backgroundColor: theme.colors.accent },
         secondary: { backgroundColor: theme.colors.surface },
-        inset: { backgroundColor: theme.colors.bg },
       },
     },
   },

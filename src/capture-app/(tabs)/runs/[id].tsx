@@ -165,7 +165,6 @@ function RunBody({ d, labUrl, reload }: { d: RunDetail; labUrl: string; reload: 
             </View>
             <View style={styles.flex}>
               <Button
-                kind="inset"
                 label={base ? t('run.compare', { name: base.name }) : t('run.verify')}
                 disabled={busy}
                 onPress={() =>
