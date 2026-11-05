@@ -24,7 +24,6 @@ async function initialPrefs(): Promise<InitialPrefs> {
     if (m) sides[m[1]!] = c.value === '1';
   }
   return {
-    collapsed: get(PREF.collapsed) === '1',
     mode: mode === 'light' || mode === 'dark' ? mode : 'system',
     dark: mode === 'dark' || (mode !== 'light' && get(PREF.dark) === '1'),
     sides,

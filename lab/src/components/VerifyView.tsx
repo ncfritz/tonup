@@ -127,11 +127,6 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
   return (
     <>
       <PageHeader
-        breadcrumb={
-          <>
-            <Link href="/verification">Verification</Link> / #{run.id}
-          </>
-        }
         title={
           <Flex gap={10} align="center">
             {run.kind === 'verify' ? `Verification #${run.id}` : `Training run #${run.id}’s check`}

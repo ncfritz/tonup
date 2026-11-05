@@ -8,40 +8,30 @@ import {
   DesktopOutlined,
   ExperimentOutlined,
   FolderOpenOutlined,
-  LeftOutlined,
+  HomeOutlined,
   MoonOutlined,
-  RightOutlined,
   SunOutlined,
 } from '@ant-design/icons';
-import { App, Button, ConfigProvider, Layout, Menu, theme, Tooltip } from 'antd';
+import { App, Breadcrumb, ConfigProvider, Layout, Menu, Space, theme, Tooltip } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 
 import { HeaderBoard } from './HeaderBoard';
 import { setColorMode, useColorMode, useDark, type ColorMode } from './colorMode';
-import {
-  PREF,
-  PrefsContext,
-  readPref,
-  subscribePrefs,
-  useInitialPrefs,
-  writePref,
-  type InitialPrefs,
-} from './prefs';
+import { PREF, PrefsContext, type InitialPrefs } from './prefs';
 import styles from './Shell.module.css';
 
 // Ant Design's own theme (its default and dark algorithms, no colour overrides), in Olympus's
-// chrome (packages/console/src/shell): a navy header across the top, the pages in a sider beside
-// the content that folds to a rail.
-/** Olympus's chrome colours: the header's navy and the collapsed rail's slate. */
+// chrome (packages/console/src/shell): a navy header across the top, Olympus's breadcrumb bar
+// under it, and the pages in a dark sider that stays open (a rail of icons on a phone).
+/** Olympus's chrome colours: the header's navy and the sider's slate. */
 const NAVY = '#001529';
 const RAIL_BG = '#324354';
 const HEADER_HEIGHT = 56;
 /** Open, and the rail it collapses to. */
 const PAGES_WIDTH = 220;
 const PAGES_RAIL = 80;
-const TRIGGER_SIZE = 24;
 
 const NAV = [
   { key: '/', icon: <DashboardOutlined />, label: 'Overview' },
@@ -52,13 +42,7 @@ const NAV = [
   { key: '/verification', icon: <CheckCircleOutlined />, label: 'Verification' },
 ];
 
-// Per browser: a sider that springs open on every visit is not a choice. A cookie, so the
-// server draws it as it was left (prefs.ts).
-const readCollapsed = () => readPref(PREF.collapsed) === '1';
-const writeCollapsed = (collapsed: boolean) => writePref(PREF.collapsed, collapsed ? '1' : '0');
-
-// Narrow screens (a phone): the menu starts folded whatever was saved, and opening it there is
-// for this visit only.
+// Narrow screens (a phone): the menu is a rail of icons.
 const NARROW = '(max-width: 767px)';
 function subscribeNarrow(l: () => void) {
   const q = window.matchMedia(NARROW);
@@ -81,12 +65,7 @@ function Chrome({ children }: { children: ReactNode }) {
   const { token } = theme.useToken();
   const pathname = usePathname();
   const selected = NAV.find((n) => n.key !== '/' && pathname.startsWith(n.key))?.key ?? '/';
-  const initial = useInitialPrefs();
-  const saved = useSyncExternalStore(subscribePrefs, readCollapsed, () => initial.collapsed);
-  const narrow = useSyncExternalStore(subscribeNarrow, readNarrow, () => false);
-  const [openNarrow, setOpenNarrow] = useState(false);
-  const collapsed = narrow ? !openNarrow : saved;
-  const collapse = (next: boolean) => (narrow ? setOpenNarrow(!next) : writeCollapsed(next));
+  const collapsed = useSyncExternalStore(subscribeNarrow, readNarrow, () => false);
 
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
@@ -108,22 +87,18 @@ function Chrome({ children }: { children: ReactNode }) {
         <div style={{ flex: 1 }} />
         <ModeSwitch />
       </Layout.Header>
+      <Crumbs pathname={pathname} />
       <Layout style={{ minHeight: 0 }}>
         <Layout.Sider
-          className={`${styles.pages} ${collapsed ? styles.collapsed : ''}`}
+          className={styles.pages}
           width={PAGES_WIDTH}
           collapsedWidth={PAGES_RAIL}
           collapsed={collapsed}
           trigger={null}
-          style={{
-            position: 'relative',
-            background: collapsed ? RAIL_BG : token.colorBgContainer,
-            // Open, the panel is the page's colour, so it needs an edge; collapsed it is its own.
-            borderInlineEnd: collapsed ? undefined : `1px solid ${token.colorBorderSecondary}`,
-          }}
+          style={{ background: RAIL_BG }}
         >
           <Menu
-            theme={collapsed ? 'dark' : 'light'}
+            theme="dark"
             mode="inline"
             selectedKeys={[selected]}
             items={NAV.map((n) => ({
@@ -133,25 +108,6 @@ function Chrome({ children }: { children: ReactNode }) {
               label: <Link href={n.key}>{n.label}</Link>,
             }))}
             style={{ background: 'transparent', borderInlineEnd: 'none', paddingBlockStart: 8 }}
-          />
-          <Button
-            className={`${styles.pill} ${collapsed ? styles.pillCollapsed : styles.pillExpanded}`}
-            shape="circle"
-            size="small"
-            icon={collapsed ? <RightOutlined /> : <LeftOutlined />}
-            onClick={() => collapse(!collapsed)}
-            aria-label={collapsed ? 'Expand the menu' : 'Collapse the menu'}
-            aria-expanded={!collapsed}
-            style={{
-              position: 'absolute',
-              top: '50%',
-              right: -TRIGGER_SIZE / 2,
-              width: TRIGGER_SIZE,
-              height: TRIGGER_SIZE,
-              minWidth: TRIGGER_SIZE,
-              transform: 'translateY(-50%)',
-              zIndex: 3,
-            }}
           />
         </Layout.Sider>
         <Layout.Content
@@ -171,6 +127,63 @@ function Chrome({ children }: { children: ReactNode }) {
         </Layout.Content>
       </Layout>
     </Layout>
+  );
+}
+
+/** Most crumbs the bar's colours are worked out for; a deeper trail repeats the last. */
+const MAX_DEPTH = 8;
+
+/**
+ * Where you are, as Olympus's bar below the header shows it (ControlBreadcrumbs): Lab, the page,
+ * then what it has open, as chevrons stepping from slate to navy. Read off the path.
+ */
+function Crumbs({ pathname }: { pathname: string }) {
+  const [section, id] = pathname.split('/').filter(Boolean);
+  const page = NAV.find((n) => n.key === `/${section ?? ''}`);
+  const trail: { title: ReactNode; href?: string }[] = [
+    {
+      title: (
+        <Space size={6}>
+          <HomeOutlined />
+          Lab
+        </Space>
+      ),
+      href: page && page.key !== '/' ? '/' : undefined,
+    },
+  ];
+  if (page && page.key !== '/') {
+    trail.push({
+      title: (
+        <Space size={6}>
+          {page.icon}
+          {page.label}
+        </Space>
+      ),
+      href: id ? page.key : undefined,
+    });
+  }
+  if (id) {
+    const name = decodeURIComponent(id);
+    trail.push({ title: section === 'captures' || section === 'sessions' ? name : `#${name}` });
+  }
+  const n = Math.min(trail.length, MAX_DEPTH);
+  return (
+    <nav className={styles.crumbs} aria-label="Breadcrumb">
+      <Breadcrumb
+        className={styles[`n${n}`]}
+        separator=""
+        items={trail.map((c, i) => ({
+          title: c.href ? <Link href={c.href}>{c.title}</Link> : c.title,
+          className: [
+            styles.level,
+            styles[`k${Math.max(1, Math.min(trail.length - i, MAX_DEPTH))}`],
+            i === 0 ? styles.root : undefined,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        }))}
+      />
+    </nav>
   );
 }
 

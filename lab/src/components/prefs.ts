@@ -3,12 +3,11 @@
 import { createContext, useContext } from 'react';
 
 /**
- * Lab's per-browser choices (the menu folded, the colour mode, side panels), kept in cookies
+ * Lab's per-browser choices (the colour mode, side panels), kept in cookies
  * so the server draws the page as it was left: no flash of the defaults on a reload. The layout
  * reads them (app/layout.tsx) and hands them down; hooks use them as their first value.
  */
 export const PREF = {
-  collapsed: 'tonup-lab.pages-collapsed',
   mode: 'tonup-lab.color-mode',
   /** Whether the page is dark, as last worked out in the browser (for "system"). */
   dark: 'tonup-lab.dark',
@@ -16,7 +15,6 @@ export const PREF = {
 } as const;
 
 export interface InitialPrefs {
-  collapsed: boolean;
   mode: 'system' | 'light' | 'dark';
   dark: boolean;
   /** Side panels by ID: open or closed; missing means its default. */
@@ -24,7 +22,6 @@ export interface InitialPrefs {
 }
 
 export const DEFAULT_PREFS: InitialPrefs = {
-  collapsed: false,
   mode: 'system',
   dark: false,
   sides: {},

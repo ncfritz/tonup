@@ -1,59 +1,143 @@
 /*
  * Lab's chrome, after Olympus's console shell (packages/console/src/shell): a navy header the
- * same in any theme, and a pages sider that is a light panel open and a slate rail collapsed,
- * with a pill on its edge to fold it. Selectors reach into antd's markup with :global and are
+ * same in any theme, its breadcrumb bar, and the pages in a slate sider that stays open. Selectors reach into antd's markup with :global and are
  * more specific than antd's own (which wraps them in :where), so they win.
  */
 
-/* Menu rows the full width of the sider, square. */
+/* Menu rows the full width of the sider, square; the sider is Olympus's slate rail, open. */
 .pages :global(.ant-menu .ant-menu-item) {
   border-radius: 0;
   margin-inline: 0;
   width: 100%;
-}
-
-/* Collapsed: the slate rail. */
-.collapsed :global(.ant-menu .ant-menu-item) {
   color: #d1d1d1;
 }
 
-.collapsed :global(.ant-menu .ant-menu-item:hover) {
+.pages :global(.ant-menu .ant-menu-item:hover) {
   color: #fff;
 }
 
-.collapsed :global(.ant-menu .ant-menu-item.ant-menu-item-selected) {
+.pages :global(.ant-menu .ant-menu-item.ant-menu-item-selected) {
   background-color: #8598aa;
   color: #fff;
 }
 
-/* The pill on the sider's edge, the colour of the sider it is on. */
-.pill:global(.ant-btn.ant-btn):not(:disabled),
-.pill:global(.ant-btn.ant-btn):not(:disabled):hover,
-.pill:global(.ant-btn.ant-btn):not(:disabled):active {
-  border: none;
-  box-shadow: none;
+/* ---- Breadcrumbs, as Olympus's (packages/console/src/shell/shell.module.css): a bar below
+   the header, chevrons stepping from the slate (#324354) down to the header's navy (#001529).
+   --n is how many there are, --k how far a crumb is from the last (1 is the last). The colours
+   are fixed: the chrome is dark in both themes. */
+
+.crumbs {
+  flex-shrink: 0;
+  height: 28px;
+  background: #001529;
+  overflow: hidden;
 }
 
-.pillCollapsed:global(.ant-btn.ant-btn):not(:disabled) {
-  background: #324354;
+.crumbs :global(.ant-breadcrumb),
+.crumbs :global(.ant-breadcrumb ol) {
+  height: 28px;
+  flex-wrap: nowrap;
+}
+
+.crumbs :global(.ant-breadcrumb .ant-breadcrumb-separator) {
+  display: none;
+}
+
+/* antd puts the item's class on its link (or its span), so the bar and the doubled class
+   outrank antd's own link styling. */
+.crumbs .level.level {
+  --colour: color-mix(in srgb, #324354 calc(var(--k) / var(--n) * 100%), #001529);
+  --behind: color-mix(in srgb, #324354 calc((var(--k) - 1) / var(--n) * 100%), #001529);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  margin-inline: 14px 0;
+  padding-inline: 8px 4px;
+  border-radius: 0;
+  background-color: var(--colour);
+  color: #999;
+  white-space: nowrap;
+}
+
+.crumbs .level.level a {
+  color: inherit;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+
+.crumbs .root.root {
+  margin-inline-start: 0;
+  padding-inline-start: 24px;
+}
+
+.crumbs .level.level:hover {
   color: #fff;
+  background-color: var(--colour);
 }
 
-.pillCollapsed:global(.ant-btn.ant-btn):not(:disabled):hover {
-  background: #517093;
-  color: #fff;
+/* The chevron: a triangle of the crumb's colour over the next one's. */
+.level::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -14px;
+  top: 0;
+  border-top: 14px solid var(--behind);
+  border-bottom: 14px solid var(--behind);
+  border-left: 14px solid var(--colour);
+  z-index: 1;
 }
 
-.pillExpanded:global(.ant-btn.ant-btn):not(:disabled) {
-  background: var(--ant-color-bg-container);
-  color: var(--ant-color-text);
-  box-shadow: 0 0 0 1px var(--ant-color-border);
+.n1 {
+  --n: 1;
+}
+.n2 {
+  --n: 2;
+}
+.n3 {
+  --n: 3;
+}
+.n4 {
+  --n: 4;
+}
+.n5 {
+  --n: 5;
+}
+.n6 {
+  --n: 6;
+}
+.n7 {
+  --n: 7;
+}
+.n8 {
+  --n: 8;
 }
 
-.pillExpanded:global(.ant-btn.ant-btn):not(:disabled):hover {
-  background: var(--ant-color-fill-secondary);
-  color: var(--ant-color-text);
-  box-shadow: 0 0 0 1px var(--ant-color-border);
+.k1 {
+  --k: 1;
+}
+.k2 {
+  --k: 2;
+}
+.k3 {
+  --k: 3;
+}
+.k4 {
+  --k: 4;
+}
+.k5 {
+  --k: 5;
+}
+.k6 {
+  --k: 6;
+}
+.k7 {
+  --k: 7;
+}
+.k8 {
+  --k: 8;
 }
 
 /* The colour theme: a pill of three icons on the navy header, the chosen one filled. */

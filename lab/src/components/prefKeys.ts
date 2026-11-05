@@ -1,7 +1,6 @@
 // Names and shapes of Lab's per-browser choices, for the server (app/layout.tsx) and the
 // browser (prefs.ts, colorMode.ts) alike: no 'use client' here, so the server gets the values.
 export const PREF = {
-  collapsed: 'tonup-lab.pages-collapsed',
   mode: 'tonup-lab.color-mode',
   /** Whether the page is dark, as last worked out in the browser (for "system"). */
   dark: 'tonup-lab.dark',
@@ -9,7 +8,6 @@ export const PREF = {
 } as const;
 
 export interface InitialPrefs {
-  collapsed: boolean;
   mode: 'system' | 'light' | 'dark';
   dark: boolean;
   /** Side panels by ID: open or closed; missing means its default. */
@@ -17,7 +15,6 @@ export interface InitialPrefs {
 }
 
 export const DEFAULT_PREFS: InitialPrefs = {
-  collapsed: false,
   mode: 'system',
   dark: false,
   sides: {},

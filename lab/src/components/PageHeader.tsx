@@ -12,19 +12,16 @@ import styles from './Page.module.css';
 export function PageHeader({
   title,
   subtitle,
-  breadcrumb,
   extra,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
-  breadcrumb?: ReactNode;
   extra?: ReactNode;
 }) {
   return (
     <div className={styles.sticky}>
       <div className={styles.bar}>
         <div>
-          {breadcrumb ? <Typography.Text type="secondary">{breadcrumb}</Typography.Text> : null}
           <Typography.Title level={4} className={styles.title}>
             {title}
           </Typography.Title>

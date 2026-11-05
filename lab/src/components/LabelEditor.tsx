@@ -499,11 +499,6 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   return (
     <div className={styles.page}>
       <PageHeader
-        breadcrumb={
-          <>
-            <Link href="/captures">Captures</Link> / {capture.id}
-          </>
-        }
         title={
           <Space>
             Capture

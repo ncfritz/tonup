@@ -80,11 +80,6 @@ export function RunView({ initial }: { initial: RunData }) {
   return (
     <>
       <PageHeader
-        breadcrumb={
-          <>
-            <Link href="/runs">Runs</Link> / #{run.id}
-          </>
-        }
         title={
           <Flex gap={10} align="center">
             Run #{run.id} <RunStatus run={run} />
