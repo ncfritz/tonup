@@ -8,15 +8,21 @@ import { modelFiles } from '@/features/capture-lab/modelFiles';
 import { checkForModel, pullModel, type PullStatus } from '@/features/capture-lab/modelPull';
 import { fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { useCapture } from '@/features/capture-lab/store';
+import { ThemeList } from '@/features/settings/ThemeList';
 import { reloadModel, visionCapabilities } from '@/services/vision';
-import { Button, ListRow, Screen, Section, Text, ToggleRow } from '@/ui';
+import { useMode } from '@/theme/ThemeSync';
+import { Button, ListRow, Screen, Section, SegmentedControl, Text, ToggleRow } from '@/ui';
 
 /** Lab's address, the model and pre-filling, and the sent photos kept on the phone. */
 export default function CaptureSettings() {
   const { t } = useTranslation('capture');
+  const { t: ts } = useTranslation('settings');
   const { theme } = useUnistyles();
   const labUrl = useCapture((s) => s.labUrl);
   const prefill = useCapture((s) => s.prefill);
+  const appearance = useCapture((s) => s.appearance);
+  const current = useCapture((s) => s.theme);
+  const mode = useMode(appearance);
   const [address, setAddress] = useState(labUrl);
   const [test, setTest] = useState<LabHealth | null>(null);
   const [testing, setTesting] = useState(false);
@@ -176,6 +182,23 @@ export default function CaptureSettings() {
           note={t('settings.prefillNote')}
           value={prefill}
           onChange={(v) => useCapture.getState().set({ prefill: v })}
+        />
+      </Section>
+      <Section label={t('settings.appearance')}>
+        <SegmentedControl<typeof appearance>
+          accessibilityLabel={ts('appearance.mode')}
+          value={appearance}
+          onChange={(v) => useCapture.getState().set({ appearance: v })}
+          segments={[
+            { value: 'system', label: ts('appearance.system') },
+            { value: 'light', label: ts('appearance.light') },
+            { value: 'dark', label: ts('appearance.dark') },
+          ]}
+        />
+        <ThemeList
+          value={current}
+          mode={mode}
+          onPick={(id) => useCapture.getState().set({ theme: id })}
         />
       </Section>
       <Section label={t('settings.storage')}>

@@ -85,3 +85,20 @@ it('pulls Lab’s active model onto the phone', async () => {
   expect(screen.getByTestId('settings-lab-model')).toHaveTextContent('Up to date with Lab (v4).');
   expect(screen.queryByTestId('settings-get-model')).toBeNull();
 });
+
+it('picks any of Ton Up’s themes and a mode, with no Pro lock', async () => {
+  useCapture.setState({ theme: 'training', appearance: 'dark' });
+  await act(async () => {
+    await render(<CaptureSettings />);
+  });
+  expect(screen.getByTestId('theme-training')).toHaveProp('accessibilityState', { selected: true });
+  expect(screen.queryByText('Ton Up Pro')).toBeNull();
+  await act(async () => {
+    await fireEvent.press(screen.getByTestId('theme-arcade'));
+  });
+  expect(useCapture.getState().theme).toBe('arcade');
+  await act(async () => {
+    await fireEvent.press(screen.getByText('Light'));
+  });
+  expect(useCapture.getState().appearance).toBe('light');
+});

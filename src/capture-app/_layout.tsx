@@ -6,26 +6,36 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Appearance } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
 
-import { hydrateCapture } from '@/features/capture-lab/store';
+import { hydrateCapture, useCapture } from '@/features/capture-lab/store';
 import i18next, { initI18n } from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
 import { FONT_ASSETS } from '@/theme/fonts';
 import { themeName } from '@/theme/themes';
+import { useApplyTheme } from '@/theme/ThemeSync';
 
 SplashScreen.preventAutoHideAsync();
 initI18n();
 // Capture's own strings, kept out of Ton Up's resources so they don't ship in Ton Up.
 i18next.addResourceBundle('en', 'capture', capture);
-// One fixed look for an internal tool: the Training theme, dark (docs/design/themes.md).
-UnistylesRuntime.setTheme(themeName('training', 'dark'));
 hydrateCapture();
+// Ton Up's themes (docs/design/themes.md), all of them, picked in Capture's Settings. Set before
+// the first draw so the saved one shows from the start.
+{
+  const { theme, appearance } = useCapture.getState();
+  const system = Appearance.getColorScheme() === 'light' ? 'light' : 'dark';
+  UnistylesRuntime.setTheme(themeName(theme, appearance === 'system' ? system : appearance));
+}
 
 export default function CaptureLayout() {
   const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
   const ready = fontsLoaded || !!fontError;
+  const theme = useCapture((s) => s.theme);
+  const appearance = useCapture((s) => s.appearance);
+  const mode = useApplyTheme(theme, appearance);
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
@@ -33,7 +43,7 @@ export default function CaptureLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <StatusBar style="light" />
+      <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="session" options={{ gestureEnabled: false }} />

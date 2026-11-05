@@ -4,6 +4,7 @@ import { File, Paths } from 'expo-file-system';
 import { create } from 'zustand';
 
 import type { DetectResult } from '@/services/vision';
+import { THEME_IDS, type Mode, type ThemeId } from '@/theme/themes';
 
 import type { Draft } from './outbox';
 import type { LabelFile, Photo, SessionInfo } from './visit';
@@ -17,9 +18,19 @@ export interface CaptureState {
   session: SessionInfo | null;
   /** Visits saved in the current session. */
   visits: number;
+  /** Ton Up's themes, picked in Settings: Training, dark, until changed. */
+  theme: ThemeId;
+  appearance: 'system' | Mode;
 }
 
-const DEFAULTS: CaptureState = { labUrl: '', prefill: true, session: null, visits: 0 };
+const DEFAULTS: CaptureState = {
+  labUrl: '',
+  prefill: true,
+  session: null,
+  visits: 0,
+  theme: 'training',
+  appearance: 'dark',
+};
 
 interface Actions {
   set(change: Partial<CaptureState>): void;
@@ -35,8 +46,8 @@ let persist: (s: CaptureState) => void = () => {};
 export const useCapture = create<CaptureState & Actions>((set, get) => {
   const update = (change: Partial<CaptureState>) => {
     set(change);
-    const { labUrl, prefill, session, visits } = get();
-    persist({ labUrl, prefill, session, visits });
+    const { labUrl, prefill, session, visits, theme, appearance } = get();
+    persist({ labUrl, prefill, session, visits, theme, appearance });
   };
   return {
     ...DEFAULTS,
@@ -56,6 +67,11 @@ export function hydrateCapture() {
     const f = stateFile();
     if (f.exists) {
       const saved = JSON.parse(f.textSync()) as Partial<CaptureState>;
+      // A theme this build doesn't have (renamed, say) falls back to the default.
+      if (saved.theme && !THEME_IDS.includes(saved.theme)) delete saved.theme;
+      if (saved.appearance && !['system', 'light', 'dark'].includes(saved.appearance)) {
+        delete saved.appearance;
+      }
       useCapture.setState({ ...DEFAULTS, ...saved });
     }
   } catch {

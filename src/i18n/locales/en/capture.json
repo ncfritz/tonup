@@ -148,6 +148,7 @@
     "testOk": "Connected · Lab {version}",
     "testFail": "Not reachable: {error}",
     "labNote": "Start Lab with pnpm start:lan so the phone can reach it.",
+    "appearance": "Appearance",
     "model": "Model",
     "modelInstalled": "On this phone: {version}",
     "modelNone": "No model on this phone yet",
