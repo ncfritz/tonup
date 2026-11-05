@@ -5,9 +5,19 @@ import practice from './locales/en/practice.json';
 import pro from './locales/en/pro.json';
 import rules from './locales/en/rules.json';
 import settings from './locales/en/settings.json';
+import stats from './locales/en/stats.json';
 
 /** English is the source language; other languages mirror these namespaces. */
-export const enResources = { common, game, practice, history, rules, settings, pro } as const;
+export const enResources = {
+  common,
+  game,
+  practice,
+  history,
+  rules,
+  settings,
+  pro,
+  stats,
+} as const;
 
 export const resources = { en: enResources };
 

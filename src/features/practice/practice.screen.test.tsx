@@ -7,6 +7,7 @@ import { resetTestDb } from '../../../test/sqlite';
 import Play from '../../app/(tabs)/index';
 import Practice from '../../app/(tabs)/practice';
 import DrillScreen from '../../app/drill/[sessionId]';
+import DrillStats from '../../app/drill-stats/[drillId]';
 import { loadGame, recordDart, startDrill } from '../game/session';
 import { useGame } from '../game/store';
 
@@ -66,11 +67,18 @@ describe('Practice tab', () => {
     expect(screen.getByText('Best 497')).toBeOnTheScreen();
   });
 
-  it('starts a drill', async () => {
+  it('opens a drill’s page from its row, and starts it from there', async () => {
     await render(<Practice />);
     await act(async () => {});
     await fireEvent.press(screen.getByTestId('drill-countUp'));
-    expect(router.push).toHaveBeenCalledWith(
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/drill-stats/[drillId]',
+      params: { drillId: 'countUp' },
+    });
+    mockParams = { drillId: 'countUp' };
+    await render(<DrillStats />);
+    await fireEvent.press(screen.getByTestId('drill-play'));
+    expect(router.replace).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: '/drill/[sessionId]' }),
     );
   });

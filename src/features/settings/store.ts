@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import type { PlayerRef } from '@/domain/darts';
 import type { GameId } from '@/domain/games';
+import { DEFAULT_RANGE, RANGE_PRESETS, type StatsRange } from '@/domain/stats';
 import { THEME_IDS, type ThemeId } from '@/theme/themes';
 
 export type AppearanceSetting = 'system' | 'light' | 'dark';
@@ -27,6 +28,8 @@ export interface Settings {
   lastGameId: string;
   gameSettings: Partial<Record<GameId, unknown>>;
   lastLineup: PlayerRef[] | null;
+  /** How far back drill pages and You look (docs/design/stats.md → Time range). */
+  statsRange: StatsRange;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -40,6 +43,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastGameId: 'x01',
   gameSettings: {},
   lastLineup: null,
+  statsRange: DEFAULT_RANGE,
 };
 
 type Persist = (key: string, value: unknown) => void;
@@ -68,6 +72,12 @@ const valid: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
     (Array.isArray(v) &&
       v.length > 0 &&
       v.every((p) => typeof p?.id === 'string' && typeof p?.name === 'string')),
+  statsRange: (v): v is StatsRange => {
+    const r = v as StatsRange | null;
+    if (!r || typeof r !== 'object') return false;
+    if (r.kind === 'days') return (RANGE_PRESETS as readonly number[]).includes(r.days);
+    return r.kind === 'custom' && Number.isFinite(r.from) && Number.isFinite(r.to);
+  },
 };
 
 interface SettingsStore extends Settings {

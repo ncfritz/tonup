@@ -5,6 +5,8 @@ import { View, type LayoutChangeEvent } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { DRILL_IDS, type DrillId } from '@/domain/drills';
+import type { GameId } from '@/domain/games';
+import i18next from '@/i18n';
 import { parseRegion } from '@/domain/stats';
 import { formatStat, gameName } from '@/features/game/format';
 import { dayLabel } from '@/features/game/when';
@@ -15,12 +17,15 @@ import {
   bests,
   destination,
   drillTrend,
+  gameRecord,
   historyEntries,
+  playedGames,
   historyHeatmap,
   latestDrill,
   removeSession,
   x01Trend,
   type Bests,
+  type GameRecord,
   type HistoryEntry,
   type HistoryFilter,
 } from '@/features/history/history';
@@ -42,10 +47,12 @@ export default function History() {
   const { t } = useTranslation('history');
   const { t: tg } = useTranslation('game');
   const { t: tp } = useTranslation('practice');
+  const { t: ts } = useTranslation('stats');
   const { theme } = useUnistyles();
   const proOwned = useProOwned();
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const [drill, setDrill] = useState<DrillId | null>(null);
+  const [game, setGame] = useState<GameId | null>(null);
   const [data, setData] = useState<{
     entries: HistoryEntry[];
     trend: number[];
@@ -53,20 +60,26 @@ export default function History() {
     heat: ReturnType<typeof historyHeatmap>;
     now: number;
     drill: DrillId | null;
+    games: GameId[];
+    record: GameRecord | null;
   } | null>(null);
   const [width, setWidth] = useState(0);
 
   const refresh = useCallback(() => {
     const d = filter === 'practice' ? (drill ?? latestDrill() ?? 'bobs27') : null;
+    const g = filter === 'matches' ? game : null;
+    const record = g ? gameRecord(g) : null;
     setData({
-      entries: historyEntries(filter),
-      trend: d ? drillTrend(d) : x01Trend(),
+      entries: historyEntries(filter, 30, g ?? undefined),
+      trend: d ? drillTrend(d) : record ? record.trend : x01Trend(),
       bests: bests(),
-      heat: historyHeatmap(filter, HEAT_SESSIONS),
+      heat: historyHeatmap(filter, HEAT_SESSIONS, g ?? undefined),
       now: Date.now(),
       drill: d,
+      games: filter === 'matches' ? playedGames() : [],
+      record,
     });
-  }, [filter, drill]);
+  }, [filter, drill, game]);
   useFocusEffect(refresh);
   const { pending, start: deleteWithUndo, undo } = usePendingDelete(refresh);
 
@@ -74,19 +87,31 @@ export default function History() {
   const { trend, heat } = data;
   // A full-swiped row hides at once while Undo is up.
   const entries = data.entries.filter((e) => e.sessionId !== pending?.sessionId);
+  const record = data.record;
+  const statName = record?.stat ? tg(`stats.${record.stat.key}` as 'stats.mpr') : '';
   const trendTitle = data.drill
     ? t('trend.drill', {
         drill: tp(`drills.${data.drill}.name` as 'drills.bobs27.name'),
         count: trend.length,
       })
-    : t('trend.x01', { count: trend.length });
+    : record
+      ? ts('history.trend', { stat: statName, count: trend.length })
+      : t('trend.x01', { count: trend.length });
   const latest = trend[trend.length - 1];
   const prev = trend[trend.length - 2];
   const delta = latest !== undefined && prev !== undefined ? latest - prev : null;
-  const fmt = (v: number) => (data.drill ? String(v) : v.toFixed(1));
+  const fmt = (v: number) =>
+    data.drill
+      ? String(v)
+      : record?.stat
+        ? formatStat({ key: record.stat.key, value: v, format: record.stat.format })
+        : v.toFixed(1);
 
   const top = heat.regions[0];
   const topRegion = top ? regionName(top.region) : '';
+  function gameTitle(id: GameId) {
+    return String((i18next.t as unknown as (k: string) => unknown)(`rules:games.${id}.name`));
+  }
   function regionName(key: string) {
     const r = parseRegion(key);
     return r ? t(`rings.${r.ring as 'treble'}`, { n: r.segment }) : '';
@@ -99,6 +124,18 @@ export default function History() {
           <Text variant="heading" accessibilityRole="header" style={styles.flex}>
             {t('title')}
           </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={ts('page.open')}
+            accessibilityHint={ts('page.openHint')}
+            style={({ pressed }) => [styles.analysis, pressed && styles.pressed]}
+            onPress={() => router.push('/you')}
+            testID="open-you"
+          >
+            <Text variant="bodyStrong" tone="accent">
+              {ts('page.open')}
+            </Text>
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={proOwned ? t('analysis.open') : t('analysis.locked')}
@@ -131,6 +168,27 @@ export default function History() {
           <Text variant="overline" tone="muted">
             {trendTitle}
           </Text>
+          {filter === 'matches' && data.games.length > 1 ? (
+            <View style={styles.chips} accessibilityLabel={ts('history.game')}>
+              {[null, ...data.games].map((id) => {
+                const on = id === game;
+                return (
+                  <Pressable
+                    key={id ?? 'all'}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                    style={[styles.chip, on && styles.chipOn]}
+                    onPress={() => setGame(id)}
+                    testID={`history-game-${id ?? 'all'}`}
+                  >
+                    <Text variant="caption" tone={on ? 'onAccent' : 'text'}>
+                      {id ? gameTitle(id) : ts('history.allGames')}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
           {data.drill ? (
             <View style={styles.chips}>
               {DRILL_IDS.filter(
@@ -179,7 +237,17 @@ export default function History() {
           )}
         </View>
 
-        <View style={styles.bests}>
+        {record ? (
+          <View style={styles.bests}>
+            <Best label={ts('history.played')} value={record.played} />
+            <Best label={ts('history.won')} value={record.won} />
+            <Best
+              label={ts('history.best', { stat: statName })}
+              value={record.best === null ? undefined : fmt(record.best)}
+            />
+          </View>
+        ) : null}
+        <View style={[styles.bests, record && styles.hidden]}>
           <Best label={t('bests.bestAverage')} value={data.bests.bestAverage?.value.toFixed(1)} />
           <Best label={t('bests.highCheckout')} value={data.bests.highCheckout?.value} />
           <Best label={tp('drills.bobs27.name')} value={data.bests.drills.bobs27} />
@@ -355,6 +423,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   chipOn: { backgroundColor: theme.colors.accent },
   bests: { flexDirection: 'row', gap: theme.spacing.s },
+  hidden: { display: 'none' },
   best: {
     flex: 1,
     backgroundColor: theme.colors.surface,

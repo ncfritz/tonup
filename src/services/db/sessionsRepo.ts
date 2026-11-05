@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte } from 'drizzle-orm';
 
 import type { DartEvent, PlayerRef } from '@/domain/darts';
 
@@ -164,16 +164,81 @@ export function finishedOfType(
 }
 
 /** Recent sessions, newest first, optionally of one kind (abandoned ones left out). */
-export function recentSessions(limit = 20, kind?: 'game' | 'drill'): string[] {
+export function recentSessions(limit = 20, kind?: 'game' | 'drill', typeId?: string): string[] {
   const live = isNull(sessions.abandonedAt);
+  const ofKind = kind ? and(live, eq(sessions.kind, kind)) : live;
   return db
     .select({ id: sessions.id })
     .from(sessions)
-    .where(kind ? and(live, eq(sessions.kind, kind)) : live)
+    .where(typeId ? and(ofKind, eq(sessions.typeId, typeId)) : ofKind)
     .orderBy(desc(sessions.startedAt))
     .limit(limit)
     .all()
     .map((r) => r.id);
+}
+
+/** When the first finished session ended, for an all-time range; null with none. */
+export function firstFinishedAt(): number | null {
+  const row = db
+    .select({ endedAt: sessions.endedAt })
+    .from(sessions)
+    .where(isNotNull(sessions.endedAt))
+    .orderBy(asc(sessions.endedAt))
+    .limit(1)
+    .get();
+  return row?.endedAt ?? null;
+}
+
+/** Finished sessions that ended between two times, oldest first (stats over a range). */
+export function finishedBetween(
+  from: number,
+  to: number,
+  kind?: 'game' | 'drill',
+): {
+  id: string;
+  kind: 'game' | 'drill';
+  typeId: string;
+  startedAt: number;
+  endedAt: number;
+  result: unknown;
+}[] {
+  const ended = and(
+    isNotNull(sessions.endedAt),
+    gte(sessions.endedAt, from),
+    lte(sessions.endedAt, to),
+  );
+  return db
+    .select({
+      id: sessions.id,
+      kind: sessions.kind,
+      typeId: sessions.typeId,
+      startedAt: sessions.startedAt,
+      endedAt: sessions.endedAt,
+      result: sessions.result,
+    })
+    .from(sessions)
+    .where(kind ? and(ended, eq(sessions.kind, kind)) : ended)
+    .orderBy(asc(sessions.endedAt))
+    .all()
+    .map((r) => ({
+      id: r.id,
+      kind: r.kind as 'game' | 'drill',
+      typeId: r.typeId,
+      startedAt: r.startedAt,
+      endedAt: r.endedAt!,
+      result: parse(r.result),
+    }));
+}
+
+/** The game types played, most recent first (History's game filter). */
+export function playedTypes(kind: 'game' | 'drill'): string[] {
+  const rows = db
+    .select({ typeId: sessions.typeId, startedAt: sessions.startedAt })
+    .from(sessions)
+    .where(and(eq(sessions.kind, kind), isNull(sessions.abandonedAt)))
+    .orderBy(desc(sessions.startedAt))
+    .all();
+  return [...new Set(rows.map((r) => r.typeId))];
 }
 
 /** One player's darts from a set of sessions, for heatmaps. */

@@ -1,7 +1,7 @@
 // The History tab (docs/design/screens.md → History): recent sessions, a trend, personal bests
 // and where your darts land, all derived from stored darts (ADR 0006).
 import { DRILL_IDS, type DrillId } from '@/domain/drills';
-import type { GameResult } from '@/domain/games';
+import { GAME_IDS, type GameId, type GameResult } from '@/domain/games';
 import { heatmap } from '@/domain/stats';
 import { log } from '@/services/diagnostics';
 import {
@@ -9,6 +9,7 @@ import {
   deleteSession,
   finishedOfType,
   getSession,
+  playedTypes,
   recentSessions,
 } from '@/services/db/sessionsRepo';
 
@@ -73,8 +74,8 @@ function entryOf(game: LoadedGame): HistoryEntry {
   };
 }
 
-export function historyEntries(filter: HistoryFilter, limit = 30): HistoryEntry[] {
-  return recentSessions(limit, kindOf(filter)).flatMap((id) => {
+export function historyEntries(filter: HistoryFilter, limit = 30, typeId?: string): HistoryEntry[] {
+  return recentSessions(limit, kindOf(filter), typeId).flatMap((id) => {
     try {
       return [entryOf(loadGame(id))];
     } catch {
@@ -136,9 +137,56 @@ export function bests(limit = 500): Bests {
 }
 
 /** Where your darts landed across the sessions shown. */
-export function historyHeatmap(filter: HistoryFilter, sessions = 30) {
-  const ids = recentSessions(sessions, kindOf(filter));
+export function historyHeatmap(filter: HistoryFilter, sessions = 30, typeId?: string) {
+  const ids = recentSessions(sessions, kindOf(filter), typeId);
   return heatmap(dartsOf(YOU_ID, ids).map((d) => d.hit));
+}
+
+/** Game types you've played, newest first, for the Matches filter's chips. */
+export const playedGames = (): GameId[] =>
+  playedTypes('game').filter((id): id is GameId => (GAME_IDS as string[]).includes(id));
+
+/** Stat keys where fewer is better. */
+const LOWER = new Set(['strokes', 'darts']);
+
+export interface GameRecord {
+  /** The game's headline stat, your values oldest first. */
+  stat: { key: string; format: 'int' | 'one' | 'pct' } | null;
+  trend: number[];
+  played: number;
+  won: number;
+  best: number | null;
+}
+
+/** One game's trend and record for you (History, with a game chosen). */
+export function gameRecord(typeId: GameId, limit = 20): GameRecord {
+  const finished = finishedOfType('game', typeId, 500);
+  let won = 0;
+  let played = 0;
+  let stat: GameRecord['stat'] = null;
+  let best: number | null = null;
+  const trend: number[] = [];
+  finished.forEach((s, i) => {
+    let game: LoadedGame;
+    try {
+      game = loadGame(s.id);
+    } catch {
+      return;
+    }
+    if (!game.session.players.some((p) => p.id === YOU_ID)) return;
+    played++;
+    if ((s.result as GameResult | null)?.winnerId === YOU_ID) won++;
+    const line =
+      typeId === 'x01'
+        ? { key: 'average', value: sessionX01Stats(game, YOU_ID).average, format: 'one' as const }
+        : sessionStats(game, YOU_ID)[0];
+    if (!line || line.value === null) return;
+    stat = { key: line.key, format: line.format };
+    const lower = LOWER.has(line.key);
+    if (best === null || (lower ? line.value < best : line.value > best)) best = line.value;
+    if (i < limit) trend.push(line.value);
+  });
+  return { stat, trend: trend.reverse(), played, won, best };
 }
 
 /** Where tapping a session goes: unfinished ones resume, finished ones open the replay. */

@@ -200,6 +200,13 @@ export function sessionX01Stats(game: LoadedGame, playerId: string): X01Stats {
   return stats;
 }
 
+/** A player's X01 stats for a stored session, from the cache without loading the game when it can. */
+export function x01StatsFor(sessionId: string, playerId: string): X01Stats {
+  const cached = readCachedStat(sessionId, playerId, 'x01', STATS_VERSION);
+  if (cached) return cached as X01Stats;
+  return sessionX01Stats(loadGame(sessionId), playerId);
+}
+
 /** A player's summary lines for any game, from the cache when it's current. */
 export function sessionStats(game: LoadedGame, playerId: string): StatLine[] {
   const cached = readCachedStat(game.session.id, playerId, 'lines', STATS_VERSION);

@@ -8,6 +8,9 @@ import type { GameId } from '@/domain/games';
 import { deal } from '@/features/game/presets';
 import { formatStat, gameName } from '@/features/game/format';
 import { loadGame, sessionStats, sessionX01Stats, startGame } from '@/features/game/session';
+import { useProOwned } from '@/features/pro/pro';
+import { SummaryCharts } from '@/features/stats/components/SummaryCharts';
+import { summaryCharts } from '@/features/stats/summary';
 import { Button, Header, Screen, Text } from '@/ui';
 
 /** The match summary: result and each player's stats (docs/design/screens.md). */
@@ -15,6 +18,8 @@ export default function Summary() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const { t } = useTranslation('game');
   const game = useMemo(() => loadGame(sessionId), [sessionId]);
+  const charts = useMemo(() => summaryCharts(game), [game]);
+  const proOwned = useProOwned();
   const result = game.def.result(game.state);
   const players = game.session.players;
   const isX01 = game.session.typeId === 'x01';
@@ -123,6 +128,12 @@ export default function Summary() {
           </View>
         ))}
       </View>
+      <SummaryCharts
+        charts={charts}
+        players={players}
+        proOwned={proOwned}
+        onPro={() => router.push('/pro')}
+      />
       <Button label={t('summary.rematch')} onPress={rematch} testID="rematch" />
       <Button
         kind="secondary"

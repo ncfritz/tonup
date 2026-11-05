@@ -23,6 +23,7 @@ These docs start high level and get more specific as decisions are made. Each de
 | [design/README.md](design/README.md)                     | Design principles and index of the design docs                                        |
 | [design/themes.md](design/themes.md)                     | The five themes, light and dark, and their tokens                                     |
 | [design/screens.md](design/screens.md)                   | Navigation and screen-by-screen notes for v1                                          |
+| [design/stats.md](design/stats.md)                       | Proposed stats and charts for each game, each drill and overall                       |
 | [design/mockups/](design/mockups/README.md)              | Reference copy of the design canvas source                                            |
 | [release/app-store.md](release/app-store.md)             | App Store listing, in-app purchase and screenshots                                    |
 | [release/privacy.md](release/privacy.md)                 | Privacy label, privacy manifest, policy text and what a problem report holds          |

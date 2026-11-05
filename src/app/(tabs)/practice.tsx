@@ -57,6 +57,15 @@ export default function Practice() {
     router.push({ pathname: '/drill/[sessionId]', params: { sessionId } });
   };
 
+  // A drill's row opens its page, with its stats and a Play button (docs/design/stats.md).
+  const openPage = (id: DrillId) => {
+    if (!canUseDrill(id, proOwned)) {
+      router.push('/pro');
+      return;
+    }
+    router.push({ pathname: '/drill-stats/[drillId]', params: { drillId: id } });
+  };
+
   const bestText = (id: DrillId) => {
     const b = bests[id];
     if (!b) return t('noBest');
@@ -75,7 +84,7 @@ export default function Practice() {
         accessibilityLabel={open ? n : t('locked.a11y', { name: n })}
         accessibilityHint={tl(`drills.${id}.short`)}
         style={({ pressed }) => [styles.row, !open && styles.locked, pressed && styles.pressed]}
-        onPress={() => start(id)}
+        onPress={() => openPage(id)}
         testID={`drill-${id}`}
       >
         <View style={styles.flex}>

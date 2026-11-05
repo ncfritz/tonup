@@ -9,7 +9,19 @@ import { label } from '@/domain/darts';
 import { replayLegs } from '@/domain/games';
 import { rowFormat } from '@/features/game/format';
 import { loadGame } from '@/features/game/session';
-import { Board, Header, Pressable, Screen, Text, type BoardMarker } from '@/ui';
+import { wormKind, wormLegs } from '@/features/stats/summary';
+import { YOU_ID } from '@/features/game/lineup';
+import {
+  Board,
+  Header,
+  Lines,
+  niceTicks,
+  Pressable,
+  Screen,
+  Text,
+  tonesFor,
+  type BoardMarker,
+} from '@/ui';
 
 /**
  * Replay (docs/design/screens.md → Replay): step through a leg visit by visit and see where
@@ -26,6 +38,17 @@ export default function Replay() {
     [game, players],
   );
   const format = rowFormat(t, game.session.typeId);
+  const { t: ts } = useTranslation('stats');
+  const kind = wormKind(game.session.typeId);
+  const worms = useMemo(() => (kind ? wormLegs(game, legs, kind) : []), [game, legs, kind]);
+  const tones = tonesFor(
+    players.length,
+    Math.max(
+      0,
+      players.findIndex((p) => p.id === YOU_ID),
+    ),
+  );
+  const [wormWidth, setWormWidth] = useState(0);
   const [legIndex, setLegIndex] = useState(() =>
     Math.min(Math.max(0, Number(legParam ?? legs.length - 1) || 0), Math.max(0, legs.length - 1)),
   );
@@ -148,6 +171,39 @@ export default function Replay() {
                   : frame.total}
             </Text>
           </View>
+          {worms[legIndex] && kind ? (
+            <View
+              style={styles.worm}
+              onLayout={(e: LayoutChangeEvent) =>
+                setWormWidth(Math.floor(e.nativeEvent.layout.width - 24))
+              }
+              testID="replay-worm"
+            >
+              {wormWidth > 0 ? (
+                <Lines
+                  width={wormWidth}
+                  height={96}
+                  series={worms[legIndex]!.series.map((values, p) => ({
+                    values,
+                    tone: tones[p]!,
+                    step: kind === 'lives',
+                  }))}
+                  {...(kind === 'remaining'
+                    ? {
+                        min: 0,
+                        max: worms[legIndex]!.series[0]![0]!,
+                        ticks: [0, worms[legIndex]!.series[0]![0]!],
+                      }
+                    : niceTicks(0, Math.max(1, ...worms[legIndex]!.series.flat())))}
+                  cursor={at + 1}
+                  accessibilityLabel={ts('worm.a11y', {
+                    title: ts('worm.title'),
+                    takeaway: ts('worm.replay'),
+                  })}
+                />
+              ) : null}
+            </View>
+          ) : null}
           <ScrollView
             horizontal
             accessibilityLabel={t('replay.visitsA11y')}
@@ -268,6 +324,12 @@ const styles = StyleSheet.create((theme) => ({
   chipOn: { borderWidth: 2, borderColor: theme.colors.accent },
   chipBar: { width: 10, borderRadius: 3 },
   controls: { flexDirection: 'row', gap: theme.spacing.s },
+  worm: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.m,
+    paddingHorizontal: 12,
+    paddingVertical: theme.spacing.xs,
+  },
   control: {
     width: 56,
     height: 52,

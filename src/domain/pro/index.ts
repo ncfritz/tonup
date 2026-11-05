@@ -35,6 +35,12 @@ export const canUseTheme = (themeId: string, pro: boolean) => pro || BASE_THEMES
 /** Aim-relative heatmap, drift and grouping, aim map, trends, ghost bot (M13). */
 export const canUseAnalysis = (pro: boolean) => pro;
 
+/**
+ * The deeper stats (docs/design/stats.md → Free and Pro): the double ladder, the miss split,
+ * session grids, the doubles wheel and skill lines.
+ */
+export const canUseDeepStats = (pro: boolean) => pro;
+
 /** Camera scoring is Pro when it ships (ADR 0005, 0009). */
 export const canUseCamera = (pro: boolean) => pro;
 

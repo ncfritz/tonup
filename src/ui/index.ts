@@ -15,3 +15,4 @@ export { Section } from './Section';
 export { LineChart } from './LineChart';
 export { ListRow, ToggleRow } from './ListRow';
 export { useScreenReader } from './useScreenReader';
+export * from './charts';
