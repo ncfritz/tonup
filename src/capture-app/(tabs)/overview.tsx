@@ -140,25 +140,6 @@ function OverviewBody({ d }: { d: Overview }) {
         </View>
       ) : null}
 
-      {thin.length && d.counts.captures ? (
-        <View style={[styles.card, styles.suggest]} testID="overview-thin">
-          <Text variant="bodyStrong">{t('overview.shootNext')}</Text>
-          <Text variant="caption" tone="muted">
-            {t('overview.thin', { count: thin.length })}
-          </Text>
-          <View style={styles.thinList}>
-            {thin.map((b) => (
-              <View key={b.key} style={styles.thinItem}>
-                <Text tone="pending" accessibilityElementsHidden>
-                  {'\u2022'}
-                </Text>
-                <Text style={styles.flex}>{b.name}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      ) : null}
-
       {buckets.length && d.counts.captures ? (
         <View style={styles.card} testID="overview-coverage">
           <View style={styles.row}>
@@ -198,6 +179,25 @@ function OverviewBody({ d }: { d: Overview }) {
               </View>
             </View>
           ))}
+        </View>
+      ) : null}
+
+      {thin.length && d.counts.captures ? (
+        <View style={[styles.card, styles.suggest]} testID="overview-thin">
+          <Text variant="bodyStrong">{t('overview.shootNext')}</Text>
+          <Text variant="caption" tone="muted">
+            {t('overview.thin', { count: thin.length })}
+          </Text>
+          <View style={styles.thinList}>
+            {thin.map((b) => (
+              <View key={b.key} style={styles.thinItem}>
+                <Text tone="pending" accessibilityElementsHidden>
+                  {'\u2022'}
+                </Text>
+                <Text style={styles.flex}>{b.name}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       ) : null}
 
@@ -276,7 +276,7 @@ const styles = StyleSheet.create((theme) => ({
   okFill: { height: '100%', backgroundColor: theme.colors.accent },
   thinFill: { height: '100%', backgroundColor: theme.colors.pending },
   bucketValue: { width: 40, textAlign: 'right' },
-  suggest: { backgroundColor: theme.colors.pendingSoft, gap: theme.spacing.s },
+  suggest: { gap: theme.spacing.s },
   thinList: { gap: theme.spacing.xs },
   thinItem: { flexDirection: 'row', gap: theme.spacing.s, paddingLeft: theme.spacing.xs },
 }));
