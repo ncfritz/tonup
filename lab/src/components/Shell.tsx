@@ -15,7 +15,7 @@ import {
 import { App, Breadcrumb, ConfigProvider, Layout, Menu, Space, theme, Tooltip } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 import { HeaderBoard } from './HeaderBoard';
 import { setColorMode, useColorMode, useDark, type ColorMode } from './colorMode';
@@ -24,13 +24,11 @@ import styles from './Shell.module.css';
 
 // Ant Design's own theme (its default and dark algorithms, no colour overrides), in Olympus's
 // chrome (packages/console/src/shell): a navy header across the top, Olympus's breadcrumb bar
-// under it, and the pages in a dark sider that stays open (a rail of icons on a phone).
-/** Olympus's chrome colours: the header's navy and the sider's slate. */
+// under it, and the pages as a navy rail of icons that never opens (their names in tooltips).
+/** Olympus's chrome navy: the header, the breadcrumb bar's end and the rail. */
 const NAVY = '#001529';
-const RAIL_BG = '#324354';
 const HEADER_HEIGHT = 56;
-/** Open, and the rail it collapses to. */
-const PAGES_WIDTH = 220;
+/** The rail's width, as Olympus's. */
 const PAGES_RAIL = 80;
 
 const NAV = [
@@ -41,15 +39,6 @@ const NAV = [
   { key: '/models', icon: <DeploymentUnitOutlined />, label: 'Models' },
   { key: '/verification', icon: <CheckCircleOutlined />, label: 'Verification' },
 ];
-
-// Narrow screens (a phone): the menu is a rail of icons.
-const NARROW = '(max-width: 767px)';
-function subscribeNarrow(l: () => void) {
-  const q = window.matchMedia(NARROW);
-  q.addEventListener('change', l);
-  return () => q.removeEventListener('change', l);
-}
-const readNarrow = () => window.matchMedia(NARROW).matches;
 
 /** The name over the header's board (mockups › Header C). */
 function Wordmark() {
@@ -65,7 +54,6 @@ function Chrome({ children }: { children: ReactNode }) {
   const { token } = theme.useToken();
   const pathname = usePathname();
   const selected = NAV.find((n) => n.key !== '/' && pathname.startsWith(n.key))?.key ?? '/';
-  const collapsed = useSyncExternalStore(subscribeNarrow, readNarrow, () => false);
 
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
@@ -91,11 +79,12 @@ function Chrome({ children }: { children: ReactNode }) {
       <Layout style={{ minHeight: 0 }}>
         <Layout.Sider
           className={styles.pages}
-          width={PAGES_WIDTH}
+          width={PAGES_RAIL}
           collapsedWidth={PAGES_RAIL}
-          collapsed={collapsed}
+          collapsed
+          collapsible={false}
           trigger={null}
-          style={{ background: RAIL_BG }}
+          style={{ background: NAVY }}
         >
           <Menu
             theme="dark"
@@ -103,11 +92,16 @@ function Chrome({ children }: { children: ReactNode }) {
             selectedKeys={[selected]}
             items={NAV.map((n) => ({
               key: n.key,
-              icon: n.icon,
+              // The link fills the row, so the whole of it opens the page (as Olympus's PageLink).
+              icon: (
+                <Link href={n.key} aria-label={n.label} className={styles.railLink}>
+                  {n.icon}
+                </Link>
+              ),
               title: n.label,
-              label: <Link href={n.key}>{n.label}</Link>,
+              label: n.label,
             }))}
-            style={{ background: 'transparent', borderInlineEnd: 'none', paddingBlockStart: 8 }}
+            style={{ background: 'transparent', borderInlineEnd: 'none', paddingBlockStart: 12 }}
           />
         </Layout.Sider>
         <Layout.Content

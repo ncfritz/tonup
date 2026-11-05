@@ -1,24 +1,51 @@
 /*
  * Lab's chrome, after Olympus's console shell (packages/console/src/shell): a navy header the
- * same in any theme, its breadcrumb bar, and the pages in a slate sider that stays open. Selectors reach into antd's markup with :global and are
+ * same in any theme, its breadcrumb bar, and the pages as a navy rail of icons. Selectors reach into antd's markup with :global and are
  * more specific than antd's own (which wraps them in :where), so they win.
  */
 
-/* Menu rows the full width of the sider, square; the sider is Olympus's slate rail, open. */
+/* The rail: icons only, tall rows, no fill; the page you're on white, the rest dimmed. */
 .pages :global(.ant-menu .ant-menu-item) {
+  height: 64px;
+  line-height: 64px;
   border-radius: 0;
-  margin-inline: 0;
+  margin: 0;
   width: 100%;
-  color: #d1d1d1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0 !important;
+  position: relative;
+  color: rgba(255, 255, 255, 0.45);
+  background: transparent;
+}
+
+.railLink {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.railLink:hover {
+  color: inherit;
+}
+
+.pages :global(.ant-menu .ant-menu-item .anticon) {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .pages :global(.ant-menu .ant-menu-item:hover) {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.85);
+  background: transparent;
 }
 
 .pages :global(.ant-menu .ant-menu-item.ant-menu-item-selected) {
-  background-color: #8598aa;
   color: #fff;
+  background: transparent;
 }
 
 /* ---- Breadcrumbs, as Olympus's (packages/console/src/shell/shell.module.css): a bar below
