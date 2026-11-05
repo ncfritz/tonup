@@ -165,7 +165,7 @@ function RunBody({ d, labUrl, reload }: { d: RunDetail; labUrl: string; reload: 
             </View>
             <View style={styles.flex}>
               <Button
-                kind="secondary"
+                kind="inset"
                 label={base ? t('run.compare', { name: base.name }) : t('run.verify')}
                 disabled={busy}
                 onPress={() =>
@@ -445,12 +445,11 @@ const styles = StyleSheet.create((theme) => ({
   },
   chipDone: { backgroundColor: theme.colors.accentSoft },
   chipFailed: { backgroundColor: theme.colors.pendingSoft },
-  // What it made stands out by its fill.
   made: {
     gap: theme.spacing.s,
     padding: theme.spacing.l,
     borderRadius: theme.radii.l,
-    backgroundColor: theme.colors.accentSoft,
+    backgroundColor: theme.colors.surface,
   },
   stopped: {
     padding: theme.spacing.l,
