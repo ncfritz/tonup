@@ -2,19 +2,20 @@
 // for training. Built from this project with APP_VARIANT=capture, which points expo-router here
 // instead of src/app; Ton Up's own bundle never includes these routes.
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Appearance } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, UnistylesRuntime } from 'react-native-unistyles';
+import { StyleSheet, UnistylesRuntime, useUnistyles } from 'react-native-unistyles';
 
 import { LabHealthWatch } from '@/features/capture-lab/LabPill';
 import { hydrateCapture, useCapture } from '@/features/capture-lab/store';
 import i18next, { initI18n } from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
 import { FONT_ASSETS } from '@/theme/fonts';
+import { useNavigationTheme } from '@/theme/navigationTheme';
 import { themeName } from '@/theme/themes';
 import { useApplyTheme } from '@/theme/ThemeSync';
 
@@ -37,6 +38,8 @@ export default function CaptureLayout() {
   const theme = useCapture((s) => s.theme);
   const appearance = useCapture((s) => s.appearance);
   const mode = useApplyTheme(theme, appearance);
+  const navTheme = useNavigationTheme(mode === 'dark');
+  const { theme: t } = useUnistyles();
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
@@ -46,12 +49,16 @@ export default function CaptureLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
       <LabHealthWatch />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="session" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="label" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="photo/[id]" />
-      </Stack>
+      <ThemeProvider value={navTheme}>
+        <Stack
+          screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.colors.bg } }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="session" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="label" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="photo/[id]" />
+        </Stack>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

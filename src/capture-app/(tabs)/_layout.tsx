@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router/js-tabs';
 import { useTranslation } from 'react-i18next';
+import { useUnistyles } from 'react-native-unistyles';
 
 import { TabBar } from '@/ui';
 
@@ -13,10 +14,11 @@ export const unstable_settings = { initialRouteName: '(home)' };
  */
 export default function CaptureTabs() {
   const { t } = useTranslation('capture');
+  const { theme } = useUnistyles();
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} home="(home)" />}
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: theme.colors.bg } }}
     >
       <Tabs.Screen name="overview" options={{ title: t('tabs.overview') }} />
       <Tabs.Screen name="models" options={{ title: t('tabs.models') }} />
