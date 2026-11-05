@@ -23,6 +23,7 @@ import {
   type RunDetail,
 } from '@/features/capture-lab/labData';
 import { LabPill } from '@/features/capture-lab/LabPill';
+import { VerifyBody } from '@/features/capture-lab/VerifyBody';
 import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
 /** Ask again every 3 seconds while the run is going. */
@@ -195,9 +196,7 @@ function RunBody({ d, labUrl, reload }: { d: RunDetail; labUrl: string; reload: 
         </Text>
       ) : null}
 
-      {run.kind === 'verify' ? (
-        <Text tone="muted">{t('run.verifyRun', { models: what })}</Text>
-      ) : null}
+      {run.kind === 'verify' ? <VerifyBody id={run.id} labUrl={labUrl} /> : null}
 
       {run.kind === 'train' && run.visitCorrect != null ? (
         <View style={styles.section} testID="run-verified">

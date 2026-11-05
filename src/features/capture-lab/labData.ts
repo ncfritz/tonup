@@ -163,6 +163,86 @@ export function bestEpoch(metrics: EpochMetrics[]): EpochMetrics | null {
   );
 }
 
+/** One model's numbers in a verification (lab/src/lib/verify.ts › ResultRow). */
+export interface VerifyResult {
+  modelId: number;
+  model: string;
+  modelStatus: string;
+  samples: number;
+  valuesOnly: number;
+  visitCorrect: number;
+  dartCorrect: number;
+  boardFound: number;
+}
+
+export interface VerifyBreakdown {
+  key: string;
+  title: string;
+  buckets: {
+    bucket: string;
+    /** By model ID: photos, and the share right on each measure. */
+    by: Record<string, { n: number; visit: number; dart: number; board: number }>;
+  }[];
+  unmeasured: number;
+}
+
+/** A photo a model got wrong (coordinates 0–1 across the photo). */
+export interface VerifyWorst {
+  captureId: string;
+  modelId: number;
+  model: string;
+  valuesOnly: boolean;
+  boardFound: boolean;
+  darts: number;
+  dartsRight: number;
+  wantTotal: number;
+  gotTotal: number | null;
+  width: number;
+  height: number;
+  predicted: { calibration: Record<string, [number, number]>; tips: [number, number][] };
+  truth: {
+    calibration: ({ x: number; y: number } | null)[];
+    tips: { x: number; y: number }[];
+  } | null;
+}
+
+export interface Verification {
+  run: RunSummary;
+  results: VerifyResult[];
+  snapshot: { id: number; test: number } | null;
+  breakdown: VerifyBreakdown[];
+  worst: VerifyWorst[];
+}
+
+/** A model's measures it's short of its bar on. */
+export const shortOn = (r: Pick<VerifyResult, MeasureKey>) =>
+  MEASURES.filter((m) => r[m.key] < m.bar).map((m) => m.key);
+
+/**
+ * What a verification says: the best model (visit right, then segments), the one it's set
+ * against (the next best) and by how much, and whether the best should be made active.
+ */
+export function verdictOf(results: VerifyResult[]) {
+  const ranked = [...results].sort(
+    (a, b) => b.visitCorrect - a.visitCorrect || b.dartCorrect - a.dartCorrect,
+  );
+  const best = ranked[0] ?? null;
+  const next = ranked[1] ?? null;
+  return {
+    best,
+    next,
+    tie: !!best && !!next && best.visitCorrect === next.visitCorrect,
+    /** Better than what's active (or nothing's active), and isn't active itself. */
+    promote:
+      !!best &&
+      best.modelStatus !== 'active' &&
+      (results.find((r) => r.modelStatus === 'active')?.visitCorrect ?? -1) < best.visitCorrect,
+  };
+}
+
+export const fetchVerification = (url: string, id: number, f?: typeof fetch) =>
+  call<Verification>(url, `/api/runs/${id}/verification`, undefined, f);
+
 /** The sessions Lab has, by ID (to say which of the phone's aren't there). */
 export const fetchLabSessions = (url: string, f?: typeof fetch) =>
   call<{ ids: string[] }>(url, '/api/sessions', undefined, f);
