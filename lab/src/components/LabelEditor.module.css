@@ -1,0 +1,86 @@
+/*
+ * The label editor fills the content area below its title bar without scrolling: the photo,
+ * fitted to the space it has, then the darts in a column beside it, then the side tabs (board
+ * points, photo, history). A phone: one under another, and the page scrolls.
+ */
+.page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.work {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.photoArea {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px 24px;
+}
+
+/* The space the photo is fitted into (LabelEditor measures it). */
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.frame {
+  overflow: auto;
+  border-radius: 6px;
+  background: #111;
+  scrollbar-width: none;
+}
+
+.scores {
+  flex: none;
+  width: 400px;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px 16px;
+  border-left: 1px solid var(--ant-color-border-secondary);
+}
+
+@media (max-width: 1279px) {
+  .scores {
+    width: 330px;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    flex: none;
+  }
+
+  .work {
+    flex-direction: column;
+  }
+
+  .photoArea {
+    padding: 12px 16px;
+  }
+
+  /* The photo's own shape, up to most of the screen. */
+  .stage {
+    flex: none;
+    aspect-ratio: var(--ratio);
+    max-height: 70vh;
+  }
+
+  .scores {
+    width: auto;
+    border-left: none;
+    border-top: 1px solid var(--ant-color-border-secondary);
+  }
+}

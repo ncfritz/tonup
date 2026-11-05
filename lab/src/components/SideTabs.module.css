@@ -1,0 +1,102 @@
+/*
+ * The collapsible side panel, after Olympus's (.collapsible-tabs in apps/site globals.css): a
+ * light panel with a border on its left, the open/close bar across its top, and the tabs' icons
+ * down its right edge. Closed, only the icons show.
+ */
+.panel {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ant-color-bg-container);
+  border-left: 1px solid var(--ant-color-border-secondary);
+  transition: width 0.2s;
+}
+
+.trigger:global(.ant-btn) {
+  flex: none;
+  height: 24px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  color: var(--ant-color-text-secondary);
+}
+
+.tabs {
+  flex: 1;
+  min-height: 0;
+}
+
+/* The tab body scrolls on its own; the icons stay. */
+.tabs :global(.ant-tabs-body-holder) {
+  min-height: 0;
+  overflow: auto;
+}
+
+.tabs :global(.ant-tabs-nav) {
+  min-width: 61px;
+}
+
+.tabs :global(.ant-tabs-tab) {
+  justify-content: center;
+}
+
+.closed .tabs :global(.ant-tabs-body-holder) {
+  display: none;
+}
+
+/* Closed, nothing is shown as picked: the rail is only the way in. */
+.closed .tabs :global(.ant-tabs-ink-bar) {
+  visibility: hidden;
+}
+
+.icon {
+  font-size: 18px;
+  display: inline-flex;
+}
+
+.pane {
+  padding: 12px 16px 16px;
+}
+
+.paneTitle {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* A narrower window: the rail keeps its place and the open panel lies over what's beside it,
+   so the photo isn't squeezed. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .open {
+    width: 62px !important;
+  }
+
+  .open .trigger:global(.ant-btn),
+  .open .tabs {
+    position: absolute;
+    right: 0;
+    width: var(--side-width);
+    z-index: 3;
+    background: var(--ant-color-bg-container);
+  }
+
+  .open .trigger:global(.ant-btn) {
+    top: 0;
+  }
+
+  .open .tabs {
+    top: 24px;
+    bottom: 0;
+    border-left: 1px solid var(--ant-color-border-secondary);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* A phone: no room beside the photo, so the panel goes under it, always open. */
+@media (max-width: 767px) {
+  .panel {
+    width: auto !important;
+    border-left: none;
+    border-top: 1px solid var(--ant-color-border-secondary);
+  }
+}
