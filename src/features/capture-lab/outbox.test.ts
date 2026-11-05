@@ -1,6 +1,7 @@
 import { checkLab, normaliseLabUrl, outcomeOf } from './lab';
 import {
   labelQueue,
+  labStanding,
   sessionPhotos,
   sessionsOn,
   syncOutbox,
@@ -52,6 +53,16 @@ function memoryStore(): OutboxStore & { items: Map<string, SentItem & { sentNow:
     },
     sentPhotoCount: () => 0,
     clearSent: () => 0,
+    forgetSent: (sessionId: string) => {
+      let n = 0;
+      for (const [id, i] of items) {
+        if (i.sentNow && i.label.sessionId === sessionId) {
+          items.delete(id);
+          n++;
+        }
+      }
+      return n;
+    },
   };
 }
 
@@ -120,8 +131,34 @@ describe('sessionsOn', () => {
     store.markSent('a', 'val');
     expect(sessionsOn(store)).toEqual([
       expect.objectContaining({ id: 's2', visits: 1, pending: 1 }),
-      expect.objectContaining({ id: 's1', visits: 2, pending: 1, split: 'val' }),
+      expect.objectContaining({ id: 's1', visits: 2, pending: 1, sent: 1, split: 'val' }),
     ]);
+  });
+});
+
+describe('labStanding', () => {
+  it('says whether Lab has a session, hasn’t had it yet, or deleted it', () => {
+    const lab = new Set(['s1']);
+    expect(labStanding({ id: 's1', sent: 3 }, lab)).toBe('onLab');
+    expect(labStanding({ id: 's2', sent: 0 }, lab)).toBe('notYet');
+    expect(labStanding({ id: 's3', sent: 2 }, lab)).toBe('deleted');
+    expect(labStanding({ id: 's3', sent: 2 }, null)).toBeNull();
+  });
+
+  it('forgets a deleted session’s sent visits, keeping what is still to send', () => {
+    const store = memoryStore();
+    store.put(labelOf('a', 's1', '2026-11-01T20:00:00Z'), '');
+    store.put(labelOf('b', 's1', '2026-11-01T20:05:00Z'), '');
+    store.put(labelOf('c', 's2', '2026-11-01T20:06:00Z'), '');
+    store.markSent('a');
+    store.markSent('c');
+    expect(store.forgetSent('s1')).toBe(1);
+    expect(sessionsOn(store)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 's1', visits: 1, pending: 1, sent: 0 }),
+        expect.objectContaining({ id: 's2', visits: 1, sent: 1 }),
+      ]),
+    );
   });
 });
 

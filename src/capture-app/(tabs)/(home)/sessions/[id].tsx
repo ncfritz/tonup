@@ -1,7 +1,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Alert, Image, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native-unistyles';
 
@@ -15,7 +15,14 @@ import {
 } from '@/features/capture-lab/outbox';
 import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { addTips, startLabelling } from '@/features/capture-lab/queue';
-import { sessionWhen, SplitChip, StatusBar } from '@/features/capture-lab/SessionBits';
+import {
+  sessionWhen,
+  SplitChip,
+  StandingLine,
+  StatusBar,
+  useLabSessionIds,
+} from '@/features/capture-lab/SessionBits';
+import { labStanding } from '@/features/capture-lab/outbox';
 import { LabPill } from '@/features/capture-lab/LabPill';
 import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
@@ -30,17 +37,36 @@ export default function SessionPhotos() {
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [photos, setPhotos] = useState<SessionPhoto[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
+  const { ids: labIds } = useLabSessionIds();
 
-  useFocusEffect(
-    useCallback(() => {
-      try {
-        setSummary(sessionsOn(fileOutbox, fileDrafts).find((s) => s.id === id) ?? null);
-        setPhotos(sessionPhotos(fileOutbox, fileDrafts, id));
-      } catch {
-        setPhotos([]);
-      }
-    }, [id]),
-  );
+  const load = useCallback(() => {
+    try {
+      setSummary(sessionsOn(fileOutbox, fileDrafts).find((s) => s.id === id) ?? null);
+      setPhotos(sessionPhotos(fileOutbox, fileDrafts, id));
+    } catch {
+      setPhotos([]);
+    }
+  }, [id]);
+  useFocusEffect(load);
+
+  // Deleted in Lab: the sent photos can go from the phone too (what's still to label or send
+  // stays). With nothing left, the session goes, so back to the list.
+  const deleted = summary ? labStanding(summary, labIds) === 'deleted' : false;
+  const removeSent = () => {
+    if (!summary) return;
+    Alert.alert(t('standing.removeTitle'), t('standing.removeBody', { count: summary.sent }), [
+      { text: t('standing.cancel'), style: 'cancel' },
+      {
+        text: t('standing.removeConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          fileOutbox.forgetSent(id);
+          if (summary.visits === summary.sent) router.back();
+          else load();
+        },
+      },
+    ]);
+  };
 
   const shown = photos.filter((p) => filter === 'all' || p.status === filter);
   const tile = Math.floor((width - 32 - (COLUMNS - 1) * 6) / COLUMNS);
@@ -99,6 +125,15 @@ export default function SessionPhotos() {
               ))}
             </View>
             <StatusBar counts={summary} />
+            <StandingLine s={summary} labIds={labIds} />
+            {deleted ? (
+              <Button
+                kind="secondary"
+                label={t('standing.remove')}
+                onPress={removeSent}
+                testID="photos-forget"
+              />
+            ) : null}
           </>
         ) : null}
         {shown.length === 0 ? (

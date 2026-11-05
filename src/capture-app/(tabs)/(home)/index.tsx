@@ -16,18 +16,20 @@ import {
 import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { startLabelling } from '@/features/capture-lab/queue';
 import {
+  TagChips,
+  type TagKey,
+  toggleTag,
   sessionWhen,
   SplitChip,
+  StandingLine,
   StatusBar,
   StatusLine,
-  TagChips,
-  toggleTag,
-  type TagKey,
+  useLabSessionIds,
 } from '@/features/capture-lab/SessionBits';
 import { newSessionId, useCapture } from '@/features/capture-lab/store';
 import { Button, Pressable, Screen, Text } from '@/ui';
 
-const EMPTY = { labelled: 0, valuesOnly: 0, unlabelled: 0, visits: 0 };
+const EMPTY = { labelled: 0, valuesOnly: 0, unlabelled: 0, visits: 0, pending: 0, sent: 0 };
 
 /**
  * Sessions, Capture's home (docs/plan/capture-lab.md › Screens): Lab's status, the session
@@ -54,6 +56,7 @@ export default function CaptureHome() {
   }, []);
 
   const health = useLabHealth((s) => (s.url === labUrl ? s.health : null));
+  const { ids: labIds, reload: reloadLabIds } = useLabSessionIds();
   const sync = useCallback(async () => {
     if (!labUrl) return;
     setSyncing(true);
@@ -68,7 +71,8 @@ export default function CaptureHome() {
     if (r.offline) notes.push(t('home.syncOffline', { error: r.offline }));
     setSyncNote(notes.join(' · ') || null);
     refresh();
-  }, [labUrl, refresh, t]);
+    if (r.sent) reloadLabIds();
+  }, [labUrl, refresh, t, reloadLabIds]);
 
   // On opening (and back from labelling): check Lab, then send anything waiting.
   useFocusEffect(
@@ -96,6 +100,8 @@ export default function CaptureHome() {
       labelled: a.labelled + s.labelled,
       valuesOnly: a.valuesOnly + s.valuesOnly,
       unlabelled: a.unlabelled + s.unlabelled,
+      pending: a.pending + s.pending,
+      sent: a.sent + s.sent,
     }),
     EMPTY,
   );
@@ -193,6 +199,7 @@ export default function CaptureHome() {
             <SplitChip split={'split' in current ? current.split : undefined} />
           </View>
           <StatusBar counts={current} thick />
+          <StandingLine s={current} labIds={labIds} />
           <View style={styles.counts}>
             <Count n={current.labelled} label={t('home.totalLabelled')} />
             <Count n={current.valuesOnly} label={t('photos.valuesOnly')} />
@@ -323,6 +330,7 @@ export default function CaptureHome() {
               </Text>
               <StatusBar counts={s} />
               <StatusLine counts={s} />
+              <StandingLine s={s} labIds={labIds} />
             </Pressable>
           ))}
         </View>

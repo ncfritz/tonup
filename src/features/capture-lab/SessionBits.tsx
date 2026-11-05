@@ -6,7 +6,11 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { Icon, Pressable, Text, type IconName } from '@/ui';
 
-import type { SessionSummary } from './outbox';
+import { useMemo } from 'react';
+
+import { useLab } from './LabBits';
+import { fetchLabSessions } from './labData';
+import { labStanding, type SessionSummary } from './outbox';
 
 /** Quick tags, one from each group (docs/plan/capture-lab.md › Screens › Session). */
 export const TAG_GROUPS = [
@@ -141,6 +145,45 @@ export function StatusLine({ counts }: { counts: Counts }) {
         </Text>
       )}
     </View>
+  );
+}
+
+/** The session IDs Lab has, asked while the screen is in view; null until it answers. */
+export function useLabSessionIds() {
+  const { reply, reload } = useLab(fetchLabSessions);
+  const ids = useMemo(() => (reply?.ok ? new Set(reply.data.ids) : null), [reply]);
+  return { ids, reload };
+}
+
+/**
+ * Why a session on the phone isn't on Lab: not there yet (waiting to be sent, or to be labelled
+ * first), or deleted there. Nothing when Lab has it, or when Lab's list isn't known.
+ */
+export function StandingLine({
+  s,
+  labIds,
+}: {
+  s: Pick<SessionSummary, 'id' | 'visits' | 'sent' | 'pending' | 'unlabelled'>;
+  labIds: ReadonlySet<string> | null;
+}) {
+  const { t } = useTranslation('capture');
+  const standing = labStanding(s, labIds);
+  // A session just started, with nothing in it yet, isn't missing from anywhere.
+  if (!standing || standing === 'onLab' || !s.visits) return null;
+  return (
+    <Text
+      variant="caption"
+      tone={standing === 'deleted' ? 'danger' : 'pending'}
+      testID={`standing-${s.id}`}
+    >
+      {standing === 'deleted'
+        ? t('standing.deleted', { count: s.sent })
+        : s.pending
+          ? t('standing.sending', { count: s.pending })
+          : s.unlabelled
+            ? t('standing.toLabel', { count: s.unlabelled })
+            : t('standing.notYet')}
+    </Text>
   );
 }
 

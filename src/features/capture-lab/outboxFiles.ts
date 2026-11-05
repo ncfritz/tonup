@@ -77,6 +77,19 @@ export const fileOutbox: OutboxStore = {
     }
     return n;
   },
+  forgetSent(sessionId) {
+    let n = 0;
+    const sent = dir('sent');
+    for (const item of read('sent')) {
+      if (item.label.sessionId !== sessionId) continue;
+      for (const name of [`${item.id}.json`, `${item.id}.jpg`]) {
+        const f = new File(sent, name);
+        if (f.exists) f.delete();
+      }
+      n++;
+    }
+    return n;
+  },
 };
 
 export const fileDrafts: DraftStore = {

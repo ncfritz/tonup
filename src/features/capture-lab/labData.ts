@@ -163,6 +163,10 @@ export function bestEpoch(metrics: EpochMetrics[]): EpochMetrics | null {
   );
 }
 
+/** The sessions Lab has, by ID (to say which of the phone's aren't there). */
+export const fetchLabSessions = (url: string, f?: typeof fetch) =>
+  call<{ ids: string[] }>(url, '/api/sessions', undefined, f);
+
 export const fetchOverview = (url: string, f?: typeof fetch) =>
   call<Overview>(url, '/api/overview', undefined, f);
 export const fetchModels = (url: string, f?: typeof fetch) =>

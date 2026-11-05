@@ -65,7 +65,9 @@ it('lists the thin conditions to shoot next, one per line', async () => {
   });
   const list = within(screen.getByTestId('overview-thin'));
   expect(list.getByText('What to shoot next')).toBeTruthy();
-  expect(list.getByText('Thin in the dataset so far: aim the next sessions at these.')).toBeTruthy();
+  expect(
+    list.getByText('Thin in the dataset so far: aim the next sessions at these.'),
+  ).toBeTruthy();
   expect(list.getByText('Angle steep')).toBeTruthy();
   expect(list.getByText('Light dim')).toBeTruthy();
   expect(list.queryByText('Angle front')).toBeNull();

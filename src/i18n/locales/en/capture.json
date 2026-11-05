@@ -198,6 +198,17 @@
     "badgeLabelled": "✓ {total}",
     "badgeValuesOnly": "V {total}"
   },
+  "standing": {
+    "notYet": "Not on Lab yet",
+    "sending": "Not on Lab yet: {count, plural, one {# photo} other {# photos}} waiting to send",
+    "toLabel": "Not on Lab yet: label {count, plural, one {its photo} other {its # photos}} (or save values only) to send",
+    "deleted": "Deleted in Lab: {count, plural, one {# sent photo is} other {# sent photos are}} still on this phone",
+    "remove": "Remove from this phone",
+    "removeTitle": "Remove this session's sent photos?",
+    "removeBody": "Lab no longer has this session. This deletes the {count, plural, one {photo} other {# photos}} it was sent from this phone; photos still to label or send stay.",
+    "removeConfirm": "Remove",
+    "cancel": "Cancel"
+  },
   "lab": {
     "pill": {
       "ok": "Lab",

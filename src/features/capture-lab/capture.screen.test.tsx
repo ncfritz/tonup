@@ -48,6 +48,7 @@ jest.mock('./outboxFiles', () => ({
       mockBox.set(id, { ...mockBox.get(id)!, done: true, split }),
     sentPhotoCount: () => 0,
     clearSent: () => 0,
+    forgetSent: () => 0,
   },
 }));
 
@@ -62,6 +63,13 @@ jest.mock('./lab', () => ({
       mockUploads.push(item);
       return { kind: 'sent', split: 'test' };
     },
+}));
+// The sessions Lab has (Lab's Sessions page): null leaves the list unknown.
+let mockLabIds: string[] | null = null;
+jest.mock('./labData', () => ({
+  ...jest.requireActual('./labData'),
+  fetchLabSessions: async () =>
+    mockLabIds ? { ok: true, data: { ids: mockLabIds } } : { ok: false, error: 'down' },
 }));
 // Gesture Handler 3's gestures need Reanimated, which doesn't run under Jest: the photo's pinch
 // is inert here (its zoom buttons still work).
@@ -105,6 +113,7 @@ beforeEach(() => {
   mockDrafts.clear();
   useLabelRun.getState().setRun(null);
   mockUploads.length = 0;
+  mockLabIds = null;
   router.back.mockClear();
   router.push.mockClear();
   useCapture.setState({
@@ -268,6 +277,22 @@ it('shows Lab’s status, sends what’s waiting, and counts each session’s ph
   expect(screen.getByTestId('capture-label-all')).toHaveTextContent('Label all 1');
   expect(screen.getByTestId('capture-totals')).toHaveTextContent(
     /4.*Photos.*50%.*Labelled.*2.*To label/,
+  );
+});
+
+it('says which sessions on the phone Lab hasn’t got, and why', async () => {
+  mockLabIds = ['sess-1'];
+  const gone = visitIn('g', 'sess-gone', true);
+  mockBox.set('g', { ...gone, done: true });
+  mockDrafts.set('n1', draftIn('n1', 'sess-new', '2026-11-03T05:20:00.000Z'));
+  await act(async () => {
+    await render(<CaptureHome />);
+  });
+  expect(screen.getByTestId('standing-sess-gone')).toHaveTextContent(
+    'Deleted in Lab: 1 sent photo is still on this phone',
+  );
+  expect(screen.getByTestId('standing-sess-new')).toHaveTextContent(
+    'Not on Lab yet: label its photo (or save values only) to send',
   );
 });
 

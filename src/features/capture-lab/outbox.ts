@@ -28,6 +28,8 @@ export interface OutboxStore {
   sentPhotoCount(): number;
   /** Deletes the sent photos (Lab has them; the label files stay for the session list). */
   clearSent(): number;
+  /** Deletes a session's sent visits, photos and label files (Lab deleted the session). */
+  forgetSent(sessionId: string): number;
 }
 
 export type UploadOutcome =
@@ -102,7 +104,25 @@ export interface SessionSummary {
   unlabelled: number;
   /** Visits waiting in the outbox. */
   pending: number;
+  /** Visits Lab has had. */
+  sent: number;
   split?: SentItem['split'];
+}
+
+/**
+ * Where a session on the phone stands with Lab, from the session IDs Lab has: there; not there
+ * yet (nothing sent: its photos wait to be sent or labelled); or deleted there (some were sent,
+ * and Lab hasn't got it). Null when Lab's list isn't known.
+ */
+export type LabStanding = 'onLab' | 'notYet' | 'deleted';
+
+export function labStanding(
+  s: Pick<SessionSummary, 'id' | 'sent'>,
+  labIds: ReadonlySet<string> | null,
+): LabStanding | null {
+  if (!labIds) return null;
+  if (labIds.has(s.id)) return 'onLab';
+  return s.sent > 0 ? 'deleted' : 'notYet';
 }
 
 /** Sessions on this phone, newest first, from the outbox, sent visits and drafts. */
@@ -118,6 +138,7 @@ export function sessionsOn(store: OutboxStore, drafts?: DraftStore): SessionSumm
       valuesOnly: 0,
       unlabelled: 0,
       pending: 0,
+      sent: 0,
     };
     byId.set(id, s);
     return s;
@@ -129,6 +150,7 @@ export function sessionsOn(store: OutboxStore, drafts?: DraftStore): SessionSumm
     if (l.valuesOnly) s.valuesOnly++;
     else s.labelled++;
     if (pending) s.pending++;
+    else s.sent++;
     if (item.split) s.split = item.split;
   };
   for (const i of store.sent()) add(i, false);

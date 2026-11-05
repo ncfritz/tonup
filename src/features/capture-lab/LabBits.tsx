@@ -61,7 +61,9 @@ export function useLab<T>(
       };
     }, [labUrl, ask, every, asked]),
   );
-  return { labUrl, reply, at, reload: () => setAsked((n) => n + 1) };
+  // Stable, so a caller can list it as a dependency.
+  const reload = useCallback(() => setAsked((n) => n + 1), []);
+  return { labUrl, reply, at, reload };
 }
 
 /** The tab's content once Lab has answered; otherwise why not (no address, asking, down). */

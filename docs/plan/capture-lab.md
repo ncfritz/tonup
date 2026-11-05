@@ -186,18 +186,19 @@ Tables (columns, no JSON blobs except run parameters):
 
 ### API used by Capture
 
-| Route                                | What                                                                              |
-| ------------------------------------ | --------------------------------------------------------------------------------- |
-| `GET /api/health`                    | Lab version and the active model's version                                        |
-| `POST /api/captures`                 | Multipart: the photo and its label JSON; idempotent by ID                         |
-| `GET /api/models/active`             | Version and file list of the active model                                         |
-| `GET /api/models/:id/files/...`      | One file of a model package                                                       |
-| `GET /api/overview`                  | Overview tab: counts, active model, progress, coverage, pre-fill (`lib/phone.ts`) |
-| `GET /api/models`                    | Models tab: every model's numbers, pre-fill kept, verify photos                   |
-| `POST /api/models/:id/activate`      | Set active (Models tab)                                                           |
-| `GET /api/runs`, `GET /api/runs/:id` | Runs tab: the list, and a live run's epochs and step                              |
-| `POST /api/runs` (`kind: verify`)    | Verify or compare models (Models tab)                                             |
-| `POST /api/runs/:id/cancel`          | Cancel the live run (Runs tab)                                                    |
+| Route                                | What                                                                                                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/health`                    | Lab version and the active model's version                                                                                                                                           |
+| `GET /api/sessions`                  | The session IDs Lab has: Capture marks its own sessions that aren't on Lab yet (waiting to send or to be labelled) or were deleted there, and can remove a deleted one's sent photos |
+| `POST /api/captures`                 | Multipart: the photo and its label JSON; idempotent by ID                                                                                                                            |
+| `GET /api/models/active`             | Version and file list of the active model                                                                                                                                            |
+| `GET /api/models/:id/files/...`      | One file of a model package                                                                                                                                                          |
+| `GET /api/overview`                  | Overview tab: counts, active model, progress, coverage, pre-fill (`lib/phone.ts`)                                                                                                    |
+| `GET /api/models`                    | Models tab: every model's numbers, pre-fill kept, verify photos                                                                                                                      |
+| `POST /api/models/:id/activate`      | Set active (Models tab)                                                                                                                                                              |
+| `GET /api/runs`, `GET /api/runs/:id` | Runs tab: the list, and a live run's epochs and step                                                                                                                                 |
+| `POST /api/runs` (`kind: verify`)    | Verify or compare models (Models tab)                                                                                                                                                |
+| `POST /api/runs/:id/cancel`          | Cancel the live run (Runs tab)                                                                                                                                                       |
 
 ## Changes to `ml/`
 
