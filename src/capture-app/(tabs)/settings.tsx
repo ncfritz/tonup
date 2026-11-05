@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, View } from 'react-native';
@@ -10,7 +9,7 @@ import { checkForModel, pullModel, type PullStatus } from '@/features/capture-la
 import { fileOutbox } from '@/features/capture-lab/outboxFiles';
 import { useCapture } from '@/features/capture-lab/store';
 import { reloadModel, visionCapabilities } from '@/services/vision';
-import { Button, Header, ListRow, Screen, Section, Text, ToggleRow } from '@/ui';
+import { Button, ListRow, Screen, Section, Text, ToggleRow } from '@/ui';
 
 /** Lab's address, the model and pre-filling, and the sent photos kept on the phone. */
 export default function CaptureSettings() {
@@ -102,12 +101,10 @@ export default function CaptureSettings() {
   };
 
   return (
-    <Screen scroll edges={['top', 'bottom']}>
-      <Header
-        title={t('settings.title')}
-        backLabel={t('settings.back')}
-        onBack={() => router.back()}
-      />
+    <Screen scroll>
+      <Text variant="heading" accessibilityRole="header">
+        {t('settings.title')}
+      </Text>
       <Section label={t('settings.lab')}>
         <View style={styles.block}>
           <Text variant="caption" tone="muted">

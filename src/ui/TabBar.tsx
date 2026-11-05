@@ -14,6 +14,10 @@ const ICONS: Record<string, IconName> = {
   history: 'history',
   rules: 'rules',
   settings: 'settings',
+  // Ton Up Capture's tabs (src/capture-app/(tabs)); its centre button is Sessions.
+  overview: 'overview',
+  models: 'models',
+  runs: 'runs',
 };
 
 /** The pill's height and its gap from the bottom of the screen. */
@@ -30,6 +34,7 @@ const OVERHANG = Math.max(0, (PLAY_SIZE + 4 - TAB_BAR_HEIGHT) / 2);
  * Our own tab bar (docs/design/screens.md → Tab bar): a pill floating above the bottom edge,
  * Practice and History on the left, Rules and Settings on the right, and the dartboard Play
  * button centred in the middle, a little larger than the bar. Play is the home screen (the `index` route).
+ * Ton Up Capture uses the same bar: Overview and Models, Sessions in the middle, Runs and Settings.
  */
 export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const { theme } = useUnistyles();

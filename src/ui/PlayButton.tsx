@@ -72,7 +72,15 @@ export function PlayButton({ focused, label }: { focused: boolean; label: string
           <Circle cx={C} cy={C} r={11} fill={c.playBase} />
         </Svg>
         <View style={styles.label}>
-          <Text style={styles.labelText}>{label}</Text>
+          {/* One line, shrunk to fit a longer label (Capture's SESSIONS). */}
+          <Text
+            style={styles.labelText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+          >
+            {label}
+          </Text>
         </View>
       </View>
     </View>
@@ -102,6 +110,7 @@ const styles = StyleSheet.create((theme) => ({
     justifyContent: 'center',
   },
   label: {
+    maxWidth: PLAY_SIZE - PLAY_BORDER * 2 - 6,
     paddingHorizontal: theme.spacing.s,
     paddingVertical: theme.spacing.xxs,
     borderRadius: 6,

@@ -11,8 +11,16 @@ import { label as labelOf } from '@/domain/darts';
 import { PhotoMarkup, type MarkupDart } from '@/features/camera/PhotoMarkup';
 import { uploader } from '@/features/capture-lab/lab';
 import { syncOutbox } from '@/features/capture-lab/outbox';
-import { fileOutbox } from '@/features/capture-lab/outboxFiles';
-import { useCapture, useShot } from '@/features/capture-lab/store';
+import { fileDrafts, fileOutbox } from '@/features/capture-lab/outboxFiles';
+import { nextDraft, stopLabelling } from '@/features/capture-lab/queue';
+import {
+  useCapture,
+  useLabelRun,
+  useLaterNote,
+  useShot,
+  type LabelRun,
+  type Shot,
+} from '@/features/capture-lab/store';
 import {
   back,
   BOUNCE_OUT,
@@ -51,8 +59,64 @@ const STEPS: Step[] = ['values', 'board', 'tips', 'review'];
  */
 export default function LabelVisit() {
   const shot = useShot((s) => s.shot);
-  if (!shot) return <Redirect href="/session" />;
-  return <Labeller initial={start(shot.photo, shot.detected)} />;
+  if (!shot) return <Redirect href="/" />;
+  // A new photo (the next draft, say) starts afresh.
+  return (
+    <Labeller
+      key={shot.draft?.id ?? shot.photo.uri}
+      shot={shot}
+      initial={start(shot.photo, shot.detected)}
+    />
+  );
+}
+
+/** Labelling drafts one after another: which photo of how many, and Skip. */
+function RunBar({ run }: { run: LabelRun }) {
+  const { t } = useTranslation('capture');
+  const { theme } = useUnistyles();
+  return (
+    <View style={styles.runBar} testID="label-run">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('label.stop')}
+        style={styles.runStop}
+        onPress={() => {
+          useLabelRun.getState().setRun(null);
+          stopLabelling();
+        }}
+        testID="label-run-stop"
+      >
+        <Icon name="close" color={theme.colors.text} />
+      </Pressable>
+      <View style={styles.flex}>
+        <Text variant="caption">
+          {t('label.runPlace', { k: run.index + 1, n: run.ids.length })}
+        </Text>
+        <View style={styles.runTrack} accessibilityElementsHidden>
+          {run.ids.map((id, i) => (
+            <View
+              key={id}
+              style={[
+                styles.runSeg,
+                i < run.index && styles.runSegDone,
+                i === run.index && styles.runSegOn,
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('label.skipA11y')}
+        style={styles.runSkip}
+        onPress={() => void nextDraft('skipped')}
+        testID="label-run-skip"
+      >
+        <Text variant="caption">{t('label.skip')}</Text>
+        <Icon name="chevron" color={theme.colors.text} />
+      </Pressable>
+    </View>
+  );
 }
 
 /** One step's frame: a compact top bar, the step's content, its buttons at the bottom. */
@@ -61,6 +125,7 @@ function StepFrame({
   step,
   backLabel,
   onBack,
+  run,
   children,
   footer,
 }: {
@@ -68,6 +133,7 @@ function StepFrame({
   step: Step;
   backLabel: string;
   onBack: () => void;
+  run: LabelRun | null;
   children: ReactNode;
   footer: ReactNode;
 }) {
@@ -75,6 +141,7 @@ function StepFrame({
   const { theme } = useUnistyles();
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
+      {run ? <RunBar run={run} /> : null}
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
@@ -101,8 +168,12 @@ function StepFrame({
   );
 }
 
-function Labeller({ initial }: { initial: VisitState }) {
+function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
   const { t } = useTranslation('capture');
+  const draft = shot.draft ?? null;
+  const liveRun = useLabelRun((r) => r.run);
+  const run = draft ? liveRun : null;
+  const last = !run || run.index >= run.ids.length - 1;
   const { t: tg } = useTranslation('game');
   const [s, setVisit] = useState(initial);
   const [scale, setScale] = useState(1);
@@ -118,25 +189,65 @@ function Labeller({ initial }: { initial: VisitState }) {
     useShot.getState().setShot(null);
     router.back();
   };
-  const onBack = () => (s.step === 'values' ? retake() : setS(back(s)));
-  const backLabel = s.step === 'values' ? t('label.retake') : t('label.back');
+  // A draft has no photo to retake: going back from its values leaves the run.
+  const stop = () => {
+    useLabelRun.getState().setRun(null);
+    stopLabelling();
+  };
+  const onBack = () => (s.step === 'values' ? (draft ? stop() : retake()) : setS(back(s)));
+  const backLabel =
+    s.step === 'values' ? (draft ? t('label.stop') : t('label.retake')) : t('label.back');
 
   const save = (valuesOnly: boolean) => {
-    const { session, labUrl } = useCapture.getState();
+    const { session: current, labUrl } = useCapture.getState();
+    const session = draft?.session ?? current;
     if (!session) return;
-    const id = randomUUID();
-    const file = labelFile(s, { id, createdAt: new Date().toISOString(), session }, valuesOnly);
+    // A draft keeps its ID and the time it was taken.
+    const id = draft?.id ?? randomUUID();
+    const createdAt = draft?.createdAt ?? new Date().toISOString();
+    const file = labelFile(s, { id, createdAt, session, zoom: draft?.zoom }, valuesOnly);
     try {
       fileOutbox.put(file, s.photo.uri);
+      if (draft) fileDrafts.remove(draft.id);
     } catch (e) {
       log('error', 'capture: saving to the outbox failed', { error: String(e) });
       return;
     }
     haptics.success();
-    useCapture.getState().savedVisit();
-    useShot.getState().setShot(null);
     // Send it now if Lab is there; it waits in the outbox if not.
     if (labUrl) void syncOutbox(fileOutbox, uploader(labUrl)).catch(() => {});
+    if (draft) {
+      void nextDraft(valuesOnly ? 'valuesOnly' : 'labelled');
+      return;
+    }
+    useCapture.getState().savedVisit();
+    useShot.getState().setShot(null);
+    router.back();
+  };
+
+  /** Keeps the photo, unlabelled, for later; back to the camera for the next visit. */
+  const labelLater = () => {
+    const { session } = useCapture.getState();
+    if (!session) return;
+    try {
+      fileDrafts.put(
+        {
+          id: randomUUID(),
+          createdAt: new Date().toISOString(),
+          session,
+          width: s.photo.width,
+          height: s.photo.height,
+        },
+        s.photo.uri,
+      );
+    } catch (e) {
+      log('error', 'capture: saving a draft failed', { error: String(e) });
+      return;
+    }
+    haptics.success();
+    useCapture.getState().savedVisit();
+    useLaterNote.getState().setNote(true);
+    useShot.getState().setShot(null);
     router.back();
   };
 
@@ -178,13 +289,28 @@ function Labeller({ initial }: { initial: VisitState }) {
         step={s.step}
         backLabel={backLabel}
         onBack={onBack}
+        run={run}
         footer={
-          <Button
-            label={t('label.toBoard')}
-            onPress={() => setS(toBoard(s))}
-            disabled={!canLeaveValues(s)}
-            testID="to-board"
-          />
+          <View style={styles.row}>
+            {draft ? null : (
+              <View style={styles.flex}>
+                <Button
+                  kind="secondary"
+                  label={t('label.labelLater')}
+                  onPress={labelLater}
+                  testID="label-later"
+                />
+              </View>
+            )}
+            <View style={draft ? styles.flex : styles.flexWide}>
+              <Button
+                label={t('label.toBoard')}
+                onPress={() => setS(toBoard(s))}
+                disabled={!canLeaveValues(s)}
+                testID="to-board"
+              />
+            </View>
+          </View>
         }
       >
         <View style={styles.values}>
@@ -240,6 +366,7 @@ function Labeller({ initial }: { initial: VisitState }) {
         step={s.step}
         backLabel={backLabel}
         onBack={onBack}
+        run={run}
         footer={
           <View style={styles.row}>
             {!step ? (
@@ -307,12 +434,13 @@ function Labeller({ initial }: { initial: VisitState }) {
         step={s.step}
         backLabel={backLabel}
         onBack={onBack}
+        run={run}
         footer={
           <View style={styles.row}>
             <View style={styles.flex}>
               <Button
                 kind="secondary"
-                label={t('label.saveValuesOnly')}
+                label={run && !last ? t('label.valuesOnlyNext') : t('label.saveValuesOnly')}
                 onPress={() => save(true)}
                 testID="save-values-only"
               />
@@ -398,19 +526,32 @@ function Labeller({ initial }: { initial: VisitState }) {
       step={s.step}
       backLabel={backLabel}
       onBack={onBack}
+      run={run}
       footer={
         <View style={styles.footerStack}>
-          <Button label={t('label.save')} onPress={() => save(false)} testID="save" />
+          <Button
+            label={draft ? (last ? t('label.saveDone') : t('label.saveNext')) : t('label.save')}
+            onPress={() => save(false)}
+            testID="save"
+          />
           <View style={styles.row}>
             <View style={styles.flex}>
               <Button
                 kind="secondary"
-                label={t('label.saveValuesOnly')}
+                label={run && !last ? t('label.valuesOnlyNext') : t('label.saveValuesOnly')}
                 onPress={() => save(true)}
               />
             </View>
             <View style={styles.flex}>
-              <Button kind="secondary" label={t('label.retake')} onPress={retake} />
+              {draft ? (
+                <Button
+                  kind="secondary"
+                  label={t('label.skip')}
+                  onPress={() => void nextDraft('skipped')}
+                />
+              ) : (
+                <Button kind="secondary" label={t('label.retake')} onPress={retake} />
+              )}
             </View>
           </View>
         </View>
@@ -466,6 +607,36 @@ const styles = StyleSheet.create((theme) => ({
   },
   footerStack: { gap: theme.spacing.s },
   flex: { flex: 1 },
+  flexWide: { flex: 1.4 },
+  runBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.s,
+    marginHorizontal: theme.spacing.s,
+    marginBottom: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.xs,
+    borderRadius: theme.radii.m,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+  },
+  runStop: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  runTrack: { flexDirection: 'row', gap: 3, marginTop: theme.spacing.xs },
+  runSeg: { flex: 1, height: 4, borderRadius: 2, backgroundColor: theme.colors.line },
+  runSegDone: { backgroundColor: theme.colors.accent },
+  runSegOn: { backgroundColor: theme.colors.pending },
+  runSkip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    minHeight: 44,
+    paddingLeft: theme.spacing.m,
+    paddingRight: theme.spacing.xs,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
   pad: { paddingHorizontal: theme.spacing.m },
   values: { flex: 1, gap: theme.spacing.s, paddingHorizontal: theme.spacing.s },

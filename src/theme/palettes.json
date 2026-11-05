@@ -28,7 +28,11 @@
       "playLabelBg": "#07090E",
       "playLabel": "#E8B931",
       "boardSurround": "#14161B",
-      "dartStroke": "#07090E"
+      "dartStroke": "#07090E",
+      "pending": "#F5B841",
+      "info": "#8C9EFF",
+      "accentSoft": "#373326",
+      "pendingSoft": "#343028"
     },
     "light": {
       "bg": "#EEF1F6",
@@ -58,7 +62,11 @@
       "playLabelBg": "#0B1320",
       "playLabel": "#E8B931",
       "boardSurround": "#14161B",
-      "dartStroke": "#EEF1F6"
+      "dartStroke": "#EEF1F6",
+      "pending": "#8A5A00",
+      "info": "#3B5BDB",
+      "accentSoft": "#E2E3E4",
+      "pendingSoft": "#F1EBE0"
     }
   },
   "chalkboard": {
@@ -90,7 +98,11 @@
       "playLabelBg": "#1F2A24",
       "playLabel": "#F2C14E",
       "boardSurround": "#111613",
-      "dartStroke": "#1F2A24"
+      "dartStroke": "#1F2A24",
+      "pending": "#F5B841",
+      "info": "#8C9EFF",
+      "accentSoft": "#4A4D35",
+      "pendingSoft": "#464932"
     },
     "light": {
       "bg": "#FBFAF6",
@@ -120,7 +132,11 @@
       "playLabelBg": "#1D2B4A",
       "playLabel": "#FBFAF6",
       "boardSurround": "#1D2B4A",
-      "dartStroke": "#1D2B4A"
+      "dartStroke": "#1D2B4A",
+      "pending": "#8A5A00",
+      "info": "#3B5BDB",
+      "accentSoft": "#F7E7E6",
+      "pendingSoft": "#F1EBE0"
     }
   },
   "arcade": {
@@ -152,7 +168,11 @@
       "playLabelBg": "#0B0517",
       "playLabel": "#3EF0FF",
       "boardSurround": "#120826",
-      "dartStroke": "#0B0517"
+      "dartStroke": "#0B0517",
+      "pending": "#F5B841",
+      "info": "#8C9EFF",
+      "accentSoft": "#3A133E",
+      "pendingSoft": "#34232D"
     },
     "light": {
       "bg": "#FBF3FF",
@@ -182,7 +202,11 @@
       "playLabelBg": "#24103D",
       "playLabel": "#FBF3FF",
       "boardSurround": "#24103D",
-      "dartStroke": "#FFFFFF"
+      "dartStroke": "#FFFFFF",
+      "pending": "#8A5A00",
+      "info": "#3B5BDB",
+      "accentSoft": "#F8E2EE",
+      "pendingSoft": "#F1EBE0"
     }
   },
   "heritage": {
@@ -214,7 +238,11 @@
       "playLabelBg": "#14231B",
       "playLabel": "#D9A441",
       "boardSurround": "#0B140F",
-      "dartStroke": "#0B140F"
+      "dartStroke": "#0B140F",
+      "pending": "#F5B841",
+      "info": "#8C9EFF",
+      "accentSoft": "#3B432A",
+      "pendingSoft": "#3B442A"
     },
     "light": {
       "bg": "#F4ECDB",
@@ -244,7 +272,11 @@
       "playLabelBg": "#1D4A34",
       "playLabel": "#F4ECDB",
       "boardSurround": "#1F1A14",
-      "dartStroke": "#1F1A14"
+      "dartStroke": "#1F1A14",
+      "pending": "#8A5A00",
+      "info": "#3B5BDB",
+      "accentSoft": "#E0E1D4",
+      "pendingSoft": "#EDE3CE"
     }
   },
   "training": {
@@ -276,7 +308,11 @@
       "playLabelBg": "#0E1217",
       "playLabel": "#2DD4BF",
       "boardSurround": "#0B0F13",
-      "dartStroke": "#0B0F13"
+      "dartStroke": "#0B0F13",
+      "pending": "#F5B841",
+      "info": "#8C9EFF",
+      "accentSoft": "#15302F",
+      "pendingSoft": "#343126"
     },
     "light": {
       "bg": "#F6F8FA",
@@ -306,7 +342,11 @@
       "playLabelBg": "#0F766E",
       "playLabel": "#FFFFFF",
       "boardSurround": "#EAEEF2",
-      "dartStroke": "#FFFFFF"
+      "dartStroke": "#FFFFFF",
+      "pending": "#8A5A00",
+      "info": "#3B5BDB",
+      "accentSoft": "#E2EFEE",
+      "pendingSoft": "#F1EBE0"
     }
   }
 }

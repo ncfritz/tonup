@@ -5,6 +5,7 @@ import { create } from 'zustand';
 
 import type { DetectResult } from '@/services/vision';
 
+import type { Draft } from './outbox';
 import type { Photo, SessionInfo } from './visit';
 
 export interface CaptureState {
@@ -78,8 +79,35 @@ export function newSessionId(now: Date, random: string): string {
     .toLowerCase()}`;
 }
 
-/** The photo just taken, handed from the camera to the labelling screen (not saved). */
+/** The photo to label, handed to the labelling screen (not saved): just taken, or a draft. */
+export interface Shot {
+  photo: Photo;
+  detected: DetectResult | null;
+  /** Set when labelling a photo saved with "Label later": its session, ID and time. */
+  draft?: Draft;
+}
+
 export const useShot = create<{
-  shot: { photo: Photo; detected: DetectResult | null } | null;
-  setShot(shot: { photo: Photo; detected: DetectResult | null } | null): void;
+  shot: Shot | null;
+  setShot(shot: Shot | null): void;
 }>((set) => ({ shot: null, setShot: (shot) => set({ shot }) }));
+
+/** Labelling saved drafts one after another: their IDs, where we are, and how it went. */
+export interface LabelRun {
+  ids: string[];
+  index: number;
+  labelled: number;
+  valuesOnly: number;
+  skipped: number;
+}
+
+export const useLabelRun = create<{
+  run: LabelRun | null;
+  setRun(run: LabelRun | null): void;
+}>((set) => ({ run: null, setRun: (run) => set({ run }) }));
+
+/** The camera's "saved to label later" note, shown once after Label later. */
+export const useLaterNote = create<{ note: boolean; setNote(note: boolean): void }>((set) => ({
+  note: false,
+  setNote: (note) => set({ note }),
+}));

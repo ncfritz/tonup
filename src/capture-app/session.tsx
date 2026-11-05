@@ -1,23 +1,17 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Redirect, router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Linking, useWindowDimensions, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { fileDrafts } from '@/features/capture-lab/outboxFiles';
+import { prefillFor } from '@/features/capture-lab/queue';
+import { TAG_GROUPS, toggleTag as toggled, type TagKey } from '@/features/capture-lab/SessionBits';
 import { cropToSquare } from '@/features/capture-lab/square';
-import { useCapture, useShot } from '@/features/capture-lab/store';
-import { log } from '@/services/diagnostics';
+import { useCapture, useLaterNote, useShot } from '@/features/capture-lab/store';
 import { haptics } from '@/services/haptics';
-import { detect } from '@/services/vision';
 import { Button, Header, Icon, Pressable, Screen, Text } from '@/ui';
-
-// Quick tags, one from each group (docs/plan/capture-lab.md › Screens › Session).
-const TAG_GROUPS = [
-  ['lightOn', 'lightOff', 'daylight'],
-  ['left', 'centre', 'right'],
-] as const;
-type TagKey = (typeof TAG_GROUPS)[number][number];
 
 /** A session: tags for the conditions, then snap visit after visit. */
 export default function CaptureSession() {
@@ -28,17 +22,28 @@ export default function CaptureSession() {
   const [reading, setReading] = useState(false);
   const session = useCapture((s) => s.session);
   const visits = useCapture((s) => s.visits);
-  const prefill = useCapture((s) => s.prefill);
   const { width } = useWindowDimensions();
+  const laterNote = useLaterNote((n) => n.note);
+
+  // "Saved to label later" shows for a few seconds after Label later.
+  useEffect(() => {
+    if (!laterNote) return;
+    const timer = setTimeout(() => useLaterNote.getState().setNote(false), 4000);
+    return () => clearTimeout(timer);
+  }, [laterNote]);
+  const toLabel = (() => {
+    if (!laterNote || !session) return 0;
+    try {
+      return fileDrafts.list().filter((d) => d.session.id === session.id).length;
+    } catch {
+      return 0;
+    }
+  })();
 
   const tagText = (k: TagKey) => t(`session.tags.${k}`);
   const toggleTag = (k: TagKey) => {
     if (!session) return;
-    const group = TAG_GROUPS.find((g) => (g as readonly TagKey[]).includes(k))!;
-    const others = (group as readonly TagKey[]).filter((g) => g !== k).map(tagText);
-    const on = session.tags.includes(tagText(k));
-    const tags = session.tags.filter((x) => !others.includes(x) && x !== tagText(k));
-    useCapture.getState().set({ session: { ...session, tags: on ? tags : [...tags, tagText(k)] } });
+    useCapture.getState().set({ session: { ...session, tags: toggled(session.tags, k, tagText) } });
   };
 
   const shoot = async () => {
@@ -49,16 +54,8 @@ export default function CaptureSession() {
       const shot = await camera.current.takePictureAsync({ quality: 0.95, shutterSound: false });
       // The square the viewfinder showed.
       const photo = await cropToSquare(shot.uri);
-      let detected = null;
-      if (prefill) {
-        try {
-          const d = await detect(photo.uri, photo);
-          detected = d.modelVersion ? d : null;
-        } catch (e) {
-          log('warn', 'capture detection failed', { error: String(e) });
-        }
-      }
-      useShot.getState().setShot({ photo, detected });
+      useLaterNote.getState().setNote(false);
+      useShot.getState().setShot({ photo, detected: await prefillFor(photo) });
       router.push('/label');
     } finally {
       setReading(false);
@@ -140,6 +137,11 @@ export default function CaptureSession() {
         <View style={styles.guideWrap} pointerEvents="none">
           <View style={styles.guide} />
         </View>
+        {laterNote ? (
+          <View style={styles.note} accessibilityLiveRegion="polite" testID="session-later-note">
+            <Text variant="caption">{t('session.laterNote', { count: toLabel })}</Text>
+          </View>
+        ) : null}
       </View>
       <View style={styles.bottom}>
         <View style={styles.coach}>
@@ -220,6 +222,15 @@ const styles = StyleSheet.create((theme) => ({
     borderWidth: 2,
     borderColor: theme.colors.accent,
     borderStyle: 'dashed',
+  },
+  note: {
+    position: 'absolute',
+    top: theme.spacing.s,
+    alignSelf: 'center',
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.m,
+    borderRadius: theme.radii.m,
+    backgroundColor: theme.colors.pendingSoft,
   },
   bottom: { flex: 1, alignItems: 'center', justifyContent: 'space-evenly' },
   coach: {

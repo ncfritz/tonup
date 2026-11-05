@@ -28,6 +28,17 @@ const pairs = [
   // Large text and icons: the selected tab and accent headings.
   ['accent', 'surface', 3],
   ['accent', 'bg', 3],
+  // Status colours (labelled / values only / to label), as text and bars on the app's surfaces.
+  ['pending', 'surface', 4.5],
+  ['pending', 'bg', 4.5],
+  ['info', 'surface', 4.5],
+  ['info', 'bg', 4.5],
+  // Filled highlights (the session being shot, a live run): text and their colour on them.
+  ['text', 'accentSoft', 4.5],
+  ['muted', 'accentSoft', 4.5],
+  ['accent', 'accentSoft', 3],
+  ['text', 'pendingSoft', 4.5],
+  ['pending', 'pendingSoft', 3],
   // Board numbers on the ring around the board.
   ['boardNumber', 'boardSurround', 4.5],
   // A dart's outline, and the number on it, against its fill.

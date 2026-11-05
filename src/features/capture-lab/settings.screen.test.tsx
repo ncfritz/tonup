@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import i18next from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
 
-import CaptureSettings from '../../capture-app/settings';
+import CaptureSettings from '../../capture-app/(tabs)/settings';
 import type { InstalledModel } from './modelPull';
 import { useCapture } from './store';
 

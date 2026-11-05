@@ -1,7 +1,11 @@
 import { checkLab, normaliseLabUrl, outcomeOf } from './lab';
 import {
+  labelQueue,
+  sessionPhotos,
   sessionsOn,
   syncOutbox,
+  type Draft,
+  type DraftStore,
   type OutboxStore,
   type SentItem,
   type UploadOutcome,
@@ -41,6 +45,7 @@ function memoryStore(): OutboxStore & { items: Map<string, SentItem & { sentNow:
     sent: () => [...items.values()].filter((i) => i.sentNow),
     put: (label) => items.set(label.id, { id: label.id, label, sentNow: false }),
     photoUri: (id) => `file:///outbox/${id}.jpg`,
+    sentPhotoUri: (id) => (id === 'cleared' ? null : `file:///sent/${id}.jpg`),
     markSent: (id, split) => {
       const i = items.get(id)!;
       items.set(id, { ...i, sentNow: true, split });
@@ -49,6 +54,25 @@ function memoryStore(): OutboxStore & { items: Map<string, SentItem & { sentNow:
     clearSent: () => 0,
   };
 }
+
+function memoryDrafts(): DraftStore & { items: Map<string, Draft> } {
+  const items = new Map<string, Draft>();
+  return {
+    items,
+    list: () => [...items.values()],
+    put: (d) => items.set(d.id, d),
+    photoUri: (id) => `file:///drafts/${id}.jpg`,
+    remove: (id) => items.delete(id),
+  };
+}
+
+const draftOf = (id: string, sessionId: string, createdAt: string): Draft => ({
+  id,
+  createdAt,
+  session: { id: sessionId, startedAt: `${createdAt.slice(0, 10)}T00:00:00Z`, tags: [] },
+  width: 4,
+  height: 4,
+});
 
 describe('syncOutbox', () => {
   it('sends oldest first, keeps refused ones, and stops when Lab is out of reach', async () => {
@@ -98,6 +122,89 @@ describe('sessionsOn', () => {
       expect.objectContaining({ id: 's2', visits: 1, pending: 1 }),
       expect.objectContaining({ id: 's1', visits: 2, pending: 1, split: 'val' }),
     ]);
+  });
+});
+
+describe('labelling later', () => {
+  const setUp = () => {
+    const store = memoryStore();
+    const drafts = memoryDrafts();
+    store.put(
+      {
+        ...labelOf('a', 's1', '2026-11-01T20:00:00Z'),
+        darts: [
+          { x: 0, y: 0, value: 'T20' },
+          { x: 0, y: 0, value: '5' },
+        ],
+      },
+      '',
+    );
+    store.put({ ...labelOf('b', 's1', '2026-11-01T20:05:00Z'), valuesOnly: true }, '');
+    store.put(labelOf('cleared', 's1', '2026-11-01T20:06:00Z'), '');
+    store.markSent('a', 'val');
+    store.markSent('cleared', 'val');
+    drafts.put(draftOf('d2', 's1', '2026-11-01T20:03:00Z'), '');
+    drafts.put(draftOf('d1', 's1', '2026-11-01T20:01:00Z'), '');
+    drafts.put(draftOf('d3', 's2', '2026-11-03T20:00:00Z'), '');
+    return { store, drafts };
+  };
+
+  it('counts labelled, values-only and unlabelled photos per session', () => {
+    const { store, drafts } = setUp();
+    expect(sessionsOn(store, drafts)).toEqual([
+      expect.objectContaining({ id: 's2', visits: 1, labelled: 0, valuesOnly: 0, unlabelled: 1 }),
+      expect.objectContaining({
+        id: 's1',
+        visits: 5,
+        labelled: 2,
+        valuesOnly: 1,
+        unlabelled: 2,
+        pending: 1,
+        split: 'val',
+      }),
+    ]);
+  });
+
+  it('lists a session’s photos in the order they were taken, with totals', () => {
+    const { store, drafts } = setUp();
+    expect(sessionPhotos(store, drafts, 's1')).toEqual([
+      {
+        id: 'a',
+        createdAt: '2026-11-01T20:00:00Z',
+        status: 'labelled',
+        total: 65,
+        uri: 'file:///sent/a.jpg',
+      },
+      {
+        id: 'd1',
+        createdAt: '2026-11-01T20:01:00Z',
+        status: 'unlabelled',
+        total: null,
+        uri: 'file:///drafts/d1.jpg',
+      },
+      {
+        id: 'd2',
+        createdAt: '2026-11-01T20:03:00Z',
+        status: 'unlabelled',
+        total: null,
+        uri: 'file:///drafts/d2.jpg',
+      },
+      {
+        id: 'b',
+        createdAt: '2026-11-01T20:05:00Z',
+        status: 'values-only',
+        total: 0,
+        uri: 'file:///outbox/b.jpg',
+      },
+      { id: 'cleared', createdAt: '2026-11-01T20:06:00Z', status: 'labelled', total: 0, uri: null },
+    ]);
+  });
+
+  it('queues one session’s drafts, or every session’s but the one being shot', () => {
+    const { drafts } = setUp();
+    expect(labelQueue(drafts, { session: 's1' })).toEqual(['d1', 'd2']);
+    expect(labelQueue(drafts, { except: 's2' })).toEqual(['d1', 'd2']);
+    expect(labelQueue(drafts, { except: null })).toEqual(['d1', 'd2', 'd3']);
   });
 });
 

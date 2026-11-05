@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native-unistyles';
 
 import type { TypeVariant } from '@/theme/tokens';
 
-type Tone = 'text' | 'muted' | 'accent' | 'onAccent' | 'danger' | 'onDanger';
+type Tone = 'text' | 'muted' | 'accent' | 'onAccent' | 'danger' | 'onDanger' | 'pending' | 'info';
 
 /**
  * How far each style grows with Dynamic Type. Body text follows the setting up to double; the
@@ -57,6 +57,8 @@ const styles = StyleSheet.create((theme) => ({
         onAccent: { color: theme.colors.onAccent },
         danger: { color: theme.colors.danger },
         onDanger: { color: theme.colors.onDanger },
+        pending: { color: theme.colors.pending },
+        info: { color: theme.colors.info },
       },
     },
   },

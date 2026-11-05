@@ -6,18 +6,21 @@ Five themes, each with a light and a dark variant, chosen in Settings › Appear
 
 Components use only tokens, never literal colours, so a new theme is data only.
 
-| Token      | Used for                                                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `bg`       | Screen background                                                                                                        |
-| `surface`  | Cards, rows, buttons, the tab bar                                                                                        |
-| `surface2` | Raised or selected cards (the active player's row, dart slots)                                                           |
-| `text`     | Primary text and icons                                                                                                   |
-| `muted`    | Labels and secondary text                                                                                                |
-| `accent`   | Primary buttons, selected items, active tab, the active player's bar                                                     |
-| `onAccent` | Text and icons on `accent`                                                                                               |
-| `danger`   | Bust and checkout strip                                                                                                  |
-| `board.*`  | Board segments (light and dark), treble/double ring colours, bull, numbers, and the surround the numbers sit on          |
-| `dart`     | Dart markers; with `dartStroke` (its outline and the number on it) it must stand out against every segment in both modes |
+| Token                    | Used for                                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `bg`                     | Screen background                                                                                                          |
+| `surface`                | Cards, rows, buttons, the tab bar                                                                                          |
+| `surface2`               | Raised or selected cards (the active player's row, dart slots)                                                             |
+| `text`                   | Primary text and icons                                                                                                     |
+| `muted`                  | Labels and secondary text                                                                                                  |
+| `accent`                 | Primary buttons, selected items, active tab, the active player's bar                                                       |
+| `onAccent`               | Text and icons on `accent`                                                                                                 |
+| `danger`                 | Bust and checkout strip                                                                                                    |
+| `accentSoft`             | A filled highlight instead of an outline (Capture's session being shot, a live run); text, `muted` and `accent` read on it |
+| `pending`, `pendingSoft` | Waiting on the player: Capture's photos still to label, a bar not yet met, the Verify set; and its soft fill               |
+| `info`                   | Capture's values-only photos, and the visit series in its charts (segment is `pending`, board found `ok`)                  |
+| `board.*`                | Board segments (light and dark), treble/double ring colours, bull, numbers, and the surround the numbers sit on            |
+| `dart`                   | Dart markers; with `dartStroke` (its outline and the number on it) it must stand out against every segment in both modes   |
 
 ## Palettes (from the mockups)
 

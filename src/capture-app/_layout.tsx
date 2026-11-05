@@ -35,10 +35,10 @@ export default function CaptureLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="session" options={{ gestureEnabled: false }} />
         <Stack.Screen name="label" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="settings" />
+        <Stack.Screen name="sessions/[id]" />
       </Stack>
     </GestureHandlerRootView>
   );

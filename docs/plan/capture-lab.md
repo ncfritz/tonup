@@ -26,15 +26,20 @@ iPhone: Ton Up Capture                    M1 Pro laptop: Ton Up Lab (lab/, Next.
 
 ### Screens (`src/capture-app`, logic in `src/features/capture-lab`)
 
-| Screen   | What                                                                                                                                                                                                                                                                                             |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Home     | Lab status (reachable, active model), sessions, outbox count with a Sync button                                                                                                                                                                                                                  |
-| Session  | Start a session with optional tags (board light on or off, standing left, centre or right, notes); snap loop with a square viewfinder the width of the screen: the photo kept is that square (`square.ts`), so the board fills the labelling screens and the model's square input isn't squeezed |
-| Values   | Keypad (reusing `@/ui` Keypad) for up to three darts, filling the screen's width and height: segment and ring, Miss, Bounce-out, Undo                                                                                                                                                            |
-| Board    | The four calibration points and the bull: pre-filled by the active model when there is one, otherwise tapped by hand with the existing diagram and magnifier (`PhotoMarkup`), on the photo edge to edge and zoomable (pinch, or the + and − buttons; `ZoomPan`)                                  |
-| Tips     | Tap each dart tip in order on the zoomable photo; the darts sit in a row of chips under it. Each tap shows the value it scores; one that doesn't match its entered value turns red until it's moved or marked "on the wire" (kept, flagged for review)                                           |
-| Review   | Rings drawn over the photo, numbered darts, entered and scored values; Save, Retake, or Save values only                                                                                                                                                                                         |
-| Settings | Lab address (default `http://<laptop>.local:3100`), Pull model, clear sent photos                                                                                                                                                                                                                |
+| Screen         | What                                                                                                                                                                                                                                                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tabs           | Ton Up's tab bar: Overview and Models, **Sessions** in the middle as the board button (home), Runs and Settings. The camera and labelling screens are full screen, without it                                                                                                                                                |
+| Sessions       | Home. A line with Lab's status, its active model, the outbox and Sync; the session being shot (filled with `accentSoft`) with its labelled / values only / to label bar and counts, Keep snapping and Label N, or a New session card with the condition tags; totals; past sessions with their set and counts, and Label all |
+| Session photos | One session's photos in a grid, each marked with its total (labelled), V and its total (values only) or To label; a count strip filters them; tapping one to label, or Label N, starts labelling there                                                                                                                       |
+| Session        | Start a session with optional tags (board light on or off, standing left, centre or right, notes); snap loop with a square viewfinder the width of the screen: the photo kept is that square (`square.ts`), so the board fills the labelling screens and the model's square input isn't squeezed                             |
+| Values         | Keypad (reusing `@/ui` Keypad) for up to three darts, filling the screen's width and height: segment and ring, Miss, Bounce-out, Undo; **Label later** beside Next                                                                                                                                                           |
+| Board          | The four calibration points and the bull: pre-filled by the active model when there is one, otherwise tapped by hand with the existing diagram and magnifier (`PhotoMarkup`), on the photo edge to edge and zoomable (pinch, or the + and − buttons; `ZoomPan`)                                                              |
+| Tips           | Tap each dart tip in order on the zoomable photo; the darts sit in a row of chips under it. Each tap shows the value it scores; one that doesn't match its entered value turns red until it's moved or marked "on the wire" (kept, flagged for review)                                                                       |
+| Review         | Rings drawn over the photo, numbered darts, entered and scored values; Save, Retake, or Save values only                                                                                                                                                                                                                     |
+| Overview       | Lab's Overview (`GET /api/overview`): the active model against each bar, captures and the train / val / verify split, accuracy by model, coverage by condition with the thin ones called out, pre-fill kept                                                                                                                  |
+| Models         | Lab's models (`GET /api/models`): each one's three numbers against the bars, on this phone or not, kept as placed; a banner when a candidate beats the active model; Set active, Verify, and tick two to compare on the verify set                                                                                           |
+| Runs           | Lab's runs (`GET /api/runs`): the one going now (filled) with its epoch, time left, best visit and accuracy chart, updated every 3 s, and Cancel; earlier runs with what they made. Runs are started from Lab                                                                                                                |
+| Settings       | Lab address (default `http://<laptop>.local:3100`), Pull model, clear sent photos                                                                                                                                                                                                                                            |
 
 Every step fits the screen without scrolling: a compact top bar with the step (1 of 4 to 4 of 4), the step's content, and its buttons pinned at the bottom.
 
@@ -42,7 +47,14 @@ Rules:
 
 - A capture is saved when every entered dart on the board has a matching tip (or an on-wire flag). Miss and Bounce-out need no tip.
 - "Save values only" keeps the photo and values without tips; Lab uses these for visit-level verification only.
+- Highlights are fills, not outlines: the session being shot, a live run and a model ticked to compare use `accentSoft`.
 - The model only proposes; the player always confirms. The label records which model pre-filled it, so Lab can measure how often labels were corrected.
+
+### Label later
+
+**Label later** on the values step keeps the photo unlabelled and goes straight back to the camera, for when there's no time to label between visits. The photo waits in `Documents/drafts/<id>.jpg` and `.json` (its session, the time it was taken, its size); drafts never go to Lab. Sessions and their photos count each photo as labelled, values only or to label (`sessionsOn`, `sessionPhotos`).
+
+Labelling drafts (Label N on a session, Label all on Home for every session but the one being shot, or tapping a photo) runs through them oldest first (`queue.ts`, `labelQueue`): the same four steps under a bar with "Photo k of N to label", the progress and **Skip**. The model's pre-fill is read afresh (the phone may have a newer model by then). Saving puts the visit in the outbox under the draft's own ID and time and deletes the draft; **Save, next photo** and **Values only, next** move on, and after the last one the screen it started from says how many were labelled, values only and skipped. Values-only photos aren't to label: they've been decided.
 
 ### Outbox and upload
 
@@ -172,12 +184,18 @@ Tables (columns, no JSON blobs except run parameters):
 
 ### API used by Capture
 
-| Route                           | What                                                      |
-| ------------------------------- | --------------------------------------------------------- |
-| `GET /api/health`               | Lab version and the active model's version                |
-| `POST /api/captures`            | Multipart: the photo and its label JSON; idempotent by ID |
-| `GET /api/models/active`        | Version and file list of the active model                 |
-| `GET /api/models/:id/files/...` | One file of a model package                               |
+| Route                                | What                                                                              |
+| ------------------------------------ | --------------------------------------------------------------------------------- |
+| `GET /api/health`                    | Lab version and the active model's version                                        |
+| `POST /api/captures`                 | Multipart: the photo and its label JSON; idempotent by ID                         |
+| `GET /api/models/active`             | Version and file list of the active model                                         |
+| `GET /api/models/:id/files/...`      | One file of a model package                                                       |
+| `GET /api/overview`                  | Overview tab: counts, active model, progress, coverage, pre-fill (`lib/phone.ts`) |
+| `GET /api/models`                    | Models tab: every model's numbers, pre-fill kept, verify photos                   |
+| `POST /api/models/:id/activate`      | Set active (Models tab)                                                           |
+| `GET /api/runs`, `GET /api/runs/:id` | Runs tab: the list, and a live run's epochs and step                              |
+| `POST /api/runs` (`kind: verify`)    | Verify or compare models (Models tab)                                             |
+| `POST /api/runs/:id/cancel`          | Cancel the live run (Runs tab)                                                    |
 
 ## Changes to `ml/`
 

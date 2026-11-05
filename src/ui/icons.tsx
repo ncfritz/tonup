@@ -21,6 +21,10 @@ const paths = {
   camera: ['M3 8h3l2-3h8l2 3h3v11H3z', [[12, 13, 4]]],
   close: ['M6 6l12 12M18 6L6 18', []],
   search: ['M20 20l-4-4', [[11, 11, 7]]],
+  // Capture's Lab tabs: accuracy bars, a model (a cube), a training run (a pulse).
+  overview: ['M4 20V12M10 20V6M16 20v-9M21 20H3', []],
+  models: ['M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9', []],
+  runs: ['M3 12h4l3-7 4 14 3-7h4', []],
   // Zoom in and out (Capture's photo).
   plus: ['M12 5v14M5 12h14', []],
   minus: ['M5 12h14', []],

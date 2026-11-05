@@ -6,10 +6,11 @@ import type { Point } from '@/domain/darts';
 import i18next from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
 
-import CaptureHome from '../../capture-app';
+import CaptureHome from '../../capture-app/(tabs)';
 import LabelVisit from '../../capture-app/label';
-import type { OutboxItem, SentItem, UploadOutcome } from './outbox';
-import { useCapture, useShot } from './store';
+import type { Draft, OutboxItem, SentItem, UploadOutcome } from './outbox';
+import { startLabelling } from './queue';
+import { useCapture, useLabelRun, useShot } from './store';
 import type { LabelFile } from './visit';
 
 // Capture's strings are added by its layout at runtime.
@@ -18,7 +19,7 @@ i18next.addResourceBundle('en', 'capture', capture);
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual<typeof import('react')>('react');
   return {
-    router: { back: jest.fn(), push: jest.fn() },
+    router: { back: jest.fn(), push: jest.fn(), canGoBack: () => true },
     Redirect: () => null,
     useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]),
   };
@@ -27,14 +28,22 @@ const router = jest.requireMock<{ router: { back: jest.Mock; push: jest.Mock } }
   'expo-router',
 ).router;
 
-// The outbox in memory instead of Documents.
+// The outbox and drafts in memory instead of Documents.
 const mockBox = new Map<string, SentItem & { done: boolean }>();
+const mockDrafts = new Map<string, Draft>();
 jest.mock('./outboxFiles', () => ({
+  fileDrafts: {
+    list: () => [...mockDrafts.values()],
+    put: (d: Draft) => mockDrafts.set(d.id, d),
+    photoUri: (id: string) => `file:///drafts/${id}.jpg`,
+    remove: (id: string) => mockDrafts.delete(id),
+  },
   fileOutbox: {
     pending: () => [...mockBox.values()].filter((i) => !i.done),
     sent: () => [...mockBox.values()].filter((i) => i.done),
     put: (label: LabelFile) => mockBox.set(label.id, { id: label.id, label, done: false }),
     photoUri: (id: string) => `file:///outbox/${id}.jpg`,
+    sentPhotoUri: () => null,
     markSent: (id: string, split?: SentItem['split']) =>
       mockBox.set(id, { ...mockBox.get(id)!, done: true, split }),
     sentPhotoCount: () => 0,
@@ -60,6 +69,10 @@ jest.mock('react-native-gesture-handler', () => ({
   ...jest.requireActual('react-native-gesture-handler'),
   GestureDetector: ({ children }: { children: unknown }) => children,
   usePinchGesture: () => ({}),
+}));
+// No model on the phone: nothing is pre-filled.
+jest.mock('@/services/vision', () => ({
+  detect: async () => ({ modelVersion: null, keypoints: {}, tips: [] }),
 }));
 jest.mock('expo-file-system', () => ({
   File: class {},
@@ -89,6 +102,8 @@ const tapAt = async (p: Point) => {
 
 beforeEach(() => {
   mockBox.clear();
+  mockDrafts.clear();
+  useLabelRun.getState().setRun(null);
   mockUploads.length = 0;
   router.back.mockClear();
   router.push.mockClear();
@@ -194,31 +209,102 @@ it('zooms the photo with the buttons and still marks where tapped', async () => 
   expect(screen.queryByTestId('zoom-fit')).toBeNull();
 });
 
-it('shows Lab’s status, sends what’s waiting, and lists sessions with their set', async () => {
-  mockBox.set('a', {
-    id: 'a',
-    label: {
-      id: 'a',
-      image: 'a.jpg',
-      width: W,
-      height: H,
-      createdAt: '2026-11-04T05:10:00.000Z',
-      sessionId: 'sess-1',
-      sessionStartedAt: '2026-11-04T05:00:00.000Z',
-      tags: [],
-      calibration: [],
-      darts: [{ x: null, y: null, value: 'T20' }],
-      valuesOnly: true,
-      prefillModel: null,
-    },
-    done: false,
-  });
+const visitIn = (
+  id: string,
+  sessionId: string,
+  valuesOnly: boolean,
+): SentItem & { done: boolean } => ({
+  id,
+  label: {
+    id,
+    image: `${id}.jpg`,
+    width: W,
+    height: H,
+    createdAt: '2026-11-04T05:10:00.000Z',
+    sessionId,
+    sessionStartedAt:
+      sessionId === 'sess-1' ? '2026-11-04T05:00:00.000Z' : '2026-11-02T05:00:00.000Z',
+    tags: [],
+    calibration: [],
+    darts: [{ x: null, y: null, value: 'T20' }],
+    valuesOnly,
+    prefillModel: null,
+  },
+  done: false,
+});
+const draftIn = (id: string, sessionId: string, at: string): Draft => ({
+  id,
+  createdAt: at,
+  session: {
+    id: sessionId,
+    startedAt: sessionId === 'sess-1' ? '2026-11-04T05:00:00.000Z' : '2026-11-02T05:00:00.000Z',
+    tags: [],
+  },
+  width: W,
+  height: H,
+});
+
+it('shows Lab’s status, sends what’s waiting, and counts each session’s photos', async () => {
+  mockBox.set('a', visitIn('a', 'sess-1', true));
+  mockBox.set('b', visitIn('b', 'sess-old', false));
+  mockDrafts.set('d1', draftIn('d1', 'sess-1', '2026-11-04T05:20:00.000Z'));
+  mockDrafts.set('d2', draftIn('d2', 'sess-old', '2026-11-02T05:20:00.000Z'));
   await act(async () => {
     await render(<CaptureHome />);
   });
   expect(screen.getByTestId('capture-lab-status')).toHaveTextContent(/Lab connected/);
-  expect(mockUploads.map((u) => u.id)).toEqual(['a']);
-  expect(screen.getByTestId('capture-pending')).toHaveTextContent('Nothing waiting');
-  expect(screen.getByTestId('capture-session-sess-1')).toHaveTextContent(/VERIFY/);
-  expect(screen.getByTestId('capture-start')).toHaveTextContent(/Continue session/);
+  expect(mockUploads.map((u) => u.id).sort()).toEqual(['a', 'b']);
+  expect(screen.getByTestId('capture-pending')).toHaveTextContent('outbox empty');
+  // The session being shot: its set, counts, and labelling what's left.
+  const current = screen.getByTestId('capture-current');
+  expect(current).toHaveTextContent(/VERIFY/);
+  expect(current).toHaveTextContent(/2 photos/);
+  expect(screen.getByTestId('capture-start')).toHaveTextContent('Keep snapping');
+  expect(screen.getByTestId('capture-label-current')).toHaveTextContent('Label 1');
+  // Past sessions, each with its counts; Label all leaves the current session alone.
+  expect(screen.getByTestId('capture-session-sess-old')).toHaveTextContent(
+    /1 labelled.*0 values only.*1 to label/,
+  );
+  expect(screen.getByTestId('capture-label-all')).toHaveTextContent('Label all 1');
+  expect(screen.getByTestId('capture-totals')).toHaveTextContent(
+    /4.*Photos.*50%.*Labelled.*2.*To label/,
+  );
+});
+
+it('saves a photo to label later and goes back to the camera', async () => {
+  await render(<LabelVisit />);
+  await fireEvent.press(screen.getByTestId('label-later'));
+  const [draft] = [...mockDrafts.values()];
+  expect(draft).toMatchObject({ session: { id: 'sess-1' }, width: W, height: H });
+  expect(mockBox.size).toBe(0);
+  expect(useCapture.getState().visits).toBe(1);
+  expect(router.back).toHaveBeenCalled();
+});
+
+it('labels drafts one after another: values only, skip, then done', async () => {
+  mockDrafts.set('d1', draftIn('d1', 'sess-old', '2026-11-02T05:10:00.000Z'));
+  mockDrafts.set('d2', draftIn('d2', 'sess-old', '2026-11-02T05:20:00.000Z'));
+  await act(async () => {
+    await startLabelling(['d1', 'd2']);
+  });
+  expect(router.push).toHaveBeenCalledWith('/label');
+  await render(<LabelVisit />);
+  expect(screen.getByTestId('label-run')).toHaveTextContent(/Photo 1 of 2 to label/);
+  // A draft has nothing to retake, and no Label later.
+  expect(screen.queryByTestId('label-later')).toBeNull();
+  await enterValues(['20']);
+  await markBoard();
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('save-values-only'));
+  });
+  // Saved under the draft's own ID and session, and the draft is gone.
+  expect(mockBox.get('d1')!.label).toMatchObject({ sessionId: 'sess-old', valuesOnly: true });
+  expect(mockDrafts.has('d1')).toBe(false);
+  expect(screen.getByTestId('label-run')).toHaveTextContent(/Photo 2 of 2 to label/);
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('label-run-skip'));
+  });
+  expect(mockDrafts.has('d2')).toBe(true);
+  expect(useLabelRun.getState().run).toMatchObject({ valuesOnly: 1, skipped: 1, labelled: 0 });
+  expect(router.back).toHaveBeenCalled();
 });
