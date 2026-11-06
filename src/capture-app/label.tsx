@@ -8,7 +8,8 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import { hitAt } from '@/domain/board';
 import { boardPointOf } from '@/domain/camera';
-import { label as labelOf, type Point } from '@/domain/darts';
+import { label as labelOf, type Hit } from '@/domain/darts';
+import { heatmap } from '@/domain/stats';
 import { PhotoMarkup, type MarkupDart } from '@/features/camera/PhotoMarkup';
 import { uploader } from '@/features/capture-lab/lab';
 import { syncOutbox } from '@/features/capture-lab/outbox';
@@ -260,11 +261,11 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
   const [scale, setScale] = useState(1);
   const list = checks(s);
   // The values step: a board to tap or the keypad, as last picked. VoiceOver gets the keypad,
-  // as in a game. Where each board tap landed is only for its marker; the value is what's kept.
+  // as in a game. Each entered dart's bed is lit on the board; only the value is kept.
   const picked = useCapture((c) => c.valuesInput);
   const screenReader = useScreenReader();
   const valuesInput = screenReader ? 'keypad' : picked;
-  const [taps, setTaps] = useState<{ photo: string; at: (Point | null)[] }>({
+  const [taps, setTaps] = useState<{ photo: string; at: (Hit | null)[] }>({
     photo: initial.photo.uri,
     at: [],
   });
@@ -273,7 +274,7 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
   const onArea = (e: LayoutChangeEvent) =>
     setArea({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
   const boardSize = Math.floor(Math.max(0, Math.min(area.w, area.h)));
-  const enterValue = (value: Parameters<typeof enter>[1], at: Point | null) => {
+  const enterValue = (value: Parameters<typeof enter>[1], at: Hit | null) => {
     setTaps({ photo: s.photo.uri, at: [...tapped, at] });
     setS(enter(s, value));
   };
@@ -463,26 +464,27 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
               {boardSize > 0 ? (
                 <Board
                   size={boardSize}
-                  markers={tapped.flatMap((p, i) => (p ? [{ point: p, text: String(i + 1) }] : []))}
+                  heat={heatmap(tapped.filter((h) => h !== null)).regions}
                   onDart={
                     full
                       ? undefined
                       : (p) => {
                           haptics.light();
-                          enterValue(labelOf(hitAt(p)), p);
+                          const hit = hitAt(p);
+                          enterValue(labelOf(hit), hit);
                         }
                   }
-                  accessibilityLabel={tg('board.a11y')}
+                  accessibilityLabel={
+                    s.entered.length
+                      ? tg('board.a11yDarts', { darts: s.entered.join(', ') })
+                      : tg('board.a11y')
+                  }
                   accessibilityHint={tg('board.hint')}
                 />
               ) : null}
             </View>
           ) : (
-            <Keypad
-              onHit={(hit) => enterValue(labelOf(hit), null)}
-              disabled={full}
-              fill={false}
-            />
+            <Keypad onHit={(hit) => enterValue(labelOf(hit), hit)} disabled={full} fill={false} />
           )}
           <View style={styles.row}>
             <View style={styles.flex}>
