@@ -21,6 +21,8 @@ export interface CaptureState {
   /** Ton Up's themes, picked in Settings: Training, dark, until changed. */
   theme: ThemeId;
   appearance: 'system' | Mode;
+  /** How the values step takes each dart's score: tapping a board, or the keypad. */
+  valuesInput: 'board' | 'keypad';
 }
 
 const DEFAULTS: CaptureState = {
@@ -30,6 +32,7 @@ const DEFAULTS: CaptureState = {
   visits: 0,
   theme: 'training',
   appearance: 'dark',
+  valuesInput: 'keypad',
 };
 
 interface Actions {
@@ -46,8 +49,8 @@ let persist: (s: CaptureState) => void = () => {};
 export const useCapture = create<CaptureState & Actions>((set, get) => {
   const update = (change: Partial<CaptureState>) => {
     set(change);
-    const { labUrl, prefill, session, visits, theme, appearance } = get();
-    persist({ labUrl, prefill, session, visits, theme, appearance });
+    const { labUrl, prefill, session, visits, theme, appearance, valuesInput } = get();
+    persist({ labUrl, prefill, session, visits, theme, appearance, valuesInput });
   };
   return {
     ...DEFAULTS,
@@ -71,6 +74,9 @@ export function hydrateCapture() {
       if (saved.theme && !THEME_IDS.includes(saved.theme)) delete saved.theme;
       if (saved.appearance && !['system', 'light', 'dark'].includes(saved.appearance)) {
         delete saved.appearance;
+      }
+      if (saved.valuesInput && !['board', 'keypad'].includes(saved.valuesInput)) {
+        delete saved.valuesInput;
       }
       useCapture.setState({ ...DEFAULTS, ...saved });
     }

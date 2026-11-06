@@ -129,6 +129,7 @@ beforeEach(() => {
     labUrl: 'my-mac.local:3100',
     prefill: true,
     visits: 0,
+    valuesInput: 'keypad',
     session: { id: 'sess-1', startedAt: '2026-11-04T05:00:00.000Z', tags: ['Board light on'] },
   });
   useShot.getState().setShot({
@@ -329,6 +330,30 @@ it('syncs with Lab when nothing is waiting, and counts photos labelled in Lab', 
   expect(screen.getByTestId('capture-sync-note')).toHaveTextContent('1 labelled in Lab');
   expect(screen.getByTestId('capture-session-sess-old')).toHaveTextContent(/1 labelled.*All done/);
   expect(mockUploads).toEqual([]);
+});
+
+it('takes the values from taps on a board, and remembers picking it', async () => {
+  await render(<LabelVisit />);
+  await fireEvent.press(screen.getByRole('radio', { name: 'Board' }));
+  expect(useCapture.getState().valuesInput).toBe('board');
+  await fireEvent(screen.getByTestId('values-board-area'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 400 } },
+  });
+  // On a 400 pt board, 1 pt is 1 mm: the treble 20 is 103 mm above the centre.
+  const tap = async (x: number, y: number) => {
+    const board = screen.getByTestId('board');
+    const at = { nativeEvent: { locationX: x, locationY: y } };
+    await fireEvent(board, 'responderGrant', at);
+    await fireEvent(board, 'responderRelease', at);
+  };
+  await tap(200, 97);
+  await fireEvent.press(screen.getByTestId('value-miss'));
+  await tap(200, 200);
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('values-save-values-only'));
+  });
+  const [item] = [...mockBox.values()];
+  expect(item!.label.darts.map((d) => d.value)).toEqual(['T20', 'Miss', 'Bull']);
 });
 
 it('saves a photo to label later and goes back to the camera', async () => {

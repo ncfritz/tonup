@@ -2,12 +2,13 @@ import { randomUUID } from 'expo-crypto';
 import { Redirect, router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, View } from 'react-native';
+import { Image, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
+import { hitAt } from '@/domain/board';
 import { boardPointOf } from '@/domain/camera';
-import { label as labelOf } from '@/domain/darts';
+import { label as labelOf, type Point } from '@/domain/darts';
 import { PhotoMarkup, type MarkupDart } from '@/features/camera/PhotoMarkup';
 import { uploader } from '@/features/capture-lab/lab';
 import { syncOutbox } from '@/features/capture-lab/outbox';
@@ -50,7 +51,17 @@ import { ZoomPan } from '@/features/capture-lab/ZoomPan';
 import { LabPill } from '@/features/capture-lab/LabPill';
 import { log } from '@/services/diagnostics';
 import { haptics } from '@/services/haptics';
-import { Board, Button, DartSlots, Icon, Keypad, Pressable, Text } from '@/ui';
+import {
+  Board,
+  Button,
+  DartSlots,
+  Icon,
+  Keypad,
+  Pressable,
+  SegmentedControl,
+  Text,
+  useScreenReader,
+} from '@/ui';
 
 const STEPS: Step[] = ['values', 'board', 'tips', 'review'];
 
@@ -248,6 +259,24 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
   const [s, setVisit] = useState(initial);
   const [scale, setScale] = useState(1);
   const list = checks(s);
+  // The values step: a board to tap or the keypad, as last picked. VoiceOver gets the keypad,
+  // as in a game. Where each board tap landed is only for its marker; the value is what's kept.
+  const picked = useCapture((c) => c.valuesInput);
+  const screenReader = useScreenReader();
+  const valuesInput = screenReader ? 'keypad' : picked;
+  const [taps, setTaps] = useState<{ photo: string; at: (Point | null)[] }>({
+    photo: initial.photo.uri,
+    at: [],
+  });
+  const tapped = taps.photo === s.photo.uri ? taps.at.slice(0, s.entered.length) : [];
+  const [area, setArea] = useState({ w: 0, h: 0 });
+  const onArea = (e: LayoutChangeEvent) =>
+    setArea({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
+  const boardSize = Math.floor(Math.max(0, Math.min(area.w, area.h)));
+  const enterValue = (value: Parameters<typeof enter>[1], at: Point | null) => {
+    setTaps({ photo: s.photo.uri, at: [...tapped, at] });
+    setS(enter(s, value));
+  };
 
   // A new step starts with the whole photo in view.
   const setS = (next: VisitState) => {
@@ -418,13 +447,49 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
               <DartSlots darts={s.entered} total={visitTotal(s.entered)} bust={false} />
             </View>
           </View>
-          <Keypad onHit={(hit) => setS(enter(s, labelOf(hit)))} disabled={full} fill={false} />
+          {screenReader ? null : (
+            <SegmentedControl<'board' | 'keypad'>
+              accessibilityLabel={tg('header.input')}
+              value={valuesInput}
+              onChange={(v) => useCapture.getState().set({ valuesInput: v })}
+              segments={[
+                { value: 'board', label: tg('header.board') },
+                { value: 'keypad', label: tg('header.keypad') },
+              ]}
+            />
+          )}
+          {valuesInput === 'board' ? (
+            <View style={styles.boardArea} onLayout={onArea} testID="values-board-area">
+              {boardSize > 0 ? (
+                <Board
+                  size={boardSize}
+                  markers={tapped.flatMap((p, i) => (p ? [{ point: p, text: String(i + 1) }] : []))}
+                  onDart={
+                    full
+                      ? undefined
+                      : (p) => {
+                          haptics.light();
+                          enterValue(labelOf(hitAt(p)), p);
+                        }
+                  }
+                  accessibilityLabel={tg('board.a11y')}
+                  accessibilityHint={tg('board.hint')}
+                />
+              ) : null}
+            </View>
+          ) : (
+            <Keypad
+              onHit={(hit) => enterValue(labelOf(hit), null)}
+              disabled={full}
+              fill={false}
+            />
+          )}
           <View style={styles.row}>
             <View style={styles.flex}>
               <Button
                 kind="secondary"
                 label={t('label.miss')}
-                onPress={() => setS(enter(s, MISS))}
+                onPress={() => enterValue(MISS, null)}
                 disabled={full}
                 testID="value-miss"
               />
@@ -433,7 +498,7 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
               <Button
                 kind="secondary"
                 label={t('label.bounceOut')}
-                onPress={() => setS(enter(s, BOUNCE_OUT))}
+                onPress={() => enterValue(BOUNCE_OUT, null)}
                 disabled={full}
                 testID="value-bounce"
               />
@@ -756,6 +821,7 @@ const styles = StyleSheet.create((theme) => ({
   stack: { gap: theme.spacing.s },
   pad: { paddingHorizontal: theme.spacing.m },
   values: { flex: 1, gap: theme.spacing.s, paddingHorizontal: theme.spacing.s },
+  boardArea: { flex: 1, minHeight: 200, alignItems: 'center', justifyContent: 'center' },
   thumb: { width: 72, height: 72, borderRadius: theme.radii.s },
   instruction: {
     flexDirection: 'row',
