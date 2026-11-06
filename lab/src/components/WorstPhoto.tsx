@@ -14,7 +14,15 @@ export const TRUTH = '#1baf7a';
 export const PREDICTED = '#eb6834';
 
 /** One photo the model got wrong: the board it found and its tips over the true tips. */
-export function WorstPhoto({ item, color }: { item: WorstItem; color?: string }) {
+export function WorstPhoto({
+  item,
+  color,
+  className,
+}: {
+  item: WorstItem;
+  color?: string;
+  className?: string;
+}) {
   const { width: w, height: h } = item;
   const predicted: Points = {};
   for (const id of CALIBRATION_IDS) {
@@ -25,7 +33,7 @@ export function WorstPhoto({ item, color }: { item: WorstItem; color?: string })
   const s = Math.max(w, h) / 120; // marker size in photo pixels, about 3px on the card
   const truthTips = item.truth?.tips ?? [];
   return (
-    <div className={pageStyles.tile}>
+    <div className={className ?? pageStyles.tile}>
       <Link href={`/captures/${item.captureId}`} style={{ position: 'relative', display: 'block' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

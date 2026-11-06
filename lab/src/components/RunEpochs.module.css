@@ -1,0 +1,84 @@
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 96px repeat(5, minmax(0, 1fr)) 84px;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 24px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.head {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-fill-quaternary);
+}
+
+.best {
+  background: var(--ant-color-success-bg);
+}
+
+.live {
+  background: var(--ant-color-primary-bg);
+}
+
+.epoch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tag {
+  margin-inline-start: 6px;
+}
+
+.metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 8px;
+}
+
+.track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ant-color-fill-secondary);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.num {
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.span {
+  grid-column: 2 / span 5;
+}
+
+.span :global(.ant-progress) {
+  margin: 0;
+}
+
+.time {
+  text-align: right;
+  font-family: var(--ant-font-family-code, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+.note {
+  padding: 8px 24px;
+  font-size: 12px;
+}

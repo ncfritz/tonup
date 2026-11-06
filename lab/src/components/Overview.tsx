@@ -4,13 +4,14 @@ import { Descriptions, Tag, Typography } from 'antd';
 import Link from 'next/link';
 
 import type { DeepdartsSummary } from '~/lib/deepdarts';
-import type { OverviewCounts, PrefillStats } from '~/lib/queries';
+import type { OverviewCounts, PrefillStats, WeekCount } from '~/lib/queries';
 import type { LabStatus } from '~/lib/status';
-import type { Coverage, ModelProgress } from '~/lib/verify';
+import type { Coverage, CoverageGrid, ModelProgress } from '~/lib/verify';
 
 import { Count, CountStrip, EdgePage, Panel, Panels, Section, TitleBar } from './Page';
 import { pct as percent } from './RunBits';
-import { CoverageChart, PrefillChart, ProgressChart, ThinNote } from './VerifyCharts';
+import { CoverageHeatmap, MeasureChart, measureNote, WeeklyChart } from './OverviewCharts';
+import { CoverageChart, MEASURES, PrefillChart, ThinNote } from './VerifyCharts';
 
 /**
  * Overview: how close the model is to the bar, and where the dataset is thin. Edge to edge as
@@ -23,6 +24,9 @@ export function Overview({
   progress,
   coverage,
   prefill,
+  weeks,
+  grid,
+  gridThin,
 }: {
   status: LabStatus;
   counts: OverviewCounts;
@@ -30,6 +34,9 @@ export function Overview({
   progress: ModelProgress;
   coverage: Coverage[];
   prefill: PrefillStats[];
+  weeks: WeekCount[];
+  grid: CoverageGrid;
+  gridThin: number;
 }) {
   const active = progress.find((m) => m.status === 'active');
   const inUse = counts.bySplit.train + counts.bySplit.val + counts.bySplit.test;
@@ -127,9 +134,27 @@ export function Overview({
         </Typography.Paragraph>
       </Section>
 
-      <Panels min={560}>
-        <Panel title="Accuracy by model" extra={<Link href="/verification">Verification</Link>}>
-          <ProgressChart models={progress} />
+      {/* Each measure across the models, on our verify photos, against its shipping bar. */}
+      <Panels min={320}>
+        {MEASURES.map((m) => (
+          <Panel
+            key={m.key}
+            title={`${m.label} correct`.replace('found correct', 'found')}
+            extra={measureNote(progress, m.key)}
+          >
+            <MeasureChart models={progress} measure={m.key} />
+          </Panel>
+        ))}
+      </Panels>
+
+      <Panels min={420}>
+        <Panel title="Labelled photos per week" extra={<Link href="/captures">Captures</Link>}>
+          <WeeklyChart weeks={weeks} />
+        </Panel>
+        <Panel
+          title={`Coverage: ${grid.rows.title.toLowerCase()} by ${grid.cols.title.toLowerCase()}`}
+        >
+          <CoverageHeatmap grid={grid} thin={gridThin} />
         </Panel>
         <Panel
           title="Labelling with the model: how much of its pre-fill was kept"

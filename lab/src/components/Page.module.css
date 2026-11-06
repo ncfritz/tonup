@@ -85,6 +85,13 @@
   overflow: hidden;
 }
 
+/* Set columns on a wide screen; the auto-fit grid on a narrow one. */
+@media (min-width: 1100px) {
+  .panelsSet {
+    grid-template-columns: var(--panel-cols);
+  }
+}
+
 .panelsEdge {
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }

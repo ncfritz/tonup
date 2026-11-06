@@ -1,7 +1,7 @@
 import { ModelsView } from '~/components/ModelsView';
 import { overviewCounts, prefillStats } from '~/lib/queries';
 import { listModels } from '~/lib/runs';
-import { modelProgress } from '~/lib/verify';
+import { activeVsCandidate, modelProgress } from '~/lib/verify';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +12,7 @@ export default function ModelsPage() {
       progress={modelProgress()}
       testPhotos={overviewCounts().bySplit.test}
       prefill={prefillStats()}
+      headToHead={activeVsCandidate()}
     />
   );
 }

@@ -22,10 +22,12 @@ import {
   hitCounts,
   listCaptures,
   listCaptureSessions,
+  labelledPerWeek,
   listSessions,
   overviewCounts,
   viewCounts,
 } from './queries';
+import { coverageGrid } from './verify';
 import { splitOf } from './splits';
 import { storedFile } from './storage';
 
@@ -238,6 +240,15 @@ describe('ingestCapture', () => {
       hits: { '5': 1, Bull: 1, '25': 1 },
       darts: 3,
     });
+    // By week taken (weeks start Monday), by set; and the angle-by-light grid.
+    const weeks = labelledPerWeek(2, Date.parse('2026-11-03T12:00:00Z'));
+    expect(weeks.map((w) => new Date(w.week).toISOString().slice(0, 10))).toEqual([
+      '2026-10-26',
+      '2026-11-02',
+    ]);
+    expect(weeks.map((w) => w.train + w.val + w.test)).toEqual([2, 1]);
+    const grid = coverageGrid('angle', 'light');
+    expect(grid.cells.flat().reduce((a, b) => a + b, 0) + grid.unmeasured).toBe(3);
     const groups = listCaptureSessions({});
     expect(groups.rows.map((r) => [r.session.id, r.total, r.cards.map((c) => c.id)])).toEqual([
       ['sb', 1, ['g3']],

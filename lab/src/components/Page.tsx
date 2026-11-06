@@ -106,16 +106,24 @@ export function Panels({
   children,
   min,
   edge = true,
+  columns,
 }: {
   children: ReactNode;
   min?: number;
+  /** Set columns instead (a narrow one beside wide ones), e.g. "1fr 1fr 300px"; stacked narrow. */
+  columns?: string;
   /** A border under the row; off inside a Section, which has its own. */
   edge?: boolean;
 }) {
   return (
     <div
-      className={`${styles.panels} ${edge ? styles.panelsEdge : ''}`}
-      style={min ? ({ '--panel-min': `${min}px` } as CSSProperties) : undefined}
+      className={`${styles.panels} ${edge ? styles.panelsEdge : ''} ${columns ? styles.panelsSet : ''}`}
+      style={
+        {
+          ...(min ? { '--panel-min': `${min}px` } : {}),
+          ...(columns ? { '--panel-cols': columns } : {}),
+        } as CSSProperties
+      }
     >
       {children}
     </div>

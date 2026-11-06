@@ -1,8 +1,8 @@
 import { Overview } from '~/components/Overview';
 import { deepdartsSummary } from '~/lib/deepdarts';
-import { overviewCounts, prefillStats } from '~/lib/queries';
+import { labelledPerWeek, overviewCounts, prefillStats } from '~/lib/queries';
 import { labStatus } from '~/lib/status';
-import { coverage, modelProgress } from '~/lib/verify';
+import { coverage, coverageGrid, GRID_THIN, modelProgress } from '~/lib/verify';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +17,9 @@ export default function OverviewPage() {
       progress={modelProgress()}
       coverage={coverage()}
       prefill={prefillStats()}
+      weeks={labelledPerWeek()}
+      grid={coverageGrid('angle', 'light')}
+      gridThin={GRID_THIN}
     />
   );
 }

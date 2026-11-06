@@ -10,6 +10,7 @@ import { Count, CountStrip, pageStyles, Panel, Panels, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { describeRun, duration, pct, RunStatus } from './RunBits';
 import { AccuracyChart, BAR, LossChart } from './RunCharts';
+import { RunEpochs } from './RunEpochs';
 
 interface RunData {
   run: TrainRunSummary;
@@ -153,16 +154,14 @@ export function RunView({ initial }: { initial: RunData }) {
           </Section>
         ) : null}
 
-        <Panels min={480}>
+        {/* The charts, and the run's settings in a narrow column beside them. */}
+        <Panels columns="minmax(0, 1fr) minmax(0, 1fr) 300px">
           <Panel title="Validation accuracy by epoch">
             <AccuracyChart metrics={metrics} epochs={epochs} />
           </Panel>
           <Panel title="Loss by epoch">
             <LossChart metrics={metrics} epochs={epochs} />
           </Panel>
-        </Panels>
-
-        <Panels min={360}>
           <Panel title="Settings">
             <Descriptions
               size="small"
@@ -194,6 +193,30 @@ export function RunView({ initial }: { initial: RunData }) {
               ]}
             />
           </Panel>
+        </Panels>
+
+        <Section title="Epochs" flush>
+          <RunEpochs
+            metrics={metrics}
+            epochs={epochs}
+            running={
+              live && run.stage === 'train'
+                ? {
+                    epoch: done + 1,
+                    step: log.step?.epoch === done + 1 ? log.step.step : 0,
+                    of: log.step?.epoch === done + 1 ? log.step.of : 1,
+                  }
+                : null
+            }
+            elapsed={
+              run.startedAt
+                ? (now - run.startedAt) / 1000 - metrics.reduce((t, m) => t + m.seconds, 0)
+                : 0
+            }
+          />
+        </Section>
+
+        <Panels min={360}>
           <Panel
             title="Log"
             extra={<Typography.Text type="secondary">runs/{run.id}/log.txt</Typography.Text>}

@@ -13,6 +13,7 @@ import { Count, CountStrip, pageStyles, Panel, Panels, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { pct, RunStatus } from './RunBits';
 import { BAR } from './RunCharts';
+import gallery from './CaptureGallery.module.css';
 import { BreakdownChart, MEASURES, MODEL_COLORS, type Measure } from './VerifyCharts';
 import { PREDICTED, TRUTH, WorstPhoto } from './WorstPhoto';
 
@@ -86,7 +87,6 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
   const router = useRouter();
   const [live, setLive] = useState<LiveData>({ run: data.run, log: { tail: initialLog } });
   const running = live.run.status === 'queued' || live.run.status === 'running';
-  const [measure, setMeasure] = useState<Measure>('visit');
   const [only, setOnly] = useState('all');
 
   useEffect(() => {
@@ -183,35 +183,32 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
               ))}
             </Panels>
 
-            <Section
-              title="By condition"
-              extra={
-                <Segmented
-                  value={measure}
-                  onChange={(v) => setMeasure(v as Measure)}
-                  options={MEASURES.map((m) => ({ value: m.key, label: m.label }))}
-                />
-              }
-              flush
-            >
-              <Panels min={420} edge={false}>
-                {data.breakdown.map((b) => (
-                  <Panel
-                    key={b.key}
-                    title={b.title}
-                    extra={
-                      b.unmeasured ? (
-                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                          {b.unmeasured} not measured
-                        </Typography.Text>
-                      ) : null
-                    }
-                  >
-                    <BreakdownChart breakdown={b} models={models} measure={measure} />
-                  </Panel>
-                ))}
-              </Panels>
-            </Section>
+            {/* A row of charts per measure, a chart per condition in each. */}
+            {MEASURES.map((m) => (
+              <Section
+                key={m.key}
+                title={`${m.label} correct by condition`.replace('found correct', 'found')}
+                flush
+              >
+                <Panels min={240} edge={false}>
+                  {data.breakdown.map((b) => (
+                    <Panel
+                      key={b.key}
+                      title={b.title}
+                      extra={
+                        b.unmeasured ? (
+                          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                            {b.unmeasured} not measured
+                          </Typography.Text>
+                        ) : null
+                      }
+                    >
+                      <BreakdownChart breakdown={b} models={models} measure={m.key} />
+                    </Panel>
+                  ))}
+                </Panels>
+              </Section>
+            ))}
 
             <Section
               title="Worst photos"
@@ -242,15 +239,44 @@ export function VerifyView({ data, initialLog }: { data: Verification; initialLo
                 </Typography.Text>
               </div>
               {worst.length ? (
-                <div className={`${pageStyles.tiles} ${pageStyles.tilesInSection}`}>
-                  {worst.map((w) => (
-                    <WorstPhoto
-                      key={`${w.modelId}-${w.captureId}`}
-                      item={w}
-                      color={models.length > 1 ? colorOf(w.modelId) : undefined}
-                    />
-                  ))}
-                </div>
+                // A row per model, its photos in a strip, as Captures shows a session.
+                models
+                  .filter((m) => worst.some((w) => w.modelId === m.id))
+                  .map((m) => {
+                    const mine = worst.filter((w) => w.modelId === m.id);
+                    return (
+                      <section
+                        key={m.id}
+                        className={gallery.sessionRow}
+                        aria-label={`${m.name}'s worst photos`}
+                      >
+                        <div className={gallery.sessionHead}>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              width: 10,
+                              height: 10,
+                              borderRadius: 5,
+                              background: colorOf(m.id),
+                            }}
+                          />
+                          <Typography.Text strong>{m.name}</Typography.Text>
+                          <Typography.Text type="secondary">
+                            {mine.length} photo{mine.length === 1 ? '' : 's'}
+                          </Typography.Text>
+                        </div>
+                        <div className={gallery.strip}>
+                          {mine.map((w) => (
+                            <WorstPhoto
+                              key={`${w.modelId}-${w.captureId}`}
+                              item={w}
+                              className={`${gallery.card} ${gallery.stripTile}`}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })
               ) : (
                 <div className={pageStyles.empty}>
                   <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Every visit right" />

@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import type { PrefillStats } from '~/lib/queries';
-import type { ModelProgress } from '~/lib/verify';
+import type { HeadToHead, ModelProgress } from '~/lib/verify';
 
 import { useStartVerification } from './NewVerification';
-import { pageStyles, Section } from './Page';
+import { HeadToHeadChart } from './OverviewCharts';
+import { pageStyles, Panel, Panels, Section } from './Page';
 import { PageBody, PageHeader } from './PageHeader';
 import { pct } from './RunBits';
 import { BAR } from './RunCharts';
@@ -52,11 +53,13 @@ export function ModelsView({
   progress,
   testPhotos,
   prefill,
+  headToHead,
 }: {
   models: ModelListItem[];
   progress: ModelProgress;
   testPhotos: number;
   prefill: PrefillStats[];
+  headToHead: HeadToHead | null;
 }) {
   const kept = new Map(prefill.map((p) => [p.model, p]));
   const { message } = App.useApp();
@@ -88,9 +91,36 @@ export function ModelsView({
         }
       />
       <PageBody>
-        {progress.length > 1 ? (
-          <Section title="Accuracy by model">
-            <ProgressChart models={progress} />
+        {progress.length > 1 || headToHead ? (
+          <Section flush>
+            <Panels min={480} edge={false}>
+              <Panel title="Accuracy by model">
+                <ProgressChart models={progress} />
+              </Panel>
+              <Panel
+                title={
+                  headToHead
+                    ? `Active vs candidate: ${headToHead.active.name} and ${headToHead.candidate.name} by condition`
+                    : 'Active vs candidate'
+                }
+                extra={
+                  headToHead ? (
+                    <Link href={`/verification/${headToHead.runId}`}>
+                      Verification #{headToHead.runId}
+                    </Link>
+                  ) : null
+                }
+              >
+                {headToHead ? (
+                  <HeadToHeadChart h={headToHead} />
+                ) : (
+                  <Typography.Text type="secondary">
+                    No verification has run the active model and a candidate together yet: select
+                    both below and compare them on the verify set.
+                  </Typography.Text>
+                )}
+              </Panel>
+            </Panels>
           </Section>
         ) : null}
         <Table

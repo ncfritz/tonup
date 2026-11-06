@@ -583,3 +583,39 @@ export function listSessions(): SessionRow[] {
     tags: tags.get(r.id) ?? [],
   }));
 }
+
+export interface WeekCount {
+  /** Monday of the week (UTC), ms. */
+  week: number;
+  train: number;
+  val: number;
+  test: number;
+}
+
+/** Labelled photos (and values only) by the week they were taken, by set: the last `weeks`. */
+export function labelledPerWeek(weeks = 12, now = Date.now()): WeekCount[] {
+  const DAY = 86_400_000;
+  const mondayOf = (t: number) => {
+    const d = Math.floor(t / DAY);
+    // 1970-01-01 was a Thursday: day 4 of a week starting Monday at 0.
+    return (d - ((d + 3) % 7)) * DAY;
+  };
+  const last = mondayOf(now);
+  const first = last - (weeks - 1) * 7 * DAY;
+  const out: WeekCount[] = Array.from({ length: weeks }, (_, i) => ({
+    week: first + i * 7 * DAY,
+    train: 0,
+    val: 0,
+    test: 0,
+  }));
+  for (const r of db()
+    .select({ takenAt: captures.takenAt, split: sessions.split })
+    .from(captures)
+    .innerJoin(sessions, eq(captures.sessionId, sessions.id))
+    .where(inArray(captures.status, ['labelled', 'values-only']))
+    .all()) {
+    const i = (mondayOf(r.takenAt.getTime()) - first) / (7 * DAY);
+    if (i >= 0 && i < weeks) out[i]![r.split]++;
+  }
+  return out;
+}

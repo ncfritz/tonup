@@ -476,3 +476,133 @@ export function latestVerifyRun() {
       .get() ?? null
   );
 }
+
+export interface CoverageGrid {
+  rows: { key: string; title: string; buckets: readonly string[] };
+  cols: { key: string; title: string; buckets: readonly string[] };
+  /** [row][col]: labelled photos in both buckets. */
+  cells: number[][];
+  /** Photos without a measure for one or the other. */
+  unmeasured: number;
+}
+
+/** Below this, a cell of the grid wants more photos (the coverage bar's total). */
+export const GRID_THIN = 30;
+
+/** Labelled photos by two conditions at once (camera angle by light, for Overview's heatmap). */
+export function coverageGrid(rowKey = 'angle', colKey = 'light'): CoverageGrid {
+  const rc = CONDITIONS.find((c) => c.key === rowKey)!;
+  const cc = CONDITIONS.find((c) => c.key === colKey)!;
+  const cells = rc.buckets.map(() => cc.buckets.map(() => 0));
+  let unmeasured = 0;
+  for (const r of db()
+    .select({
+      width: captures.width,
+      height: captures.height,
+      angleDeg: conditions.angleDeg,
+      boardPx: conditions.boardPx,
+      brightness: conditions.brightness,
+      dartCount: conditions.dartCount,
+      tightGroup: conditions.tightGroup,
+    })
+    .from(captures)
+    .innerJoin(conditions, eq(conditions.captureId, captures.id))
+    .where(inArray(captures.status, ['labelled', 'values-only']))
+    .all()) {
+    const v: ConditionValues = {
+      angleDeg: r.angleDeg,
+      boardFrac: boardFrac(r.boardPx, r.width, r.height),
+      brightness: r.brightness,
+      dartCount: r.dartCount,
+      tightGroup: r.tightGroup,
+    };
+    const a = rc.of(v);
+    const b = cc.of(v);
+    if (a == null || b == null) {
+      unmeasured++;
+      continue;
+    }
+    cells[rc.buckets.indexOf(a)]![cc.buckets.indexOf(b)]!++;
+  }
+  return {
+    rows: { key: rc.key, title: rc.title, buckets: rc.buckets },
+    cols: { key: cc.key, title: cc.title, buckets: cc.buckets },
+    cells,
+    unmeasured,
+  };
+}
+
+export interface HeadToHead {
+  runId: number;
+  samples: number;
+  active: { id: number; name: string };
+  candidate: { id: number; name: string };
+  /** Each condition's buckets, both models' share right on each measure. */
+  rows: {
+    condition: string;
+    bucket: string;
+    /** The bucket, said so it stands alone ("3 darts", "Dim light"). */
+    label: string;
+    n: number;
+    a: { visit: number; dart: number; board: number };
+    b: { visit: number; dart: number; board: number };
+  }[];
+}
+
+/**
+ * The active model against the newest candidate, by condition, from the latest verification
+ * that ran both (Models' "Active vs candidate"). Null when none has.
+ */
+export function activeVsCandidate(): HeadToHead | null {
+  const all = db()
+    .select({ id: models.id, name: models.name, status: models.status })
+    .from(models)
+    .all();
+  const active = all.find((m) => m.status === 'active');
+  if (!active) return null;
+  const candidates = all.filter((m) => m.status === 'candidate').sort((x, y) => y.id - x.id);
+  const verifies = db()
+    .select({ id: runs.id })
+    .from(runs)
+    .where(and(eq(runs.kind, 'verify'), eq(runs.status, 'done')))
+    .orderBy(desc(runs.id))
+    .limit(30)
+    .all();
+  for (const { id } of verifies) {
+    const v = getVerification(id);
+    if (!v) continue;
+    const ids = new Set(v.results.map((r) => r.modelId));
+    if (!ids.has(active.id)) continue;
+    const candidate = candidates.find((c) => ids.has(c.id));
+    if (!candidate) continue;
+    return {
+      runId: id,
+      samples: v.results.find((r) => r.modelId === active.id)!.samples,
+      active: { id: active.id, name: active.name },
+      candidate: { id: candidate.id, name: candidate.name },
+      rows: v.breakdown.flatMap((b) =>
+        b.buckets.flatMap((k) => {
+          const a = k.by[active.id];
+          const c = k.by[candidate.id];
+          if (!a || !c || !a.n) return [];
+          return [
+            {
+              condition: b.title,
+              bucket: k.bucket,
+              label:
+                b.key === 'darts'
+                  ? `${k.bucket} dart${k.bucket === '1' ? '' : 's'}`
+                  : b.key === 'light'
+                    ? `${k.bucket} light`
+                    : k.bucket,
+              n: a.n,
+              a: { visit: a.visit, dart: a.dart, board: a.board },
+              b: { visit: c.visit, dart: c.dart, board: c.board },
+            },
+          ];
+        }),
+      ),
+    };
+  }
+  return null;
+}
