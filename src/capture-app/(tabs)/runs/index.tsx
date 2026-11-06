@@ -236,7 +236,7 @@ function LiveRun({
         </View>
         <View>
           <Button
-            kind="secondary"
+            kind="danger"
             label={cancelling ? t('runs.cancelled') : t('runs.cancel')}
             disabled={cancelling}
             onPress={() => void cancel()}
@@ -328,12 +328,12 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 const styles = StyleSheet.create((theme) => ({
-  // The run going now stands out by its fill.
+  // The run going now: a card like the others.
   live: {
     gap: theme.spacing.m,
     padding: theme.spacing.l,
     borderRadius: theme.radii.l,
-    backgroundColor: theme.colors.accentSoft,
+    backgroundColor: theme.colors.surface,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
   flex: { flex: 1, gap: theme.spacing.xxs },

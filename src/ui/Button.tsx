@@ -4,7 +4,8 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Pressable } from './Pressable';
 import { Text } from './Text';
 
-type Kind = 'primary' | 'secondary';
+/** Danger: for stopping or throwing work away (cancel a run). */
+type Kind = 'primary' | 'secondary' | 'danger';
 
 export function Button({
   label,
@@ -23,7 +24,7 @@ export function Button({
       ]}
       {...props}
     >
-      <Text variant="title" tone={kind === 'primary' ? 'onAccent' : 'text'}>
+      <Text variant="title" tone={kind === 'primary' ? 'onAccent' : kind === 'danger' ? 'onDanger' : 'text'}>
         {label}
       </Text>
     </Pressable>
@@ -41,6 +42,7 @@ const styles = StyleSheet.create((theme) => ({
       kind: {
         primary: { backgroundColor: theme.colors.accent },
         secondary: { backgroundColor: theme.colors.surface },
+        danger: { backgroundColor: theme.colors.danger },
       },
     },
   },

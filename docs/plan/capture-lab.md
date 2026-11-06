@@ -47,7 +47,7 @@ Rules:
 
 - A capture is saved when every entered dart on the board has a matching tip (or an on-wire flag). Miss and Bounce-out need no tip.
 - "Save values only" keeps the photo and values without tips; Lab uses these for visit-level verification only.
-- Highlights are fills, not outlines: the session being shot, a live run and a model ticked to compare use `accentSoft`.
+- Highlights are fills, not outlines: the session being shot and a model ticked to compare use `accentSoft`. A live run is a card like the others (`surface`), its Cancel red (`Button kind="danger"`).
 - The model only proposes; the player always confirms. The label records which model pre-filled it, so Lab can measure how often labels were corrected.
 
 ### Label later
