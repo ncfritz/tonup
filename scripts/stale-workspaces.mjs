@@ -12,7 +12,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ios = path.resolve(import.meta.dirname, '..', 'ios');
+// APP_VARIANT has to be set for this script too, not just the expo command after it:
+// `APP_VARIANT=capture node scripts/stale-workspaces.mjs && APP_VARIANT=capture expo run:ios`.
 const variant = process.env.APP_VARIANT === 'capture' ? 'capture' : 'tonup';
+console.log(
+  `Building ${variant === 'capture' ? 'TU Capture' : 'Ton Up'} (APP_VARIANT=${process.env.APP_VARIANT ?? 'unset'})`,
+);
 const projects = { tonup: 'TonUp.xcodeproj', capture: 'TUCapture.xcodeproj' };
 
 if (fs.existsSync(ios) && !fs.existsSync(path.join(ios, projects[variant]))) {
