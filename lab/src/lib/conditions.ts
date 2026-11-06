@@ -10,6 +10,28 @@ import type { LabelInput } from './labels';
 /** Two tips closer than this (mm on the board) count as a tight group. */
 export const TIGHT_GROUP_MM = 15;
 
+/** A dart with this value has no tip on the board to place (a miss or a bounce-out). */
+export function isTipless(entered: string | null): boolean {
+  if (!entered) return false;
+  const v = normaliseValue(entered);
+  return v === 'Miss' || v === 'Bounce-out';
+}
+
+/**
+ * Whether a label still needs labelling: a board point not placed, or a dart that hit the board
+ * (any value but a miss or bounce-out) with no tip on the photo.
+ */
+export function needsLabelling(
+  points: readonly { kind: string }[],
+  darts: readonly { entered: string | null; hasTip: boolean }[],
+  pointKinds: readonly string[],
+): boolean {
+  const placed = new Set(points.map((p) => p.kind));
+  return (
+    pointKinds.some((k) => !placed.has(k)) || darts.some((d) => !d.hasTip && !isTipless(d.entered))
+  );
+}
+
 /** Normalises an entered value to the scorer's labels ("S5" → "5", "50" → "Bull"). */
 export function normaliseValue(v: string): string {
   const s = v.trim().toUpperCase().replace(/\s+/g, '');
@@ -89,7 +111,7 @@ export function measure(input: LabelInput, width: number, height: number): Measu
     const proposal = fit && d.tip ? propose(fit, d.tip) : null;
     const scored = proposal ? label(proposal.hit) : null;
     const entered = d.entered ? normaliseValue(d.entered) : null;
-    const tipless = entered === 'Miss' || entered === 'Bounce-out';
+    const tipless = isTipless(entered);
     return {
       entered,
       scored,

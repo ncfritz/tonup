@@ -235,3 +235,8 @@ button.need:hover {
 .entered:global(.ant-select) :global(.ant-select-selection-placeholder) {
   font-family: var(--mono) !important;
 }
+
+/* The end of a dart's row: as tall as its mini board, so a "To place" ribbon sits at the row's top right as on board points. */
+.dartEnd {
+  height: 96px;
+}

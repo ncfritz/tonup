@@ -11,6 +11,9 @@ import { Badge, Empty, Flex, Pagination, Progress, Segmented, Select, Tag, Typog
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
+import { CALIBRATION_IDS } from '@domain/camera';
+
+import { needsLabelling } from '~/lib/conditions';
 import type { CaptureCard, CaptureFilter, CaptureView, SessionGroup } from '~/lib/queries';
 import type { Coverage } from '~/lib/verify';
 
@@ -258,6 +261,17 @@ export function CaptureGallery({
   );
 }
 
+/** A photo needs labelling while a board point or a dart's tip (on the board) isn't placed. */
+function toLabel(c: CaptureCard): boolean {
+  if (c.status === 'rejected') return false;
+  if (c.status === 'unlabelled') return true;
+  return needsLabelling(
+    c.points,
+    c.darts.map((d) => ({ entered: d.entered, hasTip: d.x != null && d.y != null })),
+    CALIBRATION_IDS,
+  );
+}
+
 /** A photo's tile: its thumbnail with its label drawn over it, the darts, set and status. */
 function Tile({ c, className }: { c: CaptureCard; className?: string }) {
   const photo = (
@@ -282,8 +296,8 @@ function Tile({ c, className }: { c: CaptureCard; className?: string }) {
   );
   return (
     <Link href={`/captures/${c.id}`} className={className}>
-      {/* Sent to label here: a ribbon on the photo's corner. */}
-      {c.status === 'unlabelled' ? (
+      {/* Still to label (a board point or a dart's tip to place): a ribbon on the photo's corner. */}
+      {toLabel(c) ? (
         <Badge.Ribbon text="To label" color="volcano">
           {photo}
         </Badge.Ribbon>

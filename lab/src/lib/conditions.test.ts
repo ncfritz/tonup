@@ -2,7 +2,7 @@ import { boardPointOf, CALIBRATION_IDS, type CalibrationId } from '@domain/camer
 import { polar } from '@domain/board';
 import { describe, expect, it } from 'vitest';
 
-import { measure, normaliseValue } from './conditions';
+import { measure, needsLabelling, normaliseValue } from './conditions';
 import type { LabelInput } from './labels';
 
 /**
@@ -87,5 +87,21 @@ describe('measure', () => {
     const input = labelFor(0, [polar(103, 0)], ['T20']);
     input.points = { cal20: input.points.cal20! };
     expect(measure(input, 1000, 1000).review).toEqual(['board not marked']);
+  });
+});
+
+describe('needsLabelling', () => {
+  const kinds = ['a', 'b'];
+  const all = [{ kind: 'a' }, { kind: 'b' }];
+  it('wants every board point placed', () => {
+    expect(needsLabelling([{ kind: 'a' }], [], kinds)).toBe(true);
+    expect(needsLabelling(all, [], kinds)).toBe(false);
+  });
+  it('wants a tip for every dart on the board, not for a miss or bounce-out', () => {
+    expect(needsLabelling(all, [{ entered: 'T20', hasTip: false }], kinds)).toBe(true);
+    expect(needsLabelling(all, [{ entered: null, hasTip: false }], kinds)).toBe(true);
+    expect(needsLabelling(all, [{ entered: 'T20', hasTip: true }], kinds)).toBe(false);
+    expect(needsLabelling(all, [{ entered: 'miss', hasTip: false }], kinds)).toBe(false);
+    expect(needsLabelling(all, [{ entered: 'BO', hasTip: false }], kinds)).toBe(false);
   });
 });

@@ -42,7 +42,7 @@ import {
 
 import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
-import { measure } from '~/lib/conditions';
+import { isTipless, measure } from '~/lib/conditions';
 import { needsOf, type NeedTone } from '~/lib/needs';
 import { CORRECTED } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
@@ -831,20 +831,18 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                 title: '#',
                 render: (_, row) => (
                   <Flex align="center" gap={12}>
-                    <TipRibbon placed={!!label.darts[row.idx]?.tip}>
-                      <MiniBoard
-                        size={96}
-                        lit={row.m?.board ?? row.m?.scored ?? row.entered}
-                        outlined={row.m?.mismatch ? row.entered : null}
-                        title={
-                          row.m?.scored
-                            ? `Dart ${row.idx + 1} scores ${row.m.scored}`
-                            : row.entered
-                              ? `Dart ${row.idx + 1}: ${row.entered}`
-                              : undefined
-                        }
-                      />
-                    </TipRibbon>
+                    <MiniBoard
+                      size={96}
+                      lit={row.m?.board ?? row.m?.scored ?? row.entered}
+                      outlined={row.m?.mismatch ? row.entered : null}
+                      title={
+                        row.m?.scored
+                          ? `Dart ${row.idx + 1} scores ${row.m.scored}`
+                          : row.entered
+                            ? `Dart ${row.idx + 1}: ${row.entered}`
+                            : undefined
+                      }
+                    />
                     {row.idx + 1}
                   </Flex>
                 ),
@@ -903,16 +901,20 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               },
               {
                 render: (_, row) => (
-                  <Button
-                    size="small"
-                    type="text"
-                    icon={<DeleteOutlined />}
-                    aria-label={`Remove dart ${row.idx + 1}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeDart(row.idx);
-                    }}
-                  />
+                  <TipRibbon placed={!!row.tip || isTipless(row.entered)}>
+                    <Flex vertical justify="center" className={styles.dartEnd}>
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={<DeleteOutlined />}
+                        aria-label={`Remove dart ${row.idx + 1}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeDart(row.idx);
+                        }}
+                      />
+                    </Flex>
+                  </TipRibbon>
                 ),
                 width: 40,
               },
@@ -1026,12 +1028,12 @@ function Halo({ x, y, r, tone }: { x: number; y: number; r: number; tone: NeedTo
   );
 }
 
-/** A dart's mini board, with a "To place" ribbon while its tip isn't on the photo. */
+/** The end of a dart's row, with a "To place" ribbon while its tip isn't on the photo (as board points have). */
 function TipRibbon({ placed, children }: { placed: boolean; children: ReactNode }) {
   return placed ? (
     <>{children}</>
   ) : (
-    <Badge.Ribbon text="To place" color="volcano" placement="start">
+    <Badge.Ribbon text="To place" color="volcano">
       {children}
     </Badge.Ribbon>
   );
