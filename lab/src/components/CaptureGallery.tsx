@@ -7,7 +7,7 @@ import {
   UnorderedListOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { Empty, Flex, Pagination, Progress, Segmented, Select, Tag, Typography } from 'antd';
+import { Badge, Empty, Flex, Pagination, Progress, Segmented, Select, Tag, Typography } from 'antd';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -260,24 +260,36 @@ export function CaptureGallery({
 
 /** A photo's tile: its thumbnail with its label drawn over it, the darts, set and status. */
 function Tile({ c, className }: { c: CaptureCard; className?: string }) {
+  const photo = (
+    <div
+      style={{
+        position: 'relative',
+        aspectRatio: `${c.width} / ${c.height}`,
+        background: '#222',
+        borderRadius: '8px 8px 0 0',
+        overflow: 'hidden',
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- local thumbnails */}
+      <img
+        src={`/api/captures/${c.id}/thumb`}
+        alt={`Capture ${c.id}`}
+        loading="lazy"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      />
+      <StaticOverlay width={c.width} height={c.height} points={c.points} darts={c.darts} />
+    </div>
+  );
   return (
     <Link href={`/captures/${c.id}`} className={className}>
-      <div
-        style={{
-          position: 'relative',
-          aspectRatio: `${c.width} / ${c.height}`,
-          background: '#222',
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element -- local thumbnails */}
-        <img
-          src={`/api/captures/${c.id}/thumb`}
-          alt={`Capture ${c.id}`}
-          loading="lazy"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-        />
-        <StaticOverlay width={c.width} height={c.height} points={c.points} darts={c.darts} />
-      </div>
+      {/* Sent to label here: a ribbon on the photo's corner. */}
+      {c.status === 'unlabelled' ? (
+        <Badge.Ribbon text="To label" color="volcano">
+          {photo}
+        </Badge.Ribbon>
+      ) : (
+        photo
+      )}
       <div className={pageStyles.tileBody}>
         <Flex justify="space-between" align="center" gap={8}>
           <Typography.Text strong ellipsis>

@@ -30,7 +30,15 @@ import {
 } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 
 import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
@@ -221,6 +229,12 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       });
   };
 
+  /** The next click on the photo puts something down: a new dart, or a selection not yet placed. */
+  const placing =
+    mode === 'add' ||
+    (selected?.kind === 'point' && !label.points[selected.id]) ||
+    (selected?.kind === 'dart' && !label.darts[selected.idx]?.tip);
+
   /** A click on the photo (not on a mark): place, add, or let go of the selection. */
   const clickPhoto = (p: ImagePoint) => {
     // A selected point or dart with no position yet goes where you click.
@@ -364,9 +378,8 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
           {CALIBRATION_IDS.map((id) => {
             const sel = isSel({ kind: 'point', id });
             const flag = needs.points[id];
-            return (
+            const point = (
               <button
-                key={id}
                 type="button"
                 className={`${styles.point} ${sel ? styles.pointOn : flag ? FLAG_FILL[flag] : ''}`}
                 aria-pressed={sel}
@@ -388,6 +401,14 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   </Typography.Text>
                 </span>
               </button>
+            );
+            // Still to place: a ribbon on its corner.
+            return label.points[id] ? (
+              <div key={id}>{point}</div>
+            ) : (
+              <Badge.Ribbon key={id} text="To place" color="volcano">
+                {point}
+              </Badge.Ribbon>
             );
           })}
           <div className={styles.pointsFoot}>
@@ -582,9 +603,11 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                       inset: 0,
                       width: '100%',
                       height: '100%',
+                      // Placing (adding a dart, or a selected point or dart with nowhere yet):
+                      // a crosshair, to put it exactly.
                       cursor: panning
                         ? 'grabbing'
-                        : mode === 'add'
+                        : placing
                           ? 'crosshair'
                           : zoom > 1
                             ? 'grab'
@@ -808,18 +831,20 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                 title: '#',
                 render: (_, row) => (
                   <Flex align="center" gap={12}>
-                    <MiniBoard
-                      size={96}
-                      lit={row.m?.board ?? row.m?.scored ?? row.entered}
-                      outlined={row.m?.mismatch ? row.entered : null}
-                      title={
-                        row.m?.scored
-                          ? `Dart ${row.idx + 1} scores ${row.m.scored}`
-                          : row.entered
-                            ? `Dart ${row.idx + 1}: ${row.entered}`
-                            : undefined
-                      }
-                    />
+                    <TipRibbon placed={!!label.darts[row.idx]?.tip}>
+                      <MiniBoard
+                        size={96}
+                        lit={row.m?.board ?? row.m?.scored ?? row.entered}
+                        outlined={row.m?.mismatch ? row.entered : null}
+                        title={
+                          row.m?.scored
+                            ? `Dart ${row.idx + 1} scores ${row.m.scored}`
+                            : row.entered
+                              ? `Dart ${row.idx + 1}: ${row.entered}`
+                              : undefined
+                        }
+                      />
+                    </TipRibbon>
                     {row.idx + 1}
                   </Flex>
                 ),
@@ -998,5 +1023,16 @@ function Halo({ x, y, r, tone }: { x: number; y: number; r: number; tone: NeedTo
       fillOpacity={0.4}
       pointerEvents="none"
     />
+  );
+}
+
+/** A dart's mini board, with a "To place" ribbon while its tip isn't on the photo. */
+function TipRibbon({ placed, children }: { placed: boolean; children: ReactNode }) {
+  return placed ? (
+    <>{children}</>
+  ) : (
+    <Badge.Ribbon text="To place" color="volcano" placement="start">
+      {children}
+    </Badge.Ribbon>
   );
 }
