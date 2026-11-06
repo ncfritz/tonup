@@ -1,0 +1,48 @@
+/* Coverage in a side panel (Captures, Overview): a bar per bucket of each condition. */
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.coverageHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 600;
+}
+
+.bucket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.bucketName {
+  min-width: 0;
+}
+
+.bucketBar:global(.ant-progress) {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0 0 6px;
+}
+
+.bucketCount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.small {
+  font-size: 12px;
+}

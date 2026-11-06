@@ -12,6 +12,26 @@
   background: var(--ant-color-bg-container);
 }
 
+/* With a side panel, as Captures: the head stays, the rest scrolls beside the panel. */
+.withSide {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.work {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.scroll {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
 /* A phone: the counts would fill the screen, so nothing sticks. */
 @media (max-width: 767px) {
   .sticky {

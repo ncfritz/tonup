@@ -1,5 +1,6 @@
 'use client';
 
+import { BarChartOutlined } from '@ant-design/icons';
 import { Descriptions, Tag, Typography } from 'antd';
 import Link from 'next/link';
 
@@ -8,10 +9,12 @@ import type { OverviewCounts, PrefillStats, WeekCount } from '~/lib/queries';
 import type { LabStatus } from '~/lib/status';
 import type { Coverage, CoverageGrid, ModelProgress } from '~/lib/verify';
 
+import { CoveragePane } from './CoveragePane';
 import { Count, CountStrip, EdgePage, Panel, Panels, Section, TitleBar } from './Page';
 import { pct as percent } from './RunBits';
 import { CoverageHeatmap, MeasureChart, measureNote, WeeklyChart } from './OverviewCharts';
 import { CoverageChart, MEASURES, PrefillChart, ThinNote } from './VerifyCharts';
+import { SideTabs } from './SideTabs';
 
 /**
  * Overview: how close the model is to the bar, and where the dataset is thin. Edge to edge as
@@ -44,6 +47,21 @@ export function Overview({
 
   return (
     <EdgePage
+      side={
+        <SideTabs
+          id="overview"
+          width={420}
+          tabs={[
+            {
+              key: 'coverage',
+              icon: <BarChartOutlined />,
+              title: 'Coverage',
+              flush: true,
+              children: <CoveragePane coverage={coverage} heading={false} />,
+            },
+          ]}
+        />
+      }
       head={
         <>
           <TitleBar

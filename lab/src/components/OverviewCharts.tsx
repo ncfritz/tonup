@@ -1,7 +1,7 @@
 'use client';
 
 import { Empty, Flex, Segmented, Typography } from 'antd';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -248,7 +248,17 @@ export function HeadToHeadChart({ h }: { h: HeadToHead }) {
   const [measure, setMeasure] = useState<Measure>('visit');
   const values = h.rows.flatMap((r) => [r.a[measure], r.b[measure]]);
   const lo = Math.max(0, Math.floor((Math.min(BAR[measure], ...values) - 0.05) * 10) / 10);
-  const W = 640;
+  // Drawn at the panel's own width, so its text is the size of the other charts' (12px), not
+  // scaled with the panel as a viewBox would.
+  const [W, setW] = useState(640);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(360, Math.round(e!.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const left = 170;
   const right = 56;
   const rowH = 30;
@@ -277,66 +287,69 @@ export function HeadToHeadChart({ h }: { h: HeadToHead }) {
           </span>
         </Flex>
       </Flex>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        style={{ width: '100%', height: 'auto' }}
-        role="img"
-        aria-label={`${h.active.name} against ${h.candidate.name} by condition`}
-      >
-        {ticks.map((t) => (
-          <g key={t}>
-            <line x1={x(t)} x2={x(t)} y1={8} y2={H - 24} stroke={GRID} />
-            <text x={x(t)} y={H - 8} fontSize={11} fill={AXIS} textAnchor="middle">
-              {pct(t)}
-            </text>
-          </g>
-        ))}
-        <line
-          x1={x(BAR[measure])}
-          x2={x(BAR[measure])}
-          y1={8}
-          y2={H - 24}
-          stroke={AXIS}
-          strokeDasharray="5 4"
-          strokeWidth={1.5}
-        />
-        {h.rows.map((r, i) => {
-          const y = 22 + i * rowH;
-          const a = r.a[measure];
-          const b = r.b[measure];
-          const d = (b - a) * 100;
-          return (
-            <g key={`${r.condition}${r.bucket}`}>
-              <title>{`${r.condition}: ${r.bucket} · ${r.n} photos · ${h.active.name} ${pct1(a)}, ${h.candidate.name} ${pct1(b)}`}</title>
-              <text x={8} y={y + 4} fontSize={12} fill="currentColor">
-                {r.label}
-                <tspan fill={AXIS} fontSize={11}>{`  n ${r.n}`}</tspan>
-              </text>
-              <line
-                x1={x(a)}
-                x2={x(b)}
-                y1={y}
-                y2={y}
-                stroke={GRID}
-                strokeWidth={4}
-                strokeLinecap="round"
-              />
-              <circle cx={x(a)} cy={y} r={6} fill={MODEL_COLORS[0]} />
-              <circle cx={x(b)} cy={y} r={6} fill={MODEL_COLORS[1]} />
-              <text
-                x={W - 8}
-                y={y + 4}
-                fontSize={11}
-                fontWeight={600}
-                textAnchor="end"
-                fill={d >= 0 ? 'var(--ant-color-success-text)' : 'var(--ant-color-error-text)'}
-              >
-                {`${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(1)}`}
+      <div ref={box}>
+        <svg
+          width={W}
+          height={H}
+          style={{ display: 'block' }}
+          role="img"
+          aria-label={`${h.active.name} against ${h.candidate.name} by condition`}
+        >
+          {ticks.map((t) => (
+            <g key={t}>
+              <line x1={x(t)} x2={x(t)} y1={8} y2={H - 24} stroke={GRID} />
+              <text x={x(t)} y={H - 8} fontSize={12} fill={AXIS} textAnchor="middle">
+                {pct(t)}
               </text>
             </g>
-          );
-        })}
-      </svg>
+          ))}
+          <line
+            x1={x(BAR[measure])}
+            x2={x(BAR[measure])}
+            y1={8}
+            y2={H - 24}
+            stroke={AXIS}
+            strokeDasharray="5 4"
+            strokeWidth={1.5}
+          />
+          {h.rows.map((r, i) => {
+            const y = 22 + i * rowH;
+            const a = r.a[measure];
+            const b = r.b[measure];
+            const d = (b - a) * 100;
+            return (
+              <g key={`${r.condition}${r.bucket}`}>
+                <title>{`${r.condition}: ${r.bucket} · ${r.n} photos · ${h.active.name} ${pct1(a)}, ${h.candidate.name} ${pct1(b)}`}</title>
+                <text x={8} y={y + 4} fontSize={12} fill="currentColor">
+                  {r.label}
+                  <tspan fill={AXIS} fontSize={12}>{`  n ${r.n}`}</tspan>
+                </text>
+                <line
+                  x1={x(a)}
+                  x2={x(b)}
+                  y1={y}
+                  y2={y}
+                  stroke={GRID}
+                  strokeWidth={4}
+                  strokeLinecap="round"
+                />
+                <circle cx={x(a)} cy={y} r={6} fill={MODEL_COLORS[0]} />
+                <circle cx={x(b)} cy={y} r={6} fill={MODEL_COLORS[1]} />
+                <text
+                  x={W - 8}
+                  y={y + 4}
+                  fontSize={12}
+                  fontWeight={600}
+                  textAnchor="end"
+                  fill={d >= 0 ? 'var(--ant-color-success-text)' : 'var(--ant-color-error-text)'}
+                >
+                  {`${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(1)}`}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
       <Typography.Text type="secondary" style={{ fontSize: 12 }}>
         Verification #{h.runId}, the same {h.samples} verify photos for both; few photos in a
         condition make its numbers swing.

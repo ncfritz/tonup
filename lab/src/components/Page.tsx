@@ -9,7 +9,26 @@ import styles from './Page.module.css';
 export { styles as pageStyles };
 
 /** A page to the content area's edges (Page.module.css): what's sticky goes in `head`. */
-export function EdgePage({ head, children }: { head: ReactNode; children: ReactNode }) {
+export function EdgePage({
+  head,
+  side,
+  children,
+}: {
+  head: ReactNode;
+  /** A side panel (SideTabs): the page then fills the content area and scrolls beside it. */
+  side?: ReactNode;
+  children: ReactNode;
+}) {
+  if (side)
+    return (
+      <div className={styles.withSide}>
+        {head}
+        <div className={styles.work}>
+          <div className={styles.scroll}>{children}</div>
+          {side}
+        </div>
+      </div>
+    );
   return (
     <div>
       <div className={styles.sticky}>{head}</div>
