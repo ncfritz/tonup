@@ -2,6 +2,7 @@
 // used by Capture), and the few things they ask it to do. Shapes mirror lab/src/lib/phone.ts
 // and lab/src/lib/runs.ts; only the fields the tabs show.
 import { normaliseLabUrl } from './lab';
+import type { SessionPlan } from './visit';
 
 export type Reply<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -27,6 +28,18 @@ async function call<T>(
     clearTimeout(timer);
   }
 }
+
+/**
+ * What Lab says to do for a session (its set, and whether the model reads its visits): asked when
+ * a session starts (lab/src/lib/reads.ts › sessionPlan).
+ */
+export const fetchSessionPlan = (url: string, sessionId: string, fetchImpl?: typeof fetch) =>
+  call<SessionPlan>(
+    url,
+    `/api/sessions/${encodeURIComponent(sessionId)}/plan`,
+    undefined,
+    fetchImpl,
+  );
 
 const post = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
 

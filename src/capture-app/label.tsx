@@ -24,18 +24,27 @@ import {
   type Shot,
 } from '@/features/capture-lab/store';
 import {
+  alternatives,
   back,
   BOUNCE_OUT,
   canLeaveValues,
   canReview,
   checks,
+  chooseMine,
+  chooseModel,
+  confirmedAsRead,
   enter,
+  enterMyself,
   labelFile,
   markingPoint,
   MISS,
+  planVisit,
   remark,
+  removeDart,
   resume,
+  revealRead,
   selectDart,
+  setValue,
   start,
   tapBoard,
   tapTip,
@@ -82,7 +91,16 @@ export default function LabelVisit() {
     <Labeller
       key={shot.draft?.id ?? shot.saved?.id ?? shot.photo.uri}
       shot={shot}
-      initial={shot.saved ? resume(shot.photo, shot.saved) : start(shot.photo, shot.detected)}
+      initial={
+        shot.saved
+          ? resume(shot.photo, shot.saved)
+          : // On a training session with reads on: the model's read, or a blind check.
+            planVisit(
+              start(shot.photo, shot.detected),
+              (shot.draft?.session ?? useCapture.getState().session)?.plan,
+              useCapture.getState().readsSinceBlind,
+            )
+      }
     />
   );
 }
@@ -237,9 +255,11 @@ function StepFrame({
         </Text>
         <View style={styles.topRight}>
           <LabPill />
-          <Text variant="caption" tone="muted">
-            {t('label.step', { n: STEPS.indexOf(step) + 1 })}
-          </Text>
+          {STEPS.includes(step) ? (
+            <Text variant="caption" tone="muted">
+              {t('label.step', { n: STEPS.indexOf(step) + 1 })}
+            </Text>
+          ) : null}
         </View>
       </View>
       <View style={styles.body}>{children}</View>
@@ -260,6 +280,10 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
   const [s, setVisit] = useState(initial);
   const [scale, setScale] = useState(1);
   const list = checks(s);
+  /** The read's fix panel shows the keypad (Other…). */
+  const [other, setOther] = useState(false);
+  const model = s.detected?.modelVersion ?? '?';
+  const blindEvery = (draft?.session ?? useCapture.getState().session)?.plan?.reads.every ?? 10;
   // The values step: a board to tap or the keypad, as last picked. VoiceOver gets the keypad,
   // as in a game. Each entered dart's bed is lit on the board; only the value is kept.
   const picked = useCapture((c) => c.valuesInput);
@@ -298,16 +322,16 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
     useShot.getState().setShot(null);
     router.back();
   };
-  const onBack = () =>
-    s.step === 'values' ? (draft ? stop() : saved ? leave() : retake()) : setS(back(s));
-  const backLabel =
-    s.step === 'values'
-      ? draft
-        ? t('label.stop')
-        : saved
-          ? t('label.back')
-          : t('label.retake')
-      : t('label.back');
+  // The first step (the values, or the read when the model read the visit) leaves the visit.
+  const first = s.step === 'values' || (s.step === 'read' && s.mode === 'read');
+  const onBack = () => (first ? (draft ? stop() : saved ? leave() : retake()) : setS(back(s)));
+  const backLabel = first
+    ? draft
+      ? t('label.stop')
+      : saved
+        ? t('label.back')
+        : t('label.retake')
+    : t('label.back');
 
   const save = (valuesOnly: boolean) => {
     const { session: current, labUrl } = useCapture.getState();
@@ -328,6 +352,14 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
     } catch (e) {
       log('error', 'capture: saving to the outbox failed', { error: String(e) });
       return;
+    }
+    // A read or a blind check: counted for the session, and toward the next blind check.
+    if (s.mode !== 'entered' && s.read) {
+      useCapture.getState().countRead({
+        blind: s.mode === 'blind',
+        confirmed: confirmedAsRead(s),
+        agreed: !!s.blind?.agreed,
+      });
     }
     haptics.success();
     // Send it now if Lab is there; it waits in the outbox if not.
@@ -389,14 +421,17 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
           calibration={s.calibration}
           darts={darts}
           selected={selected !== null && selected >= 0 ? selected : null}
-          selectNear={s.step === 'tips'}
+          selectNear={s.step === 'tips' || s.step === 'read'}
           scale={scale}
           onTap={(p) => {
             if (!onTap) return;
             haptics.light();
             onTap(p);
           }}
-          onSelect={(k) => setS(selectDart(s, indexOf[k] ?? null))}
+          onSelect={(k) => {
+            setOther(false);
+            setS(selectDart(s, indexOf[k] ?? null));
+          }}
         />
       </ZoomPan>
     );
@@ -429,16 +464,33 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
               disabled={!canLeaveValues(s)}
               testID="values-save-values-only"
             />
-            <Button
-              label={t('label.toBoard')}
-              onPress={() => setS(toBoard(s))}
-              disabled={!canLeaveValues(s)}
-              testID="to-board"
-            />
+            {s.mode === 'blind' && !s.blind ? (
+              <Button
+                label={t('read.reveal', { model })}
+                onPress={() => setS(revealRead(s))}
+                disabled={!canLeaveValues(s)}
+                testID="blind-reveal"
+              />
+            ) : (
+              <Button
+                label={t('label.toBoard')}
+                onPress={() => setS(toBoard(s))}
+                disabled={!canLeaveValues(s)}
+                testID="to-board"
+              />
+            )}
           </View>
         }
       >
         <View style={styles.values}>
+          {s.mode === 'blind' && !s.blind ? (
+            <View style={styles.blindNote} testID="blind-note">
+              <Text variant="bodyStrong" tone="pending">
+                {t('read.blindTitle')}
+              </Text>
+              <Text variant="caption">{t('read.blindNote', { every: blindEvery, model })}</Text>
+            </View>
+          ) : null}
           <View style={styles.row}>
             <Image source={{ uri: s.photo.uri }} style={styles.thumb} resizeMode="cover" />
             <View style={styles.flex}>
@@ -520,6 +572,271 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
     );
   }
 
+  const blocked = list.filter((c) => !c.ok).length;
+
+  if (s.step === 'read') {
+    const sel = s.selected;
+    const selCheck = sel !== null ? list[sel] : undefined;
+    const readOf = (i: number) => s.read?.find((r) => r.tip === s.tips[i]) ?? null;
+    const saveLabel = s.edited
+      ? draft
+        ? t('read.saveFixedNext')
+        : t('read.saveFixed')
+      : draft
+        ? t('read.looksRightNext')
+        : t('read.looksRight');
+    return (
+      <StepFrame
+        title={t('read.title')}
+        step={s.step}
+        backLabel={backLabel}
+        onBack={onBack}
+        run={run}
+        footer={
+          <View style={styles.stack}>
+            <Button
+              label={canReview(s) ? saveLabel : t('label.toReviewBlocked', { count: blocked })}
+              onPress={() => save(false)}
+              disabled={!canReview(s)}
+              testID="read-save"
+            />
+            <View style={styles.row}>
+              <View style={styles.flex}>
+                <Button
+                  kind="secondary"
+                  label={t('read.enterMyself')}
+                  onPress={() => setS(enterMyself(s))}
+                  testID="read-enter"
+                />
+              </View>
+              {draft || saved ? null : (
+                <View style={styles.flex}>
+                  <Button
+                    kind="secondary"
+                    label={t('label.labelLater')}
+                    onPress={labelLater}
+                    testID="read-later"
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        }
+      >
+        {photoMarkup((p) => setS(tapTip(s, p)))}
+        <View style={[styles.row, styles.pad]}>
+          <Text variant="overline" tone="accent" style={styles.flex}>
+            {t('read.readAs', { model })}
+          </Text>
+          <Text variant="caption" tone="muted">
+            {t('label.total')}{' '}
+          </Text>
+          <Text variant="title" testID="read-total">{`${visitTotal(s.entered)}`}</Text>
+        </View>
+        {s.blind?.agreed ? (
+          <Text variant="caption" tone="accent" style={styles.pad} testID="blind-agreed">
+            {t('read.agreed', { model })}
+          </Text>
+        ) : null}
+        <View style={styles.chips}>
+          {list.map((c, i) => {
+            const r = readOf(i);
+            const state = !c.ok
+              ? c.tip
+                ? t('label.noMatchShort', { scored: c.scored ?? '?' })
+                : t('label.tapTip')
+              : c.onWire
+                ? t('label.onWire')
+                : r && !r.sure
+                  ? t(r.doubt === 'nearWire' ? 'read.nearWire' : 'read.faint')
+                  : !c.needsTip
+                    ? t('label.noTip')
+                    : t('read.sure');
+            return (
+              <Pressable
+                key={i}
+                accessibilityRole="button"
+                accessibilityState={{ selected: sel === i }}
+                accessibilityLabel={t('read.chipA11y', { n: i + 1, value: c.entered, state })}
+                style={[
+                  styles.chip,
+                  r && !r.sure && styles.chipUnsure,
+                  sel === i && styles.chipOn,
+                  !c.ok && styles.chipBad,
+                ]}
+                onPress={() => {
+                  setOther(false);
+                  // Any dart can be picked on the read, a bounce-out too (to give it a tip).
+                  setS({ ...s, selected: sel === i ? null : i });
+                }}
+                testID={`read-dart-${i}`}
+              >
+                <Text variant="caption" tone="muted">
+                  {t('read.dart', { n: i + 1 })}
+                </Text>
+                <Text variant="title">{c.entered}</Text>
+                <Text
+                  variant="caption"
+                  tone={!c.ok ? 'danger' : r && !r.sure ? 'pending' : 'muted'}
+                  numberOfLines={1}
+                  testID={`read-state-${i}`}
+                >
+                  {state}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        {sel !== null && selCheck ? (
+          <View style={styles.fix} testID="read-fix">
+            <Text variant="caption" tone="muted">
+              {t('read.fixTitle', { n: sel + 1 })} {t('read.fixHint')}
+            </Text>
+            {other ? (
+              <Keypad
+                onHit={(hit) => {
+                  setOther(false);
+                  setS(setValue(s, sel, labelOf(hit)));
+                }}
+                fill={false}
+              />
+            ) : (
+              <View style={styles.row}>
+                {alternatives(s, sel).map((v) => (
+                  <View key={v} style={styles.flex}>
+                    <Button
+                      kind="secondary"
+                      label={v}
+                      onPress={() => setS(setValue(s, sel, v))}
+                      testID={`read-alt-${v}`}
+                    />
+                  </View>
+                ))}
+                <View style={styles.flex}>
+                  <Button
+                    kind="secondary"
+                    label={t('read.other')}
+                    onPress={() => setOther(true)}
+                    testID="read-other"
+                  />
+                </View>
+              </View>
+            )}
+            <View style={styles.row}>
+              <View style={styles.flex}>
+                <Button
+                  kind="secondary"
+                  label={t('label.bounceOut')}
+                  onPress={() => setS(setValue(s, sel, BOUNCE_OUT))}
+                  testID="read-bounce"
+                />
+              </View>
+              <View style={styles.flex}>
+                <Button
+                  kind="secondary"
+                  label={t('read.notADart')}
+                  onPress={() => setS(removeDart(s, sel))}
+                  testID="read-remove"
+                />
+              </View>
+              {selCheck.needsTip && selCheck.tip ? (
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: selCheck.onWire }}
+                  accessibilityLabel={t('label.wireA11y', { n: sel + 1 })}
+                  style={[styles.wire, styles.wireTall, selCheck.onWire && styles.wireOn]}
+                  onPress={() => setS(toggleWire(s, sel))}
+                  testID="read-wire"
+                >
+                  <Text variant="caption" tone={selCheck.onWire ? 'onAccent' : 'text'}>
+                    {t('label.wire')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+        ) : (
+          <Text variant="caption" tone="muted" style={styles.pad}>
+            {t('read.hint')}
+          </Text>
+        )}
+      </StepFrame>
+    );
+  }
+
+  if (s.step === 'disagree') {
+    const theirs = (s.read ?? []).map((r) => r.value);
+    const mine = s.entered;
+    const markup: MarkupDart[] = (s.read ?? []).map((r, i) => ({
+      image: r.tip,
+      n: i + 1,
+      flagged: false,
+    }));
+    return (
+      <StepFrame
+        title={t('read.blindTitle')}
+        step={s.step}
+        backLabel={t('label.back')}
+        onBack={onBack}
+        run={run}
+        footer={
+          <View style={styles.stack}>
+            <Button
+              kind="secondary"
+              label={t('read.mine', { values: mine.join(' · ') })}
+              onPress={() => setS(chooseMine(s))}
+              testID="blind-mine"
+            />
+            <Button
+              kind="secondary"
+              label={t('read.theirs', { model, values: theirs.join(' · ') })}
+              onPress={() => setS(chooseModel(s))}
+              testID="blind-theirs"
+            />
+          </View>
+        }
+      >
+        <ZoomPan key={s.step} onZoom={setScale} testID="label-zoom">
+          <PhotoMarkup
+            photo={s.photo}
+            fit={s.fit}
+            calibration={s.calibration}
+            darts={markup}
+            selected={null}
+            selectNear={false}
+            scale={scale}
+            onTap={() => {}}
+            onSelect={() => {}}
+          />
+        </ZoomPan>
+        <View style={[styles.stack, styles.pad]}>
+          <Text variant="title" accessibilityRole="header">
+            {t('read.disagreeTitle', { model })}
+          </Text>
+          <View style={styles.row}>
+            <Text variant="caption" tone="muted" style={styles.who}>
+              {t('read.you')}
+            </Text>
+            <Text variant="bodyStrong" testID="blind-yours">
+              {mine.join(' · ')}
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <Text variant="caption" tone="muted" style={styles.who}>
+              {model}
+            </Text>
+            <Text variant="bodyStrong" testID="blind-model">
+              {theirs.join(' · ')}
+            </Text>
+          </View>
+          <Text variant="caption" tone="muted">
+            {t('read.disagreeHint')}
+          </Text>
+        </View>
+      </StepFrame>
+    );
+  }
+
   if (s.step === 'board') {
     const step = markingPoint(s);
     return (
@@ -595,8 +912,6 @@ function Labeller({ initial, shot }: { initial: VisitState; shot: Shot }) {
       </StepFrame>
     );
   }
-
-  const blocked = list.filter((c) => !c.ok).length;
 
   if (s.step === 'tips') {
     return (
@@ -844,6 +1159,7 @@ const styles = StyleSheet.create((theme) => ({
     borderColor: theme.colors.surface,
   },
   chipOn: { borderColor: theme.colors.accent },
+  chipUnsure: { borderColor: theme.colors.pending, backgroundColor: theme.colors.pendingSoft },
   chipBad: { borderColor: theme.colors.danger },
   wire: {
     alignSelf: 'flex-start',
@@ -855,6 +1171,21 @@ const styles = StyleSheet.create((theme) => ({
     borderColor: theme.colors.line,
   },
   wireOn: { backgroundColor: theme.colors.accent, borderColor: theme.colors.accent },
+  wireTall: { alignSelf: 'stretch', minHeight: 52, borderRadius: theme.radii.m },
+  fix: {
+    gap: theme.spacing.s,
+    marginHorizontal: theme.spacing.s,
+    padding: theme.spacing.s,
+    borderRadius: theme.radii.m,
+    backgroundColor: theme.colors.surface,
+  },
+  blindNote: {
+    gap: theme.spacing.xxs,
+    padding: theme.spacing.s,
+    borderRadius: theme.radii.m,
+    backgroundColor: theme.colors.pendingSoft,
+  },
+  who: { width: 48 },
   reviewRight: { alignItems: 'flex-end', gap: 2 },
   done: { padding: theme.spacing.l },
   doneTop: { alignItems: 'flex-end' },

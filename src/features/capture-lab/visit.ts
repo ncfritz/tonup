@@ -1,7 +1,10 @@
 // Labelling one visit in Ton Up Capture (docs/plan/capture-lab.md › Ton Up Capture): enter
 // what the darts scored, mark the board, tap each tip. Every tip is scored through the board
 // fit and must match its value, or be flagged as on the wire, before the visit can be saved.
+// On a training session where Lab has reads on, the model reads the visit instead and the player
+// confirms or fixes it; one visit in N is a blind check (capture-lab.md › Model reads).
 import {
+  applyHomography,
   CALIBRATION_IDS,
   fitBoard,
   MAX_RESIDUAL_MM,
@@ -29,7 +32,21 @@ export const needsTip = (e: Entered) => !TIPLESS.has(e);
 /** Darts in a visit. */
 export const MAX_DARTS = 3;
 
-export type Step = 'values' | 'board' | 'tips' | 'review';
+/** `read`: the model's read to confirm or fix; `disagree`: a blind check that didn't match. */
+export type Step = 'values' | 'board' | 'tips' | 'review' | 'read' | 'disagree';
+
+/** How the label is being made: values entered first, the model's read, or a blind check. */
+export type LabelMode = 'entered' | 'read' | 'blind';
+
+/** A dart as the model read it: its value through the board fit, how sure, and its tip. */
+export interface ReadDart {
+  value: Entered;
+  tip: ImagePoint;
+  /** Confident, and not near a wire. */
+  sure: boolean;
+  /** Why not sure: the tip is near a wire, or the model barely saw it. */
+  doubt: 'nearWire' | 'faint' | null;
+}
 
 export interface VisitState {
   photo: Photo;
@@ -59,12 +76,21 @@ export interface VisitState {
     /** One per entered dart once tips are pre-filled. */
     tips: (ImagePoint | null)[];
   } | null;
+  mode: LabelMode;
+  /** The model's read (in no throwing order), once it has read the visit. */
+  read: ReadDart[] | null;
+  /** A blind check: the values entered before the read was shown, and how it came out. */
+  blind: { values: Entered[]; agreed: boolean; chose?: 'mine' | 'model' } | null;
+  /** Anything changed from the read (a value, a tip, a dart, the wire, the board). */
+  edited: boolean;
+  /** When the photo was taken, to time the visit (ms). */
+  startedAt: number;
 }
 
 const MIN_CONFIDENCE = 0.3;
 
 /** Starts on a new photo; the model's board, if it found one, is kept for the board step. */
-export function start(photo: Photo, detected: DetectResult | null): VisitState {
+export function start(photo: Photo, detected: DetectResult | null, now = Date.now()): VisitState {
   const base: VisitState = {
     photo,
     detected,
@@ -80,6 +106,11 @@ export function start(photo: Photo, detected: DetectResult | null): VisitState {
     selected: null,
     tipsFromModel: 0,
     proposal: null,
+    mode: 'entered',
+    read: null,
+    blind: null,
+    edited: false,
+    startedAt: now,
   };
   if (!detected) return base;
   const calibration: Partial<Record<CalibrationId, ImagePoint>> = {};
@@ -164,6 +195,7 @@ export function tapBoard(s: VisitState, p: ImagePoint): VisitState {
 /** Marks the board again by hand (the model's points looked wrong). */
 export const remark = (s: VisitState): VisitState => ({
   ...s,
+  edited: true,
   calibration: {},
   fit: null,
   marking: 0,
@@ -225,12 +257,13 @@ const firstMissing = (s: VisitState): number | null => {
 
 /** A tap on the photo in the tips step: places (or moves) the selected dart's tip. */
 export function tapTip(s: VisitState, p: ImagePoint): VisitState {
-  if (s.step !== 'tips') return s;
+  if (s.step !== 'tips' && s.step !== 'read') return s;
   const target = s.selected ?? firstMissing(s);
   if (target === null) return s;
   const tips = s.tips.map((t, i) => (i === target ? p : t));
-  const next = { ...s, tips };
-  return { ...next, selected: firstMissing(next) };
+  const next = { ...s, tips, edited: s.edited || s.step === 'read' };
+  // On the read, the dart stays picked: its tip may need another nudge.
+  return s.step === 'read' ? next : { ...next, selected: firstMissing(next) };
 }
 
 export const selectDart = (s: VisitState, i: number | null): VisitState => ({
@@ -241,6 +274,7 @@ export const selectDart = (s: VisitState, i: number | null): VisitState => ({
 export const toggleWire = (s: VisitState, i: number): VisitState => ({
   ...s,
   onWire: s.onWire.map((w, k) => (k === i ? !w : w)),
+  edited: s.edited || s.mode !== 'entered',
 });
 
 export interface DartCheck {
@@ -285,11 +319,187 @@ export const toReview = (s: VisitState): VisitState =>
 
 /** Back one step, keeping what was done. */
 export function back(s: VisitState): VisitState {
+  // From a read reached by "Enter it myself" or a blind check, review goes back to the read.
+  if (s.step === 'review' && s.read && s.mode !== 'entered' && !s.edited)
+    return { ...s, step: 'read' };
   if (s.step === 'review') return { ...s, step: 'tips' };
+  if (s.step === 'disagree') return { ...s, step: 'values', blind: null };
+  // A blind check's read: back to the values as entered, to change them before the read shows.
+  if (s.step === 'read' && s.mode === 'blind' && s.blind) {
+    return {
+      ...s,
+      step: 'values',
+      entered: s.blind.values,
+      tips: [],
+      onWire: [],
+      selected: null,
+      blind: null,
+      edited: false,
+      tipsFromModel: 0,
+      proposal: s.proposal ? { ...s.proposal, tips: [] } : s.proposal,
+    };
+  }
   if (s.step === 'tips') return { ...s, step: 'board', selected: null };
   if (s.step === 'board') return { ...s, step: 'values' };
   return s;
 }
+
+// Model reads (capture-lab.md › Model reads)
+
+/** A tip the model is at least this confident of is "sure", unless it's near a wire. */
+export const SURE = 0.6;
+
+/**
+ * The model's read of the visit: up to three darts, most confident first, each scored through the
+ * board it found. Null without the model's board or with no dart found: then the values are
+ * entered as usual.
+ */
+export function readOf(s: VisitState): ReadDart[] | null {
+  const fit = s.fit;
+  if (!fit || !s.boardFromModel || !s.detected) return null;
+  const darts = s.detected.tips
+    .filter((t) => t.c >= MIN_CONFIDENCE)
+    .sort((a, b) => b.c - a.c)
+    .slice(0, MAX_DARTS)
+    .map((t) => {
+      const p = propose(fit, { x: t.x, y: t.y });
+      const doubt = p.nearWire ? ('nearWire' as const) : t.c < SURE ? ('faint' as const) : null;
+      return { value: label(p.hit), tip: { x: t.x, y: t.y }, sure: !doubt, doubt };
+    });
+  return darts.length ? darts : null;
+}
+
+/** Puts the read on screen as the visit: its values and tips, for the player to check. */
+function showRead(s: VisitState, read: ReadDart[]): VisitState {
+  const tips = read.map((r) => r.tip);
+  return {
+    ...s,
+    step: 'read',
+    read,
+    entered: read.map((r) => r.value),
+    tips,
+    onWire: read.map(() => false),
+    selected: null,
+    tipsFromModel: tips.length,
+    proposal: s.proposal ? { ...s.proposal, tips } : s.proposal,
+  };
+}
+
+/**
+ * Starts a visit the model reads (a training session with reads on): straight to the read. Stays
+ * on entering the values when the model has no read of it.
+ */
+export function startRead(s: VisitState): VisitState {
+  const read = readOf(s);
+  return read ? { ...showRead(s, read), mode: 'read' } : s;
+}
+
+/** Starts a blind check: the values are entered first, the read shown after (revealRead). */
+export const startBlind = (s: VisitState): VisitState => (readOf(s) ? { ...s, mode: 'blind' } : s);
+
+/** Whether two visits' values agree, whatever the order (a read has none). */
+export const sameValues = (a: readonly Entered[], b: readonly Entered[]) =>
+  [...a].sort().join(',') === [...b].sort().join(',');
+
+/**
+ * A blind check's values are in: show the read. If it agrees with them, the read is the visit to
+ * confirm; if not, the player says which is right first (the disagree step).
+ */
+export function revealRead(s: VisitState): VisitState {
+  if (s.mode !== 'blind' || s.step !== 'values' || !canLeaveValues(s)) return s;
+  const read = readOf(s);
+  if (!read) return toBoard({ ...s, mode: 'entered' });
+  const values = [...s.entered];
+  const agreed = sameValues(
+    values,
+    read.map((r) => r.value),
+  );
+  if (agreed) return { ...showRead(s, read), blind: { values, agreed } };
+  return { ...s, step: 'disagree', read, blind: { values, agreed } };
+}
+
+/** After a disagreement: the player's values were right. On to the board, then their tips. */
+export const chooseMine = (s: VisitState): VisitState =>
+  s.step === 'disagree' && s.blind
+    ? toBoard({ ...s, blind: { ...s.blind, chose: 'mine' }, edited: true })
+    : s;
+
+/** After a disagreement: the model's read was right (or the start of fixing it). */
+export const chooseModel = (s: VisitState): VisitState =>
+  s.step === 'disagree' && s.blind && s.read
+    ? { ...showRead(s, s.read), blind: { ...s.blind, chose: 'model' } }
+    : s;
+
+/** Fixing a dart on the read: a new value (a tipless one drops its tip). */
+export function setValue(s: VisitState, i: number, value: Entered): VisitState {
+  if (s.step !== 'read' || i < 0 || i >= s.entered.length) return s;
+  return {
+    ...s,
+    entered: s.entered.map((e, k) => (k === i ? value : e)),
+    tips: s.tips.map((t, k) => (k === i ? (needsTip(value) ? t : null) : t)),
+    onWire: s.onWire.map((w, k) => (k === i && !needsTip(value) ? false : w)),
+    edited: s.edited || value !== s.entered[i],
+  };
+}
+
+/** Fixing the read: that wasn't a dart. */
+export function removeDart(s: VisitState, i: number): VisitState {
+  if (s.step !== 'read' || i < 0 || i >= s.entered.length) return s;
+  const drop = <T>(xs: T[]) => xs.filter((_, k) => k !== i);
+  return {
+    ...s,
+    entered: drop(s.entered),
+    tips: drop(s.tips),
+    onWire: drop(s.onWire),
+    selected: null,
+    proposal: s.proposal ? { ...s.proposal, tips: drop(s.proposal.tips) } : s.proposal,
+    edited: true,
+  };
+}
+
+/** Fixing the read the long way: today's steps, from the values, with the read's kept. */
+export const enterMyself = (s: VisitState): VisitState =>
+  s.step === 'read' ? { ...s, step: 'values', selected: null, edited: true } : s;
+
+/**
+ * What a dart might have scored instead: the beds a few millimetres around its tip (the ones
+ * across the nearest wires), at most three.
+ */
+export function alternatives(s: VisitState, i: number): Entered[] {
+  const tip = s.tips[i];
+  const fit = s.fit;
+  if (!tip || !fit) return [];
+  const at = applyHomography(fit.toBoard, tip);
+  const current = s.entered[i];
+  const out: Entered[] = [];
+  for (const r of [2, 4, 7]) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4;
+      const q = applyHomography(fit.toImage, {
+        x: at.x + r * Math.cos(a),
+        y: at.y + r * Math.sin(a),
+      });
+      const v = label(propose(fit, q).hit);
+      if (v !== current && !out.includes(v)) out.push(v);
+    }
+    if (out.length >= 3) break;
+  }
+  return out.slice(0, 3);
+}
+
+/**
+ * How a new visit starts on a session Lab has reads on (its plan): the model's read, or every
+ * Nth visit a blind check. Only with the model Lab named (the active one); otherwise, and with
+ * no plan, the values are entered as usual.
+ */
+export function planVisit(s: VisitState, plan: SessionPlan | undefined, sinceBlind: number) {
+  const reads = plan?.reads;
+  if (!reads?.on || !reads.model || s.detected?.modelVersion !== reads.model) return s;
+  return sinceBlind + 1 >= reads.every ? startBlind(s) : startRead(s);
+}
+
+/** The read, saved as it was: nothing changed (the outcome Lab works out on its own too). */
+export const confirmedAsRead = (s: VisitState) => s.mode !== 'entered' && !!s.read && !s.edited;
 
 // The label file (Lab's format, docs/plan/capture-lab.md › Outbox and upload)
 
@@ -297,6 +507,14 @@ export interface SessionInfo {
   id: string;
   startedAt: string;
   tags: string[];
+  /** What Lab said to do for this session when it started (absent when Lab wasn't there). */
+  plan?: SessionPlan;
+}
+
+/** Lab's plan for a session (lab/src/lib/reads.ts › sessionPlan). */
+export interface SessionPlan {
+  split: 'train' | 'val' | 'test';
+  reads: { on: boolean; every: number; model: string | null; why: string };
 }
 
 export interface LabelFile {
@@ -317,6 +535,12 @@ export interface LabelFile {
   /** What the model placed (same order as calibration and darts), when it pre-filled. */
   prefill?: { calibration: (ImagePoint | null)[]; tips: (ImagePoint | null)[] };
   zoom?: number;
+  labelMode?: LabelMode;
+  /** The model's read (capture-lab.md › Model reads), in no throwing order. */
+  read?: { model: string; darts: { value: string; sure: boolean; x: number; y: number }[] };
+  blind?: { values: string[]; agreed: boolean; chose?: 'mine' | 'model' };
+  /** Seconds from the photo to saving it. */
+  seconds?: number;
 }
 
 const prefillModel = (s: VisitState) => (s.proposal ? (s.detected?.modelVersion ?? null) : null);
@@ -330,7 +554,7 @@ const pt = (p: ImagePoint) => ({ x: round(p.x), y: round(p.y) });
  */
 export function labelFile(
   s: VisitState,
-  meta: { id: string; createdAt: string; session: SessionInfo; zoom?: number },
+  meta: { id: string; createdAt: string; session: SessionInfo; zoom?: number; now?: number },
   valuesOnly = false,
 ): LabelFile {
   return {
@@ -373,6 +597,17 @@ export function labelFile(
         }
       : {}),
     ...(meta.zoom ? { zoom: meta.zoom } : {}),
+    labelMode: s.mode,
+    ...(s.read && s.mode !== 'entered' && !valuesOnly
+      ? {
+          read: {
+            model: s.detected?.modelVersion ?? 'unknown',
+            darts: s.read.map((r) => ({ value: r.value, sure: r.sure, ...pt(r.tip) })),
+          },
+        }
+      : {}),
+    ...(s.blind ? { blind: s.blind } : {}),
+    seconds: Math.max(0, Math.round(((meta.now ?? Date.now()) - s.startedAt) / 1000)),
   };
 }
 

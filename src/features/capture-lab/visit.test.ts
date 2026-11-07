@@ -4,8 +4,19 @@ import type { Point } from '@/domain/darts';
 import type { DetectResult } from '@/services/vision';
 
 import {
+  alternatives,
   back,
   BOUNCE_OUT,
+  chooseMine,
+  chooseModel,
+  confirmedAsRead,
+  enterMyself,
+  readOf,
+  removeDart,
+  revealRead,
+  setValue,
+  startBlind,
+  startRead,
   canReview,
   checks,
   enter,
@@ -222,4 +233,128 @@ it('picks up a values-only visit with its values and board, to add the tips', ()
 it('adds up a visit from its values', () => {
   expect(visitTotal(['T20', '5', MISS])).toBe(65);
   expect(visitTotal(['Bull', '25', 'D16'])).toBe(107);
+});
+
+describe('the model reads the visit', () => {
+  const S1 = centreOf({ segment: 1, multiplier: 1 });
+  // On the wire between the 5 and the 20, just in the 5.
+  const WIRE = polar(130, -9.6);
+  const detected: DetectResult = {
+    width: 400,
+    height: 300,
+    sharpness: 1,
+    modelVersion: 'v6',
+    keypoints: Object.fromEntries(
+      CALIBRATION_IDS.map((id) => [id, { ...img(boardPointOf(id)), c: 0.9 }]),
+    ),
+    tips: [
+      { ...img(S1), c: 0.5 },
+      { ...img(T20), c: 0.95 },
+      { ...img(WIRE), c: 0.9 },
+      { ...img(S5), c: 0.1 },
+    ],
+  };
+  const meta = {
+    id: 'v1',
+    createdAt: '2026-11-06T20:00:10.000Z',
+    session: { id: 's', startedAt: '2026-11-06T20:00:00.000Z', tags: [] },
+  };
+
+  it('reads up to three darts, most confident first, saying which it is unsure of', () => {
+    const read = readOf(start(photo, detected))!;
+    expect(read.map((r) => [r.value, r.sure, r.doubt])).toEqual([
+      ['T20', true, null],
+      ['5', false, 'nearWire'],
+      ['1', false, 'faint'],
+    ]);
+    expect(readOf(start(photo, null))).toBeNull();
+  });
+
+  it('confirms a read as it is, and sends it with the label', () => {
+    const s = startRead(start(photo, detected, 0));
+    expect(s.step).toBe('read');
+    expect(s.entered).toEqual(['T20', '5', '1']);
+    expect(canReview(s)).toBe(true);
+    expect(confirmedAsRead(s)).toBe(true);
+    const f = labelFile(s, { ...meta, now: 9000 });
+    expect(f.labelMode).toBe('read');
+    expect(f.read!.model).toBe('v6');
+    expect(f.read!.darts.map((d) => [d.value, d.sure])).toEqual([
+      ['T20', true],
+      ['5', false],
+      ['1', false],
+    ]);
+    expect(f.seconds).toBe(9);
+    expect(f.prefill!.tips).toHaveLength(3);
+  });
+
+  it('fixes a dart: another value, its tip moved, or not a dart at all', () => {
+    let s = startRead(start(photo, detected));
+    expect(alternatives(s, 1)).toContain('20');
+    s = setValue(s, 1, '20');
+    // The tip still scores the 5: it has to move, or be flagged on the wire.
+    expect(canReview(s)).toBe(false);
+    s = toggleWire(s, 1);
+    expect(canReview(s)).toBe(true);
+    expect(confirmedAsRead(s)).toBe(false);
+    s = removeDart(selectDart(s, 2), 2);
+    expect(s.entered).toEqual(['T20', '20']);
+    expect(s.proposal!.tips).toHaveLength(2);
+    // A bounce-out loses its tip.
+    s = setValue(s, 1, BOUNCE_OUT);
+    expect(s.tips[1]).toBeNull();
+    expect(canReview(s)).toBe(true);
+  });
+
+  it('moves a tip on the read, keeping the dart picked', () => {
+    let s = selectDart(startRead(start(photo, detected)), 1);
+    s = tapTip(s, img(S5));
+    expect(s.selected).toBe(1);
+    expect(checks(s)[1]!.scored).toBe('5');
+    expect(s.edited).toBe(true);
+  });
+
+  it('enters it the usual way from the read, keeping the read to start from', () => {
+    const s = enterMyself(startRead(start(photo, detected)));
+    expect(s.step).toBe('values');
+    expect(s.entered).toEqual(['T20', '5', '1']);
+    expect(labelFile(s, meta).labelMode).toBe('read');
+  });
+
+  it('a blind check that agrees goes on to the read', () => {
+    let s = startBlind(start(photo, detected));
+    expect(s.mode).toBe('blind');
+    expect(s.step).toBe('values');
+    s = revealRead(enter(enter(enter(s, '1'), 'T20'), '5'));
+    expect(s.step).toBe('read');
+    expect(s.blind).toEqual({ values: ['1', 'T20', '5'], agreed: true });
+    expect(labelFile(s, meta).blind).toEqual({ values: ['1', 'T20', '5'], agreed: true });
+  });
+
+  it('a blind check that disagrees asks whose values are right', () => {
+    const entered = revealRead(
+      enter(enter(enter(startBlind(start(photo, detected)), 'T20'), '20'), '1'),
+    );
+    expect(entered.step).toBe('disagree');
+    expect(entered.blind!.agreed).toBe(false);
+    const mine = chooseMine(entered);
+    expect(mine.step).toBe('board');
+    expect(mine.entered).toEqual(['T20', '20', '1']);
+    expect(mine.blind!.chose).toBe('mine');
+    const model = chooseModel(entered);
+    expect(model.step).toBe('read');
+    expect(model.entered).toEqual(['T20', '5', '1']);
+    expect(labelFile(model, meta)).toMatchObject({
+      labelMode: 'blind',
+      blind: { values: ['T20', '20', '1'], agreed: false, chose: 'model' },
+    });
+    expect(back(entered).step).toBe('values');
+  });
+
+  it("without the model's board there is no read: the values are entered", () => {
+    const s = startRead(start(photo, null));
+    expect(s.step).toBe('values');
+    expect(s.mode).toBe('entered');
+    expect(startBlind(start(photo, null)).mode).toBe('entered');
+  });
 });

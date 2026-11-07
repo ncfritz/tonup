@@ -7,7 +7,7 @@ import type { DetectResult } from '@/services/vision';
 import { THEME_IDS, type Mode, type ThemeId } from '@/theme/themes';
 
 import type { Draft } from './outbox';
-import type { LabelFile, Photo, SessionInfo } from './visit';
+import type { LabelFile, Photo, SessionInfo, SessionPlan } from './visit';
 
 export interface CaptureState {
   /** Lab's address, as typed ("my-mac.local:3100"); empty until set. */
@@ -21,9 +21,21 @@ export interface CaptureState {
   /** Ton Up's themes, picked in Settings: Training, dark, until changed. */
   theme: ThemeId;
   appearance: 'system' | Mode;
+  /** Reads since the last blind check (capture-lab.md › Model reads): every Nth visit is one. */
+  readsSinceBlind: number;
+  /** The current session's reads: confirmed as read, fixed, blind checks and how many agreed. */
+  readTally: ReadTally;
   /** How the values step takes each dart's score: tapping a board, or the keypad. */
   valuesInput: 'board' | 'keypad';
 }
+
+export interface ReadTally {
+  confirmed: number;
+  fixed: number;
+  blind: number;
+  agreed: number;
+}
+export const NO_READS: ReadTally = { confirmed: 0, fixed: 0, blind: 0, agreed: 0 };
 
 const DEFAULTS: CaptureState = {
   labUrl: '',
@@ -33,11 +45,17 @@ const DEFAULTS: CaptureState = {
   theme: 'training',
   appearance: 'dark',
   valuesInput: 'keypad',
+  readsSinceBlind: 0,
+  readTally: NO_READS,
 };
 
 interface Actions {
   set(change: Partial<CaptureState>): void;
   startSession(session: SessionInfo): void;
+  /** Lab's plan for the session, once it answers (if it's still the session being shot). */
+  setPlan(sessionId: string, plan: SessionPlan): void;
+  /** A visit saved after a read or a blind check. */
+  countRead(r: { blind: boolean; confirmed: boolean; agreed: boolean }): void;
   endSession(): void;
   savedVisit(): void;
   /** Label later's Undo: the visit wasn't kept after all. */
@@ -50,12 +68,40 @@ export const useCapture = create<CaptureState & Actions>((set, get) => {
   const update = (change: Partial<CaptureState>) => {
     set(change);
     const { labUrl, prefill, session, visits, theme, appearance, valuesInput } = get();
-    persist({ labUrl, prefill, session, visits, theme, appearance, valuesInput });
+    const { readsSinceBlind, readTally } = get();
+    persist({
+      labUrl,
+      prefill,
+      session,
+      visits,
+      theme,
+      appearance,
+      valuesInput,
+      readsSinceBlind,
+      readTally,
+    });
   };
   return {
     ...DEFAULTS,
     set: update,
-    startSession: (session) => update({ session, visits: 0 }),
+    startSession: (session) => update({ session, visits: 0, readTally: NO_READS }),
+    setPlan: (sessionId, plan) => {
+      const session = get().session;
+      if (session?.id === sessionId) update({ session: { ...session, plan } });
+    },
+    countRead: ({ blind, confirmed, agreed }) => {
+      const t = get().readTally;
+      update({
+        readsSinceBlind: blind ? 0 : get().readsSinceBlind + 1,
+        readTally: blind
+          ? { ...t, blind: t.blind + 1, agreed: t.agreed + (agreed ? 1 : 0) }
+          : {
+              ...t,
+              confirmed: t.confirmed + (confirmed ? 1 : 0),
+              fixed: t.fixed + (confirmed ? 0 : 1),
+            },
+      });
+    },
     endSession: () => update({ session: null, visits: 0 }),
     savedVisit: () => update({ visits: get().visits + 1 }),
     unsavedVisit: () => update({ visits: Math.max(0, get().visits - 1) }),

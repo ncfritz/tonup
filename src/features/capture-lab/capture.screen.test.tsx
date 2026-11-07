@@ -130,6 +130,8 @@ beforeEach(() => {
     prefill: true,
     visits: 0,
     valuesInput: 'keypad',
+    readsSinceBlind: 0,
+    readTally: { confirmed: 0, fixed: 0, blind: 0, agreed: 0 },
     session: { id: 'sess-1', startedAt: '2026-11-04T05:00:00.000Z', tags: ['Board light on'] },
   });
   useShot.getState().setShot({
@@ -138,7 +140,7 @@ beforeEach(() => {
   });
 });
 
-async function enterValues(values: ('T20' | '20' | '5' | 'Miss')[]) {
+async function enterValues(values: ('T20' | '20' | '5' | '1' | 'Miss')[]) {
   for (const v of values) {
     if (v === 'Miss') {
       await fireEvent.press(screen.getByTestId('value-miss'));
@@ -354,6 +356,99 @@ it('takes the values from taps on a board, and remembers picking it', async () =
   });
   const [item] = [...mockBox.values()];
   expect(item!.label.darts.map((d) => d.value)).toEqual(['T20', 'Miss', 'Bull']);
+});
+
+describe('model reads', () => {
+  const img = (p: Point) => applyHomography(CAMERA, p);
+  const T20 = centreOf({ segment: 20, multiplier: 3 });
+  const S5 = centreOf({ segment: 5, multiplier: 1 });
+  const S1 = centreOf({ segment: 1, multiplier: 1 });
+  const plan = {
+    split: 'train' as const,
+    reads: { on: true, every: 10, model: 'v6', why: 'on' },
+  };
+  beforeEach(() => {
+    useCapture.setState({
+      session: { id: 'sess-1', startedAt: '2026-11-04T05:00:00.000Z', tags: [], plan },
+    });
+    useShot.getState().setShot({
+      photo: { uri: 'file:///shot.jpg', width: W, height: H },
+      detected: {
+        width: W,
+        height: H,
+        sharpness: 1,
+        modelVersion: 'v6',
+        keypoints: Object.fromEntries(
+          CALIBRATION_IDS.map((id) => [id, { ...img(boardPointOf(id)), c: 0.9 }]),
+        ),
+        tips: [
+          { ...img(T20), c: 0.95 },
+          { ...img(S5), c: 0.9 },
+          { ...img(S1), c: 0.85 },
+        ],
+      },
+    });
+  });
+
+  it('shows the read; Looks right saves it as read', async () => {
+    await render(<LabelVisit />);
+    expect(screen.getByTestId('read-total')).toHaveTextContent('66');
+    expect(screen.getByTestId('read-state-0')).toHaveTextContent('Sure');
+    expect(screen.getByTestId('read-save')).toHaveTextContent('Looks right, snap next');
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('read-save'));
+    });
+    const [item] = [...mockBox.values()];
+    expect(item!.label).toMatchObject({ labelMode: 'read', read: { model: 'v6' } });
+    expect(item!.label.darts.map((d) => d.value)).toEqual(['T20', '5', '1']);
+    expect(useCapture.getState().readTally).toMatchObject({ confirmed: 1, fixed: 0 });
+    expect(useCapture.getState().readsSinceBlind).toBe(1);
+  });
+
+  it('fixes a dart that wasn’t one', async () => {
+    await render(<LabelVisit />);
+    await fireEvent.press(screen.getByTestId('read-dart-2'));
+    expect(screen.getByTestId('read-fix')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('read-remove'));
+    expect(screen.getByTestId('read-total')).toHaveTextContent('65');
+    expect(screen.getByTestId('read-save')).toHaveTextContent('Save, snap next');
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('read-save'));
+    });
+    const [item] = [...mockBox.values()];
+    expect(item!.label.darts.map((d) => d.value)).toEqual(['T20', '5']);
+    expect(item!.label.read!.darts).toHaveLength(3);
+    expect(useCapture.getState().readTally).toMatchObject({ confirmed: 0, fixed: 1 });
+  });
+
+  it('every tenth visit is a blind check; a disagreement asks whose values are right', async () => {
+    useCapture.setState({ readsSinceBlind: 9 });
+    await render(<LabelVisit />);
+    expect(screen.getByTestId('blind-note')).toBeOnTheScreen();
+    await enterValues(['T20', '20', '1']);
+    await fireEvent.press(screen.getByTestId('blind-reveal'));
+    expect(screen.getByTestId('blind-yours')).toHaveTextContent('T20 · 20 · 1');
+    expect(screen.getByTestId('blind-model')).toHaveTextContent('T20 · 5 · 1');
+    await fireEvent.press(screen.getByTestId('blind-theirs'));
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('read-save'));
+    });
+    const [item] = [...mockBox.values()];
+    expect(item!.label).toMatchObject({
+      labelMode: 'blind',
+      blind: { values: ['T20', '20', '1'], agreed: false, chose: 'model' },
+    });
+    expect(useCapture.getState().readsSinceBlind).toBe(0);
+    expect(useCapture.getState().readTally).toMatchObject({ blind: 1, agreed: 0 });
+  });
+
+  it('enters the values first when Lab didn’t say to read', async () => {
+    useCapture.setState({
+      session: { id: 'sess-1', startedAt: '2026-11-04T05:00:00.000Z', tags: [] },
+    });
+    await render(<LabelVisit />);
+    expect(screen.getByTestId('to-board')).toBeOnTheScreen();
+  });
 });
 
 it('saves a photo to label later and goes back to the camera', async () => {

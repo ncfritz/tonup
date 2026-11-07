@@ -25,7 +25,9 @@ import {
   StatusLine,
   useLabSessionIds,
 } from '@/features/capture-lab/SessionBits';
+import { fetchSessionPlan } from '@/features/capture-lab/labData';
 import { newSessionId, useCapture } from '@/features/capture-lab/store';
+import type { SessionPlan } from '@/features/capture-lab/visit';
 import { useSyncWithLab, type LabSync } from '@/features/capture-lab/syncLab';
 import { Button, Pressable, Screen, Text } from '@/ui';
 
@@ -99,11 +101,16 @@ export default function CaptureHome() {
   const tagText = (k: TagKey) => t(`session.tags.${k}`);
 
   const startSession = () => {
-    useCapture.getState().startSession({
-      id: newSessionId(new Date(), randomUUID()),
-      startedAt: new Date().toISOString(),
-      tags,
-    });
+    const id = newSessionId(new Date(), randomUUID());
+    useCapture.getState().startSession({ id, startedAt: new Date().toISOString(), tags });
+    // Lab's plan for it: its set, and whether the model reads its visits. Without an answer the
+    // values are entered first, as always.
+    const { labUrl } = useCapture.getState();
+    if (labUrl) {
+      void fetchSessionPlan(labUrl, id).then((r) => {
+        if (r.ok) useCapture.getState().setPlan(id, r.data);
+      });
+    }
     router.push('/session');
   };
   const endSession = () => {
@@ -187,8 +194,9 @@ export default function CaptureHome() {
                 {[t('home.photos', { count: current.visits }), ...session.tags].join(' · ')}
               </Text>
             </View>
-            <SplitChip split={'split' in current ? current.split : undefined} />
+            <SplitChip split={'split' in current ? current.split : session.plan?.split} />
           </View>
+          {session.plan ? <ReadsLine plan={session.plan} /> : null}
           <StatusBar counts={current} thick />
           <StandingLine s={current} labIds={labIds} />
           <View style={styles.counts}>
@@ -351,6 +359,33 @@ function Count({
   );
 }
 
+/** Whether the model reads this session's visits (Lab's plan), and how the reads have gone. */
+function ReadsLine({ plan }: { plan: SessionPlan }) {
+  const { t } = useTranslation('capture');
+  const tally = useCapture((c) => c.readTally);
+  const { reads } = plan;
+  if (!reads.on || !reads.model) {
+    return (
+      <Text variant="caption" tone="muted" testID="capture-reads">
+        {t('read.homeOff', { why: reads.why })}
+      </Text>
+    );
+  }
+  return (
+    <View style={styles.reads} testID="capture-reads">
+      <Text variant="bodyStrong">{t('read.homeOn', { model: reads.model })}</Text>
+      <Text variant="caption" tone="muted">
+        {t('read.homeOnHint', { every: reads.every })}
+      </Text>
+      <View style={styles.counts}>
+        <Count n={tally.confirmed} label={t('read.tallyConfirmed')} />
+        <Count n={tally.fixed} label={t('read.tallyFixed')} pending />
+        <Count n={tally.agreed} suffix={`/${tally.blind}`} label={t('read.tallyBlind')} />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create((theme) => ({
   status: {
     flexDirection: 'row',
@@ -373,6 +408,12 @@ const styles = StyleSheet.create((theme) => ({
     padding: theme.spacing.l,
     borderRadius: theme.radii.l,
     backgroundColor: theme.colors.surface,
+  },
+  reads: {
+    gap: theme.spacing.xxs,
+    padding: theme.spacing.s,
+    borderRadius: theme.radii.m,
+    backgroundColor: theme.colors.bg,
   },
   // The session being shot stands out by its fill.
   cardOn: { backgroundColor: theme.colors.accentSoft },
