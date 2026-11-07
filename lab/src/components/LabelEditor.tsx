@@ -10,6 +10,7 @@ import {
   MinusOutlined,
   PlusOutlined,
   RightOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import {
   App,
@@ -43,10 +44,11 @@ import {
 import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
 import { isTipless, measure } from '~/lib/conditions';
+import { alignGuess, type GuessSource } from '~/lib/guess';
 import { needsOf, type NeedTone } from '~/lib/needs';
 import { CORRECTED } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
-import { boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
+import { bedPath, boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
 import type { CaptureDetail } from '~/lib/queries';
 
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
@@ -78,6 +80,19 @@ const VALUE_OPTIONS = [
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 
+/** Where the beds a dart's value names are drawn (the darts' own blue is for the tips). */
+const BED = '#13c2c2';
+
+/** Where Auto-place's guess came from, as a line under its button. */
+function guessNote(from: GuessSource, photos: number): string {
+  if (from === 'model') return 'From where the model placed the board on the phone.';
+  if (from === 'session')
+    return `From ${photos} labelled photo${photos === 1 ? '' : 's'} nearest in time in this session.`;
+  if (from === 'similar')
+    return `From ${photos} labelled photo${photos === 1 ? '' : 's'} the same size (none in this session yet).`;
+  return 'A board square on in the middle: no labelled photos to go by yet.';
+}
+
 function initial(c: CaptureDetail): LabelInput {
   return {
     points: pointsMap(c.points),
@@ -100,6 +115,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const router = useRouter();
   const [label, setLabel] = useState<LabelInput>(() => initial(capture));
   const [selected, setSelected] = useState<Selected>(null);
+  // Board points Auto-place put down and nobody has moved yet: a guess to check, not a label.
+  const [guessed, setGuessed] = useState<ReadonlySet<CalibrationId>>(new Set());
+  const [showBeds, setShowBeds] = useState(true);
   const [mode, setMode] = useState<'move' | 'add'>('move');
   const [zoom, setZoom] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -134,6 +152,11 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     [label, measured, corrected, unlabelled],
   );
   const board = useMemo(() => boardDrawing(label.points, W, H), [label.points, W, H]);
+  // Where each dart should be, by its value, through the board's fit.
+  const beds = useMemo(
+    () => label.darts.map((d) => bedPath(d.entered, label.points, W, H)),
+    [label.darts, label.points, W, H],
+  );
   // What the model placed on the phone, drawn under the label (shown by default when corrected).
   const prefill = capture.prefill;
   const [showModel, setShowModel] = useState(() => !!prefill && !prefill.accepted);
@@ -221,8 +244,11 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   };
   const place = (target: Selected, p: ImagePoint) => {
     if (!target) return;
-    if (target.kind === 'point') update({ ...label, points: { ...label.points, [target.id]: p } });
-    else
+    if (target.kind === 'point') {
+      update({ ...label, points: { ...label.points, [target.id]: p } });
+      if (guessed.has(target.id))
+        setGuessed(new Set([...guessed].filter((id) => id !== target.id)));
+    } else
       update({
         ...label,
         darts: label.darts.map((d, i) => (i === target.idx ? { ...d, tip: p } : d)),
@@ -298,6 +324,19 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     setPanning(false);
     dragging.current = null;
   };
+
+  /** Puts the points not placed yet where the guess says, fitted to any already placed. */
+  const autoPlace = () => {
+    const add = alignGuess(capture.guess.points, label.points, W, H);
+    const ids = Object.keys(add) as CalibrationId[];
+    if (!ids.length) return;
+    update({ ...label, points: { ...label.points, ...add } });
+    setGuessed(new Set([...guessed, ...ids]));
+    setSelected(null);
+  };
+  /** Takes an auto-placed point as it is. */
+  const keepGuess = (id: CalibrationId) =>
+    setGuessed(new Set([...guessed].filter((g) => g !== id)));
 
   const setDart = (idx: number, change: Partial<LabelDart>) =>
     update({ ...label, darts: label.darts.map((d, i) => (i === idx ? { ...d, ...change } : d)) });
@@ -393,17 +432,23 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   >
                     {flag === 'error'
                       ? `${measured.fit?.errors[id]?.toFixed(0)} mm out: check it`
-                      : label.points[id]
-                        ? 'Placed ✓'
-                        : sel
-                          ? 'Click the photo to place it'
-                          : 'Not placed'}
+                      : guessed.has(id)
+                        ? 'Auto-placed: drag it onto the point'
+                        : label.points[id]
+                          ? 'Placed ✓'
+                          : sel
+                            ? 'Click the photo to place it'
+                            : 'Not placed'}
                   </Typography.Text>
                 </span>
               </button>
             );
-            // Still to place: a ribbon on its corner.
-            return label.points[id] ? (
+            // Still to place, or auto-placed and still to check: a ribbon on its corner.
+            return guessed.has(id) ? (
+              <Badge.Ribbon key={id} text="To check" color="gold">
+                {point}
+              </Badge.Ribbon>
+            ) : label.points[id] ? (
               <div key={id}>{point}</div>
             ) : (
               <Badge.Ribbon key={id} text="To place" color="volcano">
@@ -412,6 +457,31 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
             );
           })}
           <div className={styles.pointsFoot}>
+            {CALIBRATION_IDS.some((id) => !label.points[id]) ? (
+              <div style={{ marginTop: 8 }}>
+                <Button icon={<ThunderboltOutlined />} onClick={autoPlace}>
+                  Auto-place{' '}
+                  {CALIBRATION_IDS.some((id) => label.points[id]) ? 'the rest' : 'points'}
+                </Button>
+                <Typography.Paragraph type="secondary" style={{ margin: '4px 0 0', fontSize: 12 }}>
+                  {guessNote(capture.guess.from, capture.guess.photos)} A starting point: drag each
+                  onto its spot.
+                  {CALIBRATION_IDS.some((id) => label.points[id])
+                    ? ' Fitted to the points already placed.'
+                    : ' Place one or two first for a closer guess.'}
+                </Typography.Paragraph>
+              </div>
+            ) : null}
+            {selected?.kind === 'point' && guessed.has(selected.id) ? (
+              <Button
+                size="small"
+                type="link"
+                style={{ paddingLeft: 0, marginTop: 8 }}
+                onClick={() => keepGuess(selected.id)}
+              >
+                {KEYPOINT_LABELS[selected.id]} is on its spot
+              </Button>
+            ) : null}
             {selected?.kind === 'point' && label.points[selected.id] ? (
               <Button
                 size="small"
@@ -421,6 +491,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   const points = { ...label.points };
                   delete points[selected.id];
                   update({ ...label, points });
+                  keepGuess(selected.id);
                 }}
               >
                 Clear {KEYPOINT_LABELS[selected.id]} (not visible in the photo)
@@ -651,6 +722,22 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                         ))}
                       </g>
                     ) : null}
+                    {showBeds
+                      ? beds.map((d, idx) =>
+                          d ? (
+                            <path
+                              key={idx}
+                              d={d}
+                              fill={BED}
+                              fillRule="evenodd"
+                              fillOpacity={isSel({ kind: 'dart', idx }) ? 0.55 : 0.3}
+                              stroke={BED}
+                              strokeWidth={r / 8}
+                              pointerEvents="none"
+                            />
+                          ) : null,
+                        )
+                      : null}
                     {board ? (
                       <path
                         d={`${board.rings} ${board.wires}`}
@@ -678,8 +765,9 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                             cy={p.y * H}
                             r={r * (sel ? 1.3 : 1)}
                             fill="rgba(14,18,23,0.35)"
-                            stroke={MARK.label}
+                            stroke={guessed.has(id) ? MARK.wire : MARK.label}
                             strokeWidth={r / (sel ? 2.5 : 3.5)}
+                            strokeDasharray={guessed.has(id) ? `${r / 2} ${r / 3}` : undefined}
                           />
                           <text
                             x={p.x * W + r * 1.5}
@@ -766,6 +854,11 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                 Scroll to zoom, drag the photo to move around
               </Typography.Text>
             )}
+            {board && beds.some(Boolean) ? (
+              <Checkbox checked={showBeds} onChange={(e) => setShowBeds(e.target.checked)}>
+                <span style={{ color: BED }}>■</span> Where the darts should be
+              </Checkbox>
+            ) : null}
             {prefill ? (
               <Checkbox checked={showModel} onChange={(e) => setShowModel(e.target.checked)}>
                 <span style={{ color: MODEL }}>✕</span> What {prefill.model} placed
@@ -938,25 +1031,23 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
               )}
             </div>
             <Flex vertical gap={8}>
-              <Button
-                block
-                type="primary"
-                loading={saving}
+              <SaveButton
+                unchecked={guessed.size}
+                onSave={() => save(false)}
                 disabled={!dirty}
-                onClick={() => save(false)}
+                loading={saving}
               >
                 Save label
-              </Button>
+              </SaveButton>
               {capture.nextReviewId ? (
-                <Button
-                  block
-                  type="primary"
-                  loading={saving}
+                <SaveButton
+                  unchecked={guessed.size}
+                  onSave={() => save(true)}
                   disabled={!dirty}
-                  onClick={() => save(true)}
+                  loading={saving}
                 >
                   Save, next to review
-                </Button>
+                </SaveButton>
               ) : null}
               {capture.review?.includes(CORRECTED) && !dirty ? (
                 <Button block onClick={looksRight}>
@@ -1025,6 +1116,48 @@ function Halo({ x, y, r, tone }: { x: number; y: number; r: number; tone: NeedTo
       fillOpacity={0.4}
       pointerEvents="none"
     />
+  );
+}
+
+/**
+ * Saving asks first while auto-placed points haven't been moved or kept: they're a guess, and
+ * a guess saved as a label teaches the model the wrong board. With none, it saves on the click.
+ */
+function SaveButton({
+  unchecked,
+  onSave,
+  disabled,
+  loading,
+  children,
+}: {
+  unchecked: number;
+  onSave: () => void;
+  disabled: boolean;
+  loading: boolean;
+  children: ReactNode;
+}) {
+  const button = (
+    <Button
+      block
+      type="primary"
+      loading={loading}
+      disabled={disabled}
+      onClick={unchecked ? undefined : onSave}
+    >
+      {children}
+    </Button>
+  );
+  if (!unchecked || disabled) return button;
+  return (
+    <Popconfirm
+      title={`${unchecked} auto-placed point${unchecked === 1 ? '' : 's'} not checked`}
+      description="Each is a guess until it's dragged onto its spot. Save anyway?"
+      okText="Save anyway"
+      cancelText="Check them"
+      onConfirm={onSave}
+    >
+      {button}
+    </Popconfirm>
   );
 }
 

@@ -16,6 +16,7 @@ import {
 } from 'drizzle-orm';
 
 import { db } from './db/client';
+import { defaultPoints, medianPoints, nearest, type GuessPoints, type PointGuess } from './guess';
 import { CORRECTED } from './prefill';
 import {
   captures,
@@ -368,6 +369,8 @@ export interface CaptureDetail extends CaptureCard {
   nextReviewId: string | null;
   /** What the model pre-filled on the phone and how much of it the player kept. */
   prefill: CapturePrefill | null;
+  /** A first guess at the board points, for Auto-place (guess.ts). */
+  guess: PointGuess;
 }
 
 export interface CapturePrefill {
@@ -541,7 +544,74 @@ export function getCapture(id: string): CaptureDetail | null {
     nextId: neighbour('next'),
     nextReviewId: nextReview,
     prefill: prefillOf(c.id, c.labelId ? (darts.get(c.labelId)?.length ?? 0) : 0),
+    guess: pointGuess(c),
   };
+}
+
+/**
+ * A first guess at a photo's board points (guess.ts), best source first: the board the model
+ * placed on the phone; else the median of the labelled photos nearest in time in its session
+ * (the phone tends to stay put through a session); else of other labelled photos the same size;
+ * else a board square on in the middle.
+ */
+function pointGuess(c: {
+  id: string;
+  sessionId: string;
+  width: number;
+  height: number;
+  takenAt: Date;
+}): PointGuess {
+  const d = db();
+  const model = d
+    .select({ kind: prefillPoints.kind, x: prefillPoints.x, y: prefillPoints.y })
+    .from(prefillPoints)
+    .where(and(eq(prefillPoints.captureId, c.id), ne(prefillPoints.kind, 'tip')))
+    .all();
+  if (model.length >= 4) {
+    return {
+      points: Object.fromEntries(model.map((p) => [p.kind, { x: p.x, y: p.y }])),
+      from: 'model',
+      photos: 1,
+    };
+  }
+  const labelled = (where: ReturnType<typeof and>) => {
+    const rows = d
+      .select({
+        id: captures.id,
+        takenAt: captures.takenAt,
+        kind: labelPoints.kind,
+        x: labelPoints.x,
+        y: labelPoints.y,
+      })
+      .from(captures)
+      .innerJoin(labelPoints, eq(labelPoints.labelId, captures.labelId))
+      .where(and(eq(captures.status, 'labelled'), ne(captures.id, c.id), where))
+      .all();
+    const byPhoto = new Map<string, { takenAt: number; points: GuessPoints }>();
+    for (const r of rows) {
+      const e = byPhoto.get(r.id) ?? { takenAt: r.takenAt.getTime(), points: {} };
+      e.points[r.kind as keyof GuessPoints] = { x: r.x, y: r.y };
+      byPhoto.set(r.id, e);
+    }
+    return nearest([...byPhoto.values()], c.takenAt.getTime());
+  };
+  const session = labelled(eq(captures.sessionId, c.sessionId));
+  if (session.length) {
+    return {
+      points: medianPoints(session.map((p) => p.points)),
+      from: 'session',
+      photos: session.length,
+    };
+  }
+  const similar = labelled(and(eq(captures.width, c.width), eq(captures.height, c.height)));
+  if (similar.length) {
+    return {
+      points: medianPoints(similar.map((p) => p.points)),
+      from: 'similar',
+      photos: similar.length,
+    };
+  }
+  return { points: defaultPoints(c.width, c.height), from: 'default', photos: 0 };
 }
 
 export interface SessionRow {
