@@ -170,6 +170,27 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     });
     return [...out.values()];
   }, [label.darts, label.points, W, H]);
+  // The part of the photo in view (photo pixels), so a bed's value can stay on screen when
+  // zoomed in: its label is held inside this, clear of the zoom pill at the bottom.
+  const [view, setView] = useState<{
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+    unit: number;
+  } | null>(null);
+  const readView = () => {
+    const el = frame.current;
+    if (!el || !el.scrollWidth) return;
+    const unit = W / el.scrollWidth;
+    setView({
+      x0: el.scrollLeft * unit,
+      y0: el.scrollTop * unit,
+      x1: (el.scrollLeft + el.clientWidth) * unit,
+      y1: (el.scrollTop + el.clientHeight) * unit,
+      unit,
+    });
+  };
   /** The bed under the pointer: drawn as an outline only, to see where the tip goes. */
   const [hoverBed, setHoverBed] = useState<string | null>(null);
   // What the model placed on the phone, drawn under the label (shown by default when corrected).
@@ -205,6 +226,13 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     el.scrollTop = a.fy * el.scrollHeight - a.my;
     anchor.current = null;
   }, [zoom]);
+  useLayoutEffect(readView, [zoom, fit, W]);
+  useEffect(() => {
+    const el = frame.current;
+    if (!el) return;
+    el.addEventListener('scroll', readView, { passive: true });
+    return () => el.removeEventListener('scroll', readView);
+  });
   // The wheel zooms the photo instead of scrolling the page (a listener React can't make
   // non-passive). Trackpad pinches arrive as wheel events with ctrl held, and zoom the same way.
   useEffect(() => {
@@ -773,11 +801,22 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                           // A pill in the bed's colour, the value on it.
                           const h = r * 2.2;
                           const w = b.value.length * r * 1.05 + r * 1.4;
+                          // Zoomed in, held inside the view (off the zoom pill: 72 px up).
+                          const pad = r * 0.5;
+                          const keep = (v: number, lo: number, hi: number) =>
+                            lo > hi ? v : Math.min(hi, Math.max(lo, v));
+                          const held = zoom > 1 ? view : null;
+                          const x = held
+                            ? keep(b.at.x, held.x0 + w / 2 + pad, held.x1 - w / 2 - pad)
+                            : b.at.x;
+                          const y = held
+                            ? keep(b.at.y, held.y0 + h / 2 + pad, held.y1 - h / 2 - 72 * held.unit)
+                            : b.at.y;
                           return (
                             <g key={b.value} pointerEvents="none">
                               <rect
-                                x={b.at.x - w / 2}
-                                y={b.at.y - h / 2}
+                                x={x - w / 2}
+                                y={y - h / 2}
                                 width={w}
                                 height={h}
                                 rx={h / 2}
@@ -786,8 +825,8 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                                 strokeWidth={r / 6}
                               />
                               <text
-                                x={b.at.x}
-                                y={b.at.y}
+                                x={x}
+                                y={y}
                                 fontSize={r * 1.5}
                                 fontWeight={700}
                                 textAnchor="middle"
