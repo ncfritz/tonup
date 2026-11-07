@@ -221,8 +221,20 @@ Tables (columns, no JSON blobs except run parameters):
 | L3  | `ml/` changes; runner, Runs and Run pages; snapshots; models registered from training runs                                                     | A DeepDarts baseline started from Lab finishes on the M1 Pro and registers a candidate          |
 | L4  | Verification runs, Verify page, Models page (active, compare, download), Overview coverage                                                     | Two models compared on one test snapshot, with the breakdown by condition                       |
 | L5  | Model pull into Capture and pre-filling; "To review" queue of flagged and corrected labels                                                     | A labelled visit is mostly confirming what the model placed                                     |
+| L6  | Model reads (planned, below): the model proposes the values too on training sessions; blind checks; Lab settings and measures                  | Blind checks agree on 95% of visits and reads are fixed less than reads are confirmed           |
 
 Before L3, time a short run on the M1 Pro (`--limit 2000 --epochs 1`) to set the default epochs and DeepDarts sample.
+
+## Model reads (planned, L6)
+
+Once the active model is good enough, it reads the whole visit on the phone (board, tips and values) and the player confirms or fixes it, instead of entering the values first. Mockups: the Ton Up Lab mockups canvas, rows "TU Capture — the model reads the visit" and "Lab — tracking model reads and blind checks".
+
+- **Only on training sessions.** Val and verify sessions are never read: their values are always entered first, so verification isn't the model grading itself, and val (which picks the checkpoint a run keeps) isn't biased toward the model either. The phone asks Lab for a session's set and whether reads are on when the session starts (a new endpoint; today the phone doesn't know the set).
+- **Turned on in Lab** (Overview › Model reads: Off / Training sessions), and only while the active model meets the visit bar (90%) on verify.
+- **Blind checks:** one visit in N (default 10) is scored first, the read shown after. A disagreement is resolved on the phone (I was right / the model was right / fix it) and always goes to To review. Reads pause if blind checks agree on fewer than 95% of the last 50.
+- **On the phone:** the read screen shows the board, the numbered tips and each dart's value with how sure the model is (unsure darts amber, with why); **Looks right, snap next**, **Enter it myself** (today's flow), **Label later**. Tapping a dart zooms onto it with its bed and the neighbour outlined: the read, the neighbour, Other… (keypad), Bounce-out, Not a dart, On the wire, or drag the tip.
+- **The label records how it was made:** entered, read and confirmed, read and fixed, or blind check, with the model's read (values as well as board and tips) and the time spent. Lab stores it, shows it on the capture page (a tag, the read beside the label in the darts table, a "How it was labelled" timeline), filters Captures by it, and puts fixed reads in To review.
+- **Measures on Overview:** reads confirmed and fixed, blind-check agreement over time against the pause line, seconds per visit read vs by hand, and what gets fixed (tips moved, values changed, darts added or removed, board re-marked). Values changed is the one that says whether reads can be trusted.
 
 ## Shipping a model in Ton Up
 
