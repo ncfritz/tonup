@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { bedLabel, bedPath } from './overlay';
+import { bedLabel, bedPath, bedSamples, inViewSpot } from './overlay';
 import { defaultPoints } from './guess';
 
 // A board square on in a 400 × 400 photo: 1 mm is 120/170 px, the bull at (200, 200).
@@ -39,5 +39,26 @@ describe('bedLabel', () => {
     expect(bull.text).toBe('Bull');
     expect(Math.hypot(bull.x - 200, bull.y - 200)).toBeLessThan(40);
     expect(bedLabel('Miss', points, 400, 400)).toBeNull();
+  });
+});
+
+describe('inViewSpot', () => {
+  const t20 = bedSamples('T20', points, 400, 400);
+  it('puts the value in the part of the bed in view', () => {
+    // A view over the right half of the treble 20 only.
+    const view = { x0: 200, y0: 0, x1: 400, y1: 400 };
+    const at = inViewSpot(t20, view)!;
+    expect(at.x).toBeGreaterThanOrEqual(200);
+    const mm = Math.hypot(at.x - 200, at.y - 200) * (170 / 120);
+    expect(mm).toBeGreaterThan(99);
+    expect(mm).toBeLessThan(107);
+  });
+  it('keeps a single in one of its beds, not between them', () => {
+    const at = inViewSpot(bedSamples('20', points, 400, 400), { x0: 0, y0: 0, x1: 400, y1: 400 })!;
+    const mm = Math.hypot(at.x - 200, at.y - 200) * (170 / 120);
+    expect(mm < 99 || mm > 107).toBe(true);
+  });
+  it('is null with none of the bed in view', () => {
+    expect(inViewSpot(t20, { x0: 0, y0: 300, x1: 100, y1: 400 })).toBeNull();
   });
 });

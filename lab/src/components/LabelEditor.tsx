@@ -48,7 +48,14 @@ import { alignGuess, type GuessSource } from '~/lib/guess';
 import { needsOf, type NeedTone } from '~/lib/needs';
 import { CORRECTED } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
-import { bedLabel, bedPath, boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
+import {
+  bedLabel,
+  bedPath,
+  bedSamples,
+  boardDrawing,
+  inViewSpot,
+  KEYPOINT_LABELS,
+} from '~/lib/overlay';
 import type { CaptureDetail } from '~/lib/queries';
 
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
@@ -157,7 +164,13 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const beds = useMemo(() => {
     const out = new Map<
       string,
-      { value: string; d: string; at: { x: number; y: number }; darts: number[] }
+      {
+        value: string;
+        d: string;
+        at: { x: number; y: number };
+        samples: { x: number; y: number }[];
+        darts: number[];
+      }
     >();
     label.darts.forEach((dart, idx) => {
       if (!dart.entered) return;
@@ -166,7 +179,10 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       if (had) return void had.darts.push(idx);
       const d = bedPath(value, label.points, W, H);
       const at = bedLabel(value, label.points, W, H);
-      if (d && at) out.set(value, { value, d, at, darts: [idx] });
+      if (d && at) {
+        const samples = bedSamples(value, label.points, W, H);
+        out.set(value, { value, d, at, samples, darts: [idx] });
+      }
     });
     return [...out.values()];
   }, [label.darts, label.points, W, H]);
@@ -801,17 +817,38 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                           // A pill in the bed's colour, the value on it.
                           const h = r * 2.2;
                           const w = b.value.length * r * 1.05 + r * 1.4;
-                          // Zoomed in, held inside the view (off the zoom pill: 72 px up).
+                          // Zoomed in: in the middle of the part of the bed in view, the whole pill
+                          // in view and above the zoom pill's strip (72 px); failing that, beside the
+                          // zoom pill; failing that (a sliver at the edge), on the sliver.
+                          // With none of the bed in view, held at the view's edge by its usual spot.
                           const pad = r * 0.5;
                           const keep = (v: number, lo: number, hi: number) =>
                             lo > hi ? v : Math.min(hi, Math.max(lo, v));
                           const held = zoom > 1 ? view : null;
-                          const x = held
-                            ? keep(b.at.x, held.x0 + w / 2 + pad, held.x1 - w / 2 - pad)
-                            : b.at.x;
-                          const y = held
-                            ? keep(b.at.y, held.y0 + h / 2 + pad, held.y1 - h / 2 - 72 * held.unit)
-                            : b.at.y;
+                          let x = b.at.x;
+                          let y = b.at.y;
+                          if (held) {
+                            const clear = {
+                              x0: held.x0 + w / 2 + pad,
+                              x1: held.x1 - w / 2 - pad,
+                              y0: held.y0 + h / 2 + pad,
+                              y1: held.y1 - h / 2 - 72 * held.unit,
+                            };
+                            // The zoom pill's box (about 150 × 60 px, bottom middle), grown by
+                            // half the value's pill: no centre in there.
+                            const mid = (held.x0 + held.x1) / 2;
+                            const offPill = b.samples.filter(
+                              (q) =>
+                                Math.abs(q.x - mid) > 75 * held.unit + w / 2 ||
+                                q.y < held.y1 - 60 * held.unit - h / 2,
+                            );
+                            const spot =
+                              inViewSpot(b.samples, clear) ??
+                              inViewSpot(offPill, { ...clear, y1: held.y1 - h / 2 - pad }) ??
+                              inViewSpot(b.samples, held);
+                            x = spot ? spot.x : keep(b.at.x, clear.x0, clear.x1);
+                            y = spot ? spot.y : keep(b.at.y, clear.y0, clear.y1);
+                          }
                           return (
                             <g key={b.value} pointerEvents="none">
                               <rect

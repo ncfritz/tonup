@@ -114,6 +114,70 @@ export function bedLabel(
   return { x: q.x * width, y: q.y * height, text: v };
 }
 
+/**
+ * Points spread evenly over the bed an entered value names, in photo pixels: for putting its
+ * value inside the part of the bed in view when zoomed (both single beds for a single). Empty
+ * where bedPath draws nothing.
+ */
+export function bedSamples(
+  entered: string | null,
+  points: Points,
+  width: number,
+  height: number,
+): { x: number; y: number }[] {
+  if (!entered) return [];
+  const fit = fitBoard(points);
+  if (!fit) return [];
+  const out: { x: number; y: number }[] = [];
+  const add = (r1: number, r2: number, from: number, to: number, n = 10) => {
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++) {
+        const q = applyHomography(
+          fit.toImage,
+          polar(r1 + ((r2 - r1) * (i + 0.5)) / n, from + ((to - from) * (j + 0.5)) / n),
+        );
+        out.push({ x: q.x * width, y: q.y * height });
+      }
+  };
+  const v = normaliseValue(entered);
+  if (v === 'Bull') add(0, R.innerBull, 0, 360);
+  else if (v === '25') add(R.innerBull, R.outerBull, 0, 360, 14);
+  else {
+    const m = /^([DT]?)(\d{1,2})$/.exec(v);
+    const n = m ? Number(m[2]) : NaN;
+    if (!m || n < 1 || n > 20) return [];
+    const deg = segmentCentreDegrees(n);
+    const [a, b] = [deg - 9, deg + 9];
+    if (m[1] === 'T') add(R.trebleInner, R.trebleOuter, a, b);
+    else if (m[1] === 'D') add(R.doubleInner, R.doubleOuter, a, b);
+    else {
+      add(R.outerBull, R.trebleInner, a, b, 14);
+      add(R.trebleOuter, R.doubleInner, a, b, 14);
+    }
+  }
+  return out;
+}
+
+/**
+ * Where a bed's value goes when zoomed in: in the part of the bed inside the view, at the
+ * sample nearest that part's middle (so it stays in the bed even when the part is curved or
+ * split, as a single's two beds are). Null when none of the bed is in view.
+ */
+export function inViewSpot(
+  samples: readonly { x: number; y: number }[],
+  view: { x0: number; y0: number; x1: number; y1: number },
+): { x: number; y: number } | null {
+  const seen = samples.filter(
+    (p) => p.x >= view.x0 && p.x <= view.x1 && p.y >= view.y0 && p.y <= view.y1,
+  );
+  if (!seen.length) return null;
+  const cx = seen.reduce((s, p) => s + p.x, 0) / seen.length;
+  const cy = seen.reduce((s, p) => s + p.y, 0) / seen.length;
+  return seen.reduce((best, p) =>
+    Math.hypot(p.x - cx, p.y - cy) < Math.hypot(best.x - cx, best.y - cy) ? p : best,
+  );
+}
+
 export const KEYPOINT_LABELS: Record<CalibrationId, string> = {
   cal20: '5/20',
   cal6: '13/6',
