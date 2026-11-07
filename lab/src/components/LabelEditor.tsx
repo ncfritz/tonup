@@ -46,7 +46,7 @@ import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } fr
 import { isTipless, measure, normaliseValue } from '~/lib/conditions';
 import { alignGuess, type GuessSource } from '~/lib/guess';
 import { needsOf, type NeedTone } from '~/lib/needs';
-import { MODEL_WRONG } from '~/lib/prefill';
+import { BLIND_DISAGREED, MODEL_WRONG, READ_FIXED } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
 import {
   bedLabel,
@@ -61,6 +61,7 @@ import type { CaptureDetail } from '~/lib/queries';
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
 import styles from './LabelEditor.module.css';
 import { MiniBoard } from './MiniBoard';
+import { HowLabelledBlock, HowLabelledTag } from './HowLabelled';
 import { PageHeader } from './PageHeader';
 import { ScorePicker } from './ScorePicker';
 import { SideTabs, type SideTab } from './SideTabs';
@@ -154,7 +155,15 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const r = Math.max(W, H) / 90 / zoom;
   const measured = useMemo(() => measure(label, W, H), [label, W, H]);
   // What needs a look, pinned to its dart or board point (a corrected label until Looks right).
-  const corrected = MODEL_WRONG.some((r) => capture.review?.includes(r)) && !dirty;
+  const review = capture.review ?? '';
+  const corrected =
+    !dirty && MODEL_WRONG.some((r) => review.includes(r))
+      ? review.includes(BLIND_DISAGREED)
+        ? ('blind' as const)
+        : review.includes(READ_FIXED)
+          ? ('read' as const)
+          : ('corrected' as const)
+      : false;
   const unlabelled = capture.status === 'unlabelled' && !dirty;
   const needs = useMemo(
     () => needsOf(label, measured, corrected, unlabelled),
@@ -213,7 +222,13 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const [hoverBed, setHoverBed] = useState<string | null>(null);
   // What the model placed on the phone, drawn under the label (shown by default when corrected).
   const prefill = capture.prefill;
-  const [showModel, setShowModel] = useState(() => !!prefill && !prefill.accepted);
+  const [showModel, setShowModel] = useState(
+    () =>
+      !!prefill &&
+      (!prefill.accepted ||
+        capture.howLabelled?.read?.outcome === 'fixed' ||
+        capture.howLabelled?.blind?.agreed === false),
+  );
   const modelBoard = useMemo(
     () => (prefill ? boardDrawing(pointsMap(prefill.calibration), W, H) : null),
     [prefill, W, H],
@@ -649,26 +664,29 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       icon: <HistoryOutlined />,
       title: 'Label history',
       children: (
-        <Timeline
-          items={capture.history.map((h) => ({
-            color: h.current ? 'green' : 'gray',
-            content: (
-              <>
-                <b>Version {h.version}</b>
-                {h.current ? ' · current' : ''}
-                <br />
-                <Typography.Text type="secondary">
-                  {h.source === 'lab'
-                    ? 'Edited in Lab'
-                    : h.source === 'phone'
-                      ? 'From the phone'
-                      : 'Imported'}{' '}
-                  · {new Date(h.createdAt).toLocaleString()}
-                </Typography.Text>
-              </>
-            ),
-          }))}
-        />
+        <>
+          <HowLabelledBlock how={capture.howLabelled} />
+          <Timeline
+            items={capture.history.map((h) => ({
+              color: h.current ? 'green' : 'gray',
+              content: (
+                <>
+                  <b>Version {h.version}</b>
+                  {h.current ? ' · current' : ''}
+                  <br />
+                  <Typography.Text type="secondary">
+                    {h.source === 'lab'
+                      ? 'Edited in Lab'
+                      : h.source === 'phone'
+                        ? 'From the phone'
+                        : 'Imported'}{' '}
+                    · {new Date(h.createdAt).toLocaleString()}
+                  </Typography.Text>
+                </>
+              ),
+            }))}
+          />
+        </>
       ),
     },
   ];
@@ -681,6 +699,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
             Capture
             <SplitTag split={capture.split} />
             <StatusTag status={capture.status} />
+            <HowLabelledTag how={capture.howLabelled} />
           </Space>
         }
         extra={

@@ -201,6 +201,7 @@ Tables (columns, no JSON blobs except run parameters):
 | `GET /api/runs`, `GET /api/runs/:id` | Runs tab: the list, and a live run's epochs and step                                                                                                                                                                                                                   |
 | `POST /api/runs` (`kind: verify`)    | Verify or compare models (Models tab)                                                                                                                                                                                                                                  |
 | `POST /api/runs/:id/cancel`          | Cancel the live run (Runs tab)                                                                                                                                                                                                                                         |
+| `GET /api/sessions/:id/plan`         | A new session: its set, and whether the model reads its visits (Model reads)                                                                                                                                                                                           |
 
 ## Changes to `ml/`
 
@@ -221,11 +222,11 @@ Tables (columns, no JSON blobs except run parameters):
 | L3  | `ml/` changes; runner, Runs and Run pages; snapshots; models registered from training runs                                                     | A DeepDarts baseline started from Lab finishes on the M1 Pro and registers a candidate          |
 | L4  | Verification runs, Verify page, Models page (active, compare, download), Overview coverage                                                     | Two models compared on one test snapshot, with the breakdown by condition                       |
 | L5  | Model pull into Capture and pre-filling; "To review" queue of flagged and corrected labels                                                     | A labelled visit is mostly confirming what the model placed                                     |
-| L6  | Model reads (planned, below): the model proposes the values too on training sessions; blind checks; Lab settings and measures                  | Blind checks agree on 95% of visits and reads are fixed less than reads are confirmed           |
+| L6  | Model reads (below): the model proposes the values too on training sessions; blind checks; Lab settings and measures                           | Blind checks agree on 95% of visits and reads are fixed less than reads are confirmed           |
 
 Before L3, time a short run on the M1 Pro (`--limit 2000 --epochs 1`) to set the default epochs and DeepDarts sample.
 
-## Model reads (planned, L6)
+## Model reads (L6)
 
 Once the active model is good enough, it reads the whole visit on the phone (board, tips and values) and the player confirms or fixes it, instead of entering the values first. Mockups: the Ton Up Lab mockups canvas, rows "TU Capture — the model reads the visit" and "Lab — tracking model reads and blind checks".
 
@@ -234,6 +235,7 @@ Once the active model is good enough, it reads the whole visit on the phone (boa
 - **Blind checks:** one visit in N (default 10) is scored first, the read shown after. A disagreement is resolved on the phone (I was right / the model was right / fix it) and always goes to To review. Reads pause if blind checks agree on fewer than 95% of the last 50.
 - **On the phone:** the read screen shows the board, the numbered tips and each dart's value with how sure the model is (unsure darts amber, with why); **Looks right, snap next**, **Enter it myself** (today's flow), **Label later**. Tapping a dart zooms onto it with its bed and the neighbour outlined: the read, the neighbour, Other… (keypad), Bounce-out, Not a dart, On the wire, or drag the tip.
 - **The label records how it was made:** entered, read and confirmed, read and fixed, or blind check, with the model's read (values as well as board and tips) and the time spent. Lab stores it, shows it on the capture page (a tag, the read beside the label in the darts table, a "How it was labelled" timeline), filters Captures by it, and puts fixed reads in To review.
+- **Built:** Lab: `lib/reads.ts` (settings in `settings` as `readsMode` and `readsEvery`; `sessionPlan`; `checkRead` pairs the read's darts with the label's by nearest tip on the board, within 25 mm, and counts values changed, tips moved more than 3 mm, darts added or removed, wires marked and the board re-marked; `blindAgreement` over the last 50); tables `reads`, `read_darts`, `blind_darts` and `captures.label_mode` / `label_seconds` (migration 0005); review reasons "read fixed" and "blind check disagreed" lead the queue beside "corrected from model", and Looks right clears all three; `GET/PUT /api/settings/reads`; Overview › Model reads (`ReadsSection`); the capture page's tag and "How it was labelled" (`HowLabelled`); Captures' "Labelled any way" filter (`?labelled=entered|read|confirmed|fixed|blind`). Capture: `visit.ts` (`readOf` takes up to three tips, most confident first, sure at 0.6 and not near a wire; `planVisit`, `startRead`, `startBlind`, `revealRead`, `chooseMine`, `chooseModel`, `setValue`, `removeDart`, `enterMyself`, `alternatives`), the read and disagree steps in `label.tsx`, the plan fetched on New session (`fetchSessionPlan`), `readsSinceBlind` and the session's `readTally` in the store, and the reads line on Home. The phone reads only with the model version Lab names; a draft labelled later uses its session's plan.
 - **Measures on Overview:** reads confirmed and fixed, blind-check agreement over time against the pause line, seconds per visit read vs by hand, and what gets fixed (tips moved, values changed, darts added or removed, board re-marked). Values changed is the one that says whether reads can be trusted.
 
 ## Shipping a model in Ton Up

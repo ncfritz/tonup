@@ -1,6 +1,7 @@
 import { Overview } from '~/components/Overview';
 import { deepdartsSummary } from '~/lib/deepdarts';
 import { labelledPerWeek, overviewCounts, prefillStats } from '~/lib/queries';
+import { readsOverview } from '~/lib/reads';
 import { labStatus } from '~/lib/status';
 import { coverage, coverageGrid, GRID_THIN, modelProgress } from '~/lib/verify';
 
@@ -20,6 +21,7 @@ export default function OverviewPage() {
       weeks={labelledPerWeek()}
       grid={coverageGrid('angle', 'light')}
       gridThin={GRID_THIN}
+      reads={readsOverview()}
     />
   );
 }

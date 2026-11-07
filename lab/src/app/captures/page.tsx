@@ -3,9 +3,11 @@ import {
   hitCounts,
   listCaptures,
   listCaptureSessions,
+  LABELLED_HOW,
   listSessions,
   viewCounts,
   type CaptureFilter,
+  type LabelledHow,
 } from '~/lib/queries';
 import { coverage } from '~/lib/verify';
 
@@ -29,6 +31,7 @@ export default async function CapturesPage({ searchParams }: { searchParams: Pro
       status === 'rejected'
         ? status
         : undefined,
+    labelled: LABELLED_HOW.find((h) => h === one(q.labelled)) as LabelledHow | undefined,
     page: Number(one(q.page) ?? 1) || 1,
   };
   const layout = one(q.layout) === 'sessions' ? 'sessions' : 'grid';

@@ -119,6 +119,20 @@ export function CaptureGallery({
             { value: 'rejected', label: 'Left out' },
           ]}
         />
+        <Select
+          allowClear
+          placeholder="Labelled any way"
+          style={{ minWidth: 190 }}
+          value={filter.labelled}
+          onChange={(v?: string) => go({ labelled: v })}
+          options={[
+            { value: 'entered', label: 'Entered by hand' },
+            { value: 'read', label: 'Read by the model' },
+            { value: 'confirmed', label: 'Read, confirmed' },
+            { value: 'fixed', label: 'Read, fixed' },
+            { value: 'blind', label: 'Blind check' },
+          ]}
+        />
       </div>
       <div className={styles.work}>
         <div className={styles.scroll}>

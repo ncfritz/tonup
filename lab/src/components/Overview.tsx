@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import type { DeepdartsSummary } from '~/lib/deepdarts';
 import type { OverviewCounts, PrefillStats, WeekCount } from '~/lib/queries';
+import type { ReadsOverview } from '~/lib/reads';
 import type { LabStatus } from '~/lib/status';
 import type { Coverage, CoverageGrid, ModelProgress } from '~/lib/verify';
 
@@ -14,6 +15,7 @@ import { Count, CountStrip, EdgePage, Panel, Panels, Section, TitleBar } from '.
 import { pct as percent } from './RunBits';
 import { CoverageHeatmap, MeasureChart, measureNote, WeeklyChart } from './OverviewCharts';
 import { CoverageChart, MEASURES, PrefillChart, ThinNote } from './VerifyCharts';
+import { ReadsSection } from './ReadsSection';
 import { SideTabs } from './SideTabs';
 
 /**
@@ -30,6 +32,7 @@ export function Overview({
   weeks,
   grid,
   gridThin,
+  reads,
 }: {
   status: LabStatus;
   counts: OverviewCounts;
@@ -38,6 +41,7 @@ export function Overview({
   coverage: Coverage[];
   prefill: PrefillStats[];
   weeks: WeekCount[];
+  reads: ReadsOverview;
   grid: CoverageGrid;
   gridThin: number;
 }) {
@@ -151,6 +155,8 @@ export function Overview({
           Sets are chosen by session, 80/10/10. Verify is never trained on.
         </Typography.Paragraph>
       </Section>
+
+      <ReadsSection reads={reads} />
 
       {/* Each measure across the models, on our verify photos, against its shipping bar. */}
       <Panels min={320}>

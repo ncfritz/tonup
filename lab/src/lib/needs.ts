@@ -26,7 +26,8 @@ export interface Needs {
 export function needsOf(
   label: LabelInput,
   m: Measured,
-  corrected: boolean,
+  /** The model went wrong: its pre-fill corrected, its read fixed, or a blind check disagreed. */
+  corrected: boolean | 'corrected' | 'read' | 'blind',
   /** Sent from Capture to label here, and not labelled yet. */
   unlabelled = false,
 ): Needs {
@@ -91,7 +92,12 @@ export function needsOf(
     list.push({
       key: 'corrected',
       tone: 'warning',
-      text: 'The model’s placement was corrected: check the label against the photo (the model’s is dashed)',
+      text:
+        corrected === 'read'
+          ? 'The model’s read was fixed on the phone: check the label against the photo (the read is dashed)'
+          : corrected === 'blind'
+            ? 'A blind check disagreed with the model’s read: check the values against the photo (the read is dashed)'
+            : 'The model’s placement was corrected: check the label against the photo (the model’s is dashed)',
       target: null,
     });
   }

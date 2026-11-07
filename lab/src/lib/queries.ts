@@ -25,8 +25,11 @@ import {
   labelPoints,
   labels,
   models,
+  blindDarts,
   prefillPoints,
   prefills,
+  readDarts,
+  reads,
   sessions,
   sessionTags,
   type SPLITS,
@@ -131,8 +134,23 @@ export interface CaptureFilter {
   /** Only captures whose label needs a look. */
   review?: boolean;
   status?: 'labelled' | 'values-only' | 'unlabelled' | 'rejected';
+  /** How the phone's label was made (capture-lab.md › Model reads). */
+  labelled?: LabelledHow;
   page?: number;
   pageSize?: number;
+}
+
+/** Entered first; the model's read (confirmed or fixed, or either); a blind check. */
+export const LABELLED_HOW = ['entered', 'read', 'confirmed', 'fixed', 'blind'] as const;
+export type LabelledHow = (typeof LABELLED_HOW)[number];
+
+function labelledWhere(how: LabelledHow) {
+  if (how === 'entered' || how === 'blind') return eq(captures.labelMode, how);
+  if (how === 'read') return eq(captures.labelMode, 'read');
+  return and(
+    eq(captures.labelMode, 'read'),
+    sql`exists (select 1 from ${reads} where ${reads.captureId} = ${captures.id} and ${reads.outcome} = ${how})`,
+  );
 }
 
 export interface CaptureCard {
@@ -156,6 +174,7 @@ function where(f: CaptureFilter) {
     f.sessionId ? eq(captures.sessionId, f.sessionId) : undefined,
     f.review ? and(isNotNull(captures.review), ne(captures.status, 'rejected')) : undefined,
     f.status ? eq(captures.status, f.status) : undefined,
+    f.labelled ? labelledWhere(f.labelled) : undefined,
   );
 }
 
@@ -373,6 +392,75 @@ export interface CaptureDetail extends CaptureCard {
   prefill: CapturePrefill | null;
   /** A first guess at the board points, for Auto-place (guess.ts). */
   guess: PointGuess;
+  /** How the phone's label was made, and the model's read if it read the visit. */
+  howLabelled: HowLabelled | null;
+}
+
+export interface HowLabelled {
+  mode: 'entered' | 'read' | 'blind';
+  seconds: number | null;
+  read: {
+    model: string;
+    outcome: 'confirmed' | 'fixed';
+    darts: { value: string; sure: boolean }[];
+    valuesChanged: number;
+    tipsMoved: number;
+    dartsAdded: number;
+    dartsRemoved: number;
+    wiresMarked: number;
+    boardKept: boolean;
+  } | null;
+  blind: { values: string[]; agreed: boolean; chose: 'mine' | 'model' | null } | null;
+}
+
+function howLabelledOf(c: {
+  id: string;
+  labelMode: HowLabelled['mode'] | null;
+  labelSeconds: number | null;
+}): HowLabelled | null {
+  if (!c.labelMode) return null;
+  const d = db();
+  const r = d.select().from(reads).where(eq(reads.captureId, c.id)).get();
+  const darts = r
+    ? d
+        .select({ value: readDarts.value, sure: readDarts.sure })
+        .from(readDarts)
+        .where(eq(readDarts.captureId, c.id))
+        .orderBy(asc(readDarts.idx))
+        .all()
+    : [];
+  const blind =
+    r && r.blindAgreed !== null
+      ? {
+          values: d
+            .select({ value: blindDarts.value })
+            .from(blindDarts)
+            .where(eq(blindDarts.captureId, c.id))
+            .orderBy(asc(blindDarts.idx))
+            .all()
+            .map((b) => b.value),
+          agreed: r.blindAgreed,
+          chose: r.blindChose,
+        }
+      : null;
+  return {
+    mode: c.labelMode,
+    seconds: c.labelSeconds,
+    read: r
+      ? {
+          model: r.model,
+          outcome: r.outcome,
+          darts,
+          valuesChanged: r.valuesChanged,
+          tipsMoved: r.tipsMoved,
+          dartsAdded: r.dartsAdded,
+          dartsRemoved: r.dartsRemoved,
+          wiresMarked: r.wiresMarked,
+          boardKept: r.boardKept,
+        }
+      : null,
+    blind,
+  };
 }
 
 export interface CapturePrefill {
@@ -547,6 +635,7 @@ export function getCapture(id: string): CaptureDetail | null {
     nextReviewId: nextReview,
     prefill: prefillOf(c.id, c.labelId ? (darts.get(c.labelId)?.length ?? 0) : 0),
     guess: pointGuess(c),
+    howLabelled: howLabelledOf(c),
   };
 }
 

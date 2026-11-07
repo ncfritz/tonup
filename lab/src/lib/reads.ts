@@ -242,3 +242,131 @@ export function sameValues(a: readonly string[], b: readonly string[]): boolean 
   const norm = (xs: readonly string[]) => xs.map(normaliseValue).sort().join(',');
   return norm(a) === norm(b);
 }
+
+export interface ReadsWeek {
+  week: number;
+  entered: number;
+  confirmed: number;
+  fixed: number;
+  blind: number;
+  /** Blind checks that agreed, of `blind`. */
+  agreed: number;
+}
+
+export interface ReadsOverview {
+  settings: ReadsSettings;
+  /** Whether a training session starting now would be read, and why not. */
+  status: SessionPlan['reads'];
+  agreement: BlindAgreement;
+  totals: { read: number; confirmed: number; fixed: number; blind: number; agreed: number };
+  /** Median seconds per visit: read (confirmed or fixed), and entered first. */
+  seconds: { read: number | null; entered: number | null };
+  fixes: {
+    valuesChanged: number;
+    tipsMoved: number;
+    wiresMarked: number;
+    dartsAdded: number;
+    dartsRemoved: number;
+    boardRemarked: number;
+  };
+  weeks: ReadsWeek[];
+}
+
+const DAY = 86_400_000;
+// 1970-01-01 was a Thursday: back to the Monday at 0.
+const mondayOf = (t: number) => {
+  const d = Math.floor(t / DAY);
+  return (d - ((d + 3) % 7)) * DAY;
+};
+
+const median = (xs: number[]) => {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m]! : Math.round((s[m - 1]! + s[m]!) / 2);
+};
+
+/** Overview › Model reads: the settings, whether reads are on, and how they've gone. */
+export function readsOverview(weeks = 10, now = Date.now()): ReadsOverview {
+  const d = db();
+  const rows = d
+    .select({
+      takenAt: captures.takenAt,
+      mode: captures.labelMode,
+      seconds: captures.labelSeconds,
+      outcome: reads.outcome,
+      agreed: reads.blindAgreed,
+      valuesChanged: reads.valuesChanged,
+      tipsMoved: reads.tipsMoved,
+      wiresMarked: reads.wiresMarked,
+      dartsAdded: reads.dartsAdded,
+      dartsRemoved: reads.dartsRemoved,
+      boardKept: reads.boardKept,
+    })
+    .from(captures)
+    .leftJoin(reads, eq(reads.captureId, captures.id))
+    .where(isNotNull(captures.labelMode))
+    .all();
+  const last = mondayOf(now);
+  const first = last - (weeks - 1) * 7 * DAY;
+  const byWeek: ReadsWeek[] = Array.from({ length: weeks }, (_, i) => ({
+    week: first + i * 7 * DAY,
+    entered: 0,
+    confirmed: 0,
+    fixed: 0,
+    blind: 0,
+    agreed: 0,
+  }));
+  const totals = { read: 0, confirmed: 0, fixed: 0, blind: 0, agreed: 0 };
+  const fixes = {
+    valuesChanged: 0,
+    tipsMoved: 0,
+    wiresMarked: 0,
+    dartsAdded: 0,
+    dartsRemoved: 0,
+    boardRemarked: 0,
+  };
+  const secs = { read: [] as number[], entered: [] as number[] };
+  for (const r of rows) {
+    const i = (mondayOf(r.takenAt.getTime()) - first) / (7 * DAY);
+    const w = i >= 0 && i < weeks ? byWeek[i] : undefined;
+    const isRead = r.mode === 'read' && r.outcome;
+    if (r.mode === 'blind' && r.agreed !== null) {
+      totals.blind++;
+      if (r.agreed) totals.agreed++;
+      if (w) {
+        w.blind++;
+        if (r.agreed) w.agreed++;
+      }
+    } else if (isRead) {
+      totals.read++;
+      totals[r.outcome!]++;
+      if (w) w[r.outcome!]++;
+    } else if (w) {
+      w.entered++;
+    }
+    if (r.seconds !== null) (isRead ? secs.read : secs.entered).push(r.seconds);
+    if (isRead && r.outcome === 'fixed') {
+      fixes.valuesChanged += r.valuesChanged ?? 0;
+      fixes.tipsMoved += r.tipsMoved ?? 0;
+      fixes.wiresMarked += r.wiresMarked ?? 0;
+      fixes.dartsAdded += r.dartsAdded ?? 0;
+      fixes.dartsRemoved += r.dartsRemoved ?? 0;
+      if (r.boardKept === false) fixes.boardRemarked++;
+    }
+  }
+  return {
+    settings: readsSettings(),
+    status: sessionPlan(TRAIN_PROBE).reads,
+    agreement: blindAgreement(),
+    totals,
+    seconds: { read: median(secs.read), entered: median(secs.entered) },
+    fixes,
+    weeks: byWeek,
+  };
+}
+
+/** A session ID that hashes to the training set and is never shot, to ask "would it be read?". */
+const TRAIN_PROBE = (() => {
+  for (let i = 0; ; i++) if (splitOf(`reads-probe-${i}`) === 'train') return `reads-probe-${i}`;
+})();
