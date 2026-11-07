@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { bedPath } from './overlay';
+import { bedLabel, bedPath } from './overlay';
 import { defaultPoints } from './guess';
 
 // A board square on in a 400 × 400 photo: 1 mm is 120/170 px, the bull at (200, 200).
@@ -26,5 +26,18 @@ describe('bedPath', () => {
     expect(bedPath('Miss', points, 400, 400)).toBeNull();
     expect(bedPath(null, points, 400, 400)).toBeNull();
     expect(bedPath('T20', { bull: points.bull }, 400, 400)).toBeNull();
+  });
+});
+
+describe('bedLabel', () => {
+  it('writes a segment value outside the board on its centre line, the bulls near the bull', () => {
+    const t20 = bedLabel('t20', points, 400, 400)!;
+    expect(t20.text).toBe('T20');
+    expect(t20.x).toBeCloseTo(200, 1);
+    expect(200 - t20.y).toBeGreaterThan(120);
+    const bull = bedLabel('50', points, 400, 400)!;
+    expect(bull.text).toBe('Bull');
+    expect(Math.hypot(bull.x - 200, bull.y - 200)).toBeLessThan(40);
+    expect(bedLabel('Miss', points, 400, 400)).toBeNull();
   });
 });

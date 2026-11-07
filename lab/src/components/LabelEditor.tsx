@@ -43,12 +43,12 @@ import {
 
 import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } from '@domain/camera';
 
-import { isTipless, measure } from '~/lib/conditions';
+import { isTipless, measure, normaliseValue } from '~/lib/conditions';
 import { alignGuess, type GuessSource } from '~/lib/guess';
 import { needsOf, type NeedTone } from '~/lib/needs';
 import { CORRECTED } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
-import { bedPath, boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
+import { bedLabel, bedPath, boardDrawing, KEYPOINT_LABELS } from '~/lib/overlay';
 import type { CaptureDetail } from '~/lib/queries';
 
 import { dartColour, MARK, pointsMap, ReviewTags, SplitTag, StatusTag } from './CaptureBits';
@@ -152,11 +152,26 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     [label, measured, corrected, unlabelled],
   );
   const board = useMemo(() => boardDrawing(label.points, W, H), [label.points, W, H]);
-  // Where each dart should be, by its value, through the board's fit.
-  const beds = useMemo(
-    () => label.darts.map((d) => bedPath(d.entered, label.points, W, H)),
-    [label.darts, label.points, W, H],
-  );
+  // Where each dart should be, by its value, through the board's fit: a bed per value (two
+  // darts in the T20 share one), with the value written by it.
+  const beds = useMemo(() => {
+    const out = new Map<
+      string,
+      { value: string; d: string; at: { x: number; y: number }; darts: number[] }
+    >();
+    label.darts.forEach((dart, idx) => {
+      if (!dart.entered) return;
+      const value = normaliseValue(dart.entered);
+      const had = out.get(value);
+      if (had) return void had.darts.push(idx);
+      const d = bedPath(value, label.points, W, H);
+      const at = bedLabel(value, label.points, W, H);
+      if (d && at) out.set(value, { value, d, at, darts: [idx] });
+    });
+    return [...out.values()];
+  }, [label.darts, label.points, W, H]);
+  /** The bed under the pointer: drawn as an outline only, to see where the tip goes. */
+  const [hoverBed, setHoverBed] = useState<string | null>(null);
   // What the model placed on the phone, drawn under the label (shown by default when corrected).
   const prefill = capture.prefill;
   const [showModel, setShowModel] = useState(() => !!prefill && !prefill.accepted);
@@ -723,20 +738,25 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                       </g>
                     ) : null}
                     {showBeds
-                      ? beds.map((d, idx) =>
-                          d ? (
+                      ? beds.map((b) => {
+                          const hover = hoverBed === b.value;
+                          const sel = b.darts.some((idx) => isSel({ kind: 'dart', idx }));
+                          // Hovered: no shading, a heavier outline, so the photo shows through.
+                          return (
                             <path
-                              key={idx}
-                              d={d}
+                              key={b.value}
+                              d={b.d}
                               fill={BED}
                               fillRule="evenodd"
-                              fillOpacity={isSel({ kind: 'dart', idx }) ? 0.55 : 0.3}
+                              fillOpacity={hover ? 0 : sel ? 0.55 : 0.3}
                               stroke={BED}
-                              strokeWidth={r / 8}
-                              pointerEvents="none"
+                              strokeWidth={hover ? r / 3 : r / 8}
+                              pointerEvents="all"
+                              onPointerEnter={() => setHoverBed(b.value)}
+                              onPointerLeave={() => setHoverBed(null)}
                             />
-                          ) : null,
-                        )
+                          );
+                        })
                       : null}
                     {board ? (
                       <path
@@ -748,6 +768,38 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                         pointerEvents="none"
                       />
                     ) : null}
+                    {showBeds
+                      ? beds.map((b) => {
+                          // A pill in the bed's colour, the value on it.
+                          const h = r * 2.2;
+                          const w = b.value.length * r * 1.05 + r * 1.4;
+                          return (
+                            <g key={b.value} pointerEvents="none">
+                              <rect
+                                x={b.at.x - w / 2}
+                                y={b.at.y - h / 2}
+                                width={w}
+                                height={h}
+                                rx={h / 2}
+                                fill={BED}
+                                stroke={MARK.ink}
+                                strokeWidth={r / 6}
+                              />
+                              <text
+                                x={b.at.x}
+                                y={b.at.y}
+                                fontSize={r * 1.5}
+                                fontWeight={700}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                fill={MARK.ink}
+                              >
+                                {b.value}
+                              </text>
+                            </g>
+                          );
+                        })
+                      : null}
                     {CALIBRATION_IDS.map((id) => {
                       const p = label.points[id];
                       if (!p) return null;
@@ -854,7 +906,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                 Scroll to zoom, drag the photo to move around
               </Typography.Text>
             )}
-            {board && beds.some(Boolean) ? (
+            {board && beds.length ? (
               <Checkbox checked={showBeds} onChange={(e) => setShowBeds(e.target.checked)}>
                 <span style={{ color: BED }}>■</span> Where the darts should be
               </Checkbox>

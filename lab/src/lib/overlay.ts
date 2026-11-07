@@ -87,6 +87,33 @@ export function bedPath(
   return `${sector(R.outerBull, R.trebleInner, a, b)} ${sector(R.trebleOuter, R.doubleInner, a, b)}`;
 }
 
+/**
+ * Where to write a highlighted bed's value, in photo pixels, and the value as written: just
+ * outside the double ring on the segment's centre line, where a board's numbers are; for the
+ * bulls, a little up and right of the bull. Null where bedPath draws nothing.
+ */
+export function bedLabel(
+  entered: string | null,
+  points: Points,
+  width: number,
+  height: number,
+): { x: number; y: number; text: string } | null {
+  if (!entered) return null;
+  const fit = fitBoard(points);
+  if (!fit) return null;
+  const v = normaliseValue(entered);
+  let at: { x: number; y: number };
+  if (v === 'Bull' || v === '25') at = polar(R.outerBull + 14, 45);
+  else {
+    const m = /^([DT]?)(\d{1,2})$/.exec(v);
+    const n = m ? Number(m[2]) : NaN;
+    if (!m || n < 1 || n > 20) return null;
+    at = polar(R.doubleOuter + 18, segmentCentreDegrees(n));
+  }
+  const q = applyHomography(fit.toImage, at);
+  return { x: q.x * width, y: q.y * height, text: v };
+}
+
 export const KEYPOINT_LABELS: Record<CalibrationId, string> = {
   cal20: '5/20',
   cal6: '13/6',
