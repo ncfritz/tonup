@@ -46,7 +46,7 @@ import { boardPointOf, CALIBRATION_IDS, type CalibrationId, type ImagePoint } fr
 import { isTipless, measure, normaliseValue } from '~/lib/conditions';
 import { alignGuess, type GuessSource } from '~/lib/guess';
 import { needsOf, type NeedTone } from '~/lib/needs';
-import { CORRECTED } from '~/lib/prefill';
+import { MODEL_WRONG } from '~/lib/prefill';
 import type { LabelDart, LabelInput } from '~/lib/labels';
 import {
   bedLabel,
@@ -154,7 +154,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
   const r = Math.max(W, H) / 90 / zoom;
   const measured = useMemo(() => measure(label, W, H), [label, W, H]);
   // What needs a look, pinned to its dart or board point (a corrected label until Looks right).
-  const corrected = !!capture.review?.includes(CORRECTED) && !dirty;
+  const corrected = MODEL_WRONG.some((r) => capture.review?.includes(r)) && !dirty;
   const unlabelled = capture.status === 'unlabelled' && !dirty;
   const needs = useMemo(
     () => needsOf(label, measured, corrected, unlabelled),
@@ -1184,7 +1184,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                   Save, next to review
                 </SaveButton>
               ) : null}
-              {capture.review?.includes(CORRECTED) && !dirty ? (
+              {MODEL_WRONG.some((r) => capture.review?.includes(r)) && !dirty ? (
                 <Button block onClick={looksRight}>
                   Looks right{capture.nextReviewId ? ', next' : ''}
                 </Button>

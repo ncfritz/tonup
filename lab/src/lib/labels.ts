@@ -43,6 +43,38 @@ export const captureFile = z.object({
     })
     .optional(),
   zoom: z.number().positive().optional(),
+  /**
+   * How the label was made (capture-lab.md › Model reads): entered first (the default), the
+   * model's read confirmed or fixed, or a blind check. Older phones send none.
+   */
+  labelMode: z.enum(['entered', 'read', 'blind']).optional(),
+  /** The model's read: each dart as it scored it, how sure, and its tip; in no particular order. */
+  read: z
+    .object({
+      model: z.string().min(1).max(40),
+      darts: z
+        .array(
+          z.object({
+            value: z.string().max(16),
+            sure: z.boolean(),
+            x: z.number().nullable().optional(),
+            y: z.number().nullable().optional(),
+          }),
+        )
+        .max(6),
+    })
+    .optional(),
+  /** A blind check: the values entered before the read was shown, and how it came out. */
+  blind: z
+    .object({
+      values: z.array(z.string().max(16)).max(6),
+      agreed: z.boolean(),
+      /** After a disagreement, whose values were kept. */
+      chose: z.enum(['mine', 'model']).optional(),
+    })
+    .optional(),
+  /** Seconds spent on the visit, photo to save. */
+  seconds: z.number().int().min(0).max(36000).optional(),
   deviceModel: z.string().max(80).optional(),
 });
 export type CaptureFile = z.infer<typeof captureFile>;

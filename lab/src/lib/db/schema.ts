@@ -11,6 +11,8 @@ import {
 } from 'drizzle-orm/sqlite-core';
 
 export const SPLITS = ['train', 'val', 'test'] as const;
+/** How a label was made on the phone (captures.labelMode). */
+export const LABEL_MODES = ['entered', 'read', 'blind'] as const;
 export const KEYPOINTS = ['cal20', 'cal6', 'cal3', 'cal11', 'bull'] as const;
 /** `unlabelled`: a photo Capture sent with "Label later", to label here; not in the dataset yet. */
 export const CAPTURE_STATUS = ['labelled', 'values-only', 'unlabelled', 'rejected'] as const;
@@ -58,6 +60,14 @@ export const captures = sqliteTable(
     status: text('status', { enum: CAPTURE_STATUS }).notNull(),
     /** The model that pre-filled the label on the phone, if any. */
     prefillModel: text('prefill_model'),
+    /**
+     * How the phone's label was made (capture-lab.md › Model reads): values entered first, the
+     * model's read confirmed or fixed, or a blind check (entered first, the read shown after).
+     * Null for imports and older phones.
+     */
+    labelMode: text('label_mode', { enum: LABEL_MODES }),
+    /** Seconds the player spent on the visit, photo to save. */
+    labelSeconds: integer('label_seconds'),
     /** The current label version's id. */
     labelId: integer('label_id'),
     /** Why the current label needs a look (comma-separated reasons), or null. */
@@ -285,4 +295,56 @@ export const prefillPoints = sqliteTable(
     y: real('y').notNull(),
   },
   (t) => [primaryKey({ columns: [t.captureId, t.kind, t.idx] })],
+);
+
+/**
+ * The model's read of a visit on the phone (capture-lab.md › Model reads), against the label the
+ * player saved (lib/reads.ts › checkRead). A blind check also keeps what the player entered first.
+ */
+export const reads = sqliteTable('reads', {
+  captureId: text('capture_id')
+    .primaryKey()
+    .references(() => captures.id, { onDelete: 'cascade' }),
+  model: text('model').notNull(),
+  /** Saved exactly as read (the board kept, every dart's value and tip), or fixed. */
+  outcome: text('outcome', { enum: ['confirmed', 'fixed'] }).notNull(),
+  valuesChanged: integer('values_changed').notNull(),
+  tipsMoved: integer('tips_moved').notNull(),
+  dartsAdded: integer('darts_added').notNull(),
+  dartsRemoved: integer('darts_removed').notNull(),
+  wiresMarked: integer('wires_marked').notNull(),
+  boardKept: integer('board_kept', { mode: 'boolean' }).notNull(),
+  /** A blind check: the player's values, entered before the read was shown, agreed with it. */
+  blindAgreed: integer('blind_agreed', { mode: 'boolean' }),
+  /** After a blind check that disagreed: whose values the player kept. */
+  blindChose: text('blind_chose', { enum: ['mine', 'model'] }),
+});
+
+/** Each dart of a read: what the model scored it, how sure, and where it put the tip. */
+export const readDarts = sqliteTable(
+  'read_darts',
+  {
+    captureId: text('capture_id')
+      .notNull()
+      .references(() => captures.id, { onDelete: 'cascade' }),
+    idx: integer('idx').notNull(),
+    value: text('value').notNull(),
+    sure: integer('sure', { mode: 'boolean' }).notNull(),
+    x: real('x'),
+    y: real('y'),
+  },
+  (t) => [primaryKey({ columns: [t.captureId, t.idx] })],
+);
+
+/** A blind check's values, as the player entered them before seeing the read. */
+export const blindDarts = sqliteTable(
+  'blind_darts',
+  {
+    captureId: text('capture_id')
+      .notNull()
+      .references(() => captures.id, { onDelete: 'cascade' }),
+    idx: integer('idx').notNull(),
+    value: text('value').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.captureId, t.idx] })],
 );

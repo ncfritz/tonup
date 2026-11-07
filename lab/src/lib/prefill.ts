@@ -9,6 +9,12 @@ import type { LabelInput } from './labels';
 
 /** Review reason for a label the player corrected from the model's pre-fill. */
 export const CORRECTED = 'corrected from model';
+/** Review reasons from model reads (lib/reads.ts): a read the player fixed, a blind check that disagreed. */
+export const READ_FIXED = 'read fixed';
+export const BLIND_DISAGREED = 'blind check disagreed';
+/** The reasons that lead the To review queue and that Looks right clears: the model went wrong. */
+export const MODEL_WRONG = [CORRECTED, READ_FIXED, BLIND_DISAGREED];
+
 /** The review reason a photo sent to label in Lab carries until it's labelled. */
 export const NOT_LABELLED = 'not labelled';
 

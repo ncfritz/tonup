@@ -10,6 +10,7 @@ import { and, eq, max } from 'drizzle-orm';
 import { measure } from './conditions';
 import { db, type LabDb } from './db/client';
 import {
+  blindDarts,
   captures,
   conditions,
   labelDarts,
@@ -17,11 +18,21 @@ import {
   prefills,
   labelPoints,
   labels,
+  readDarts,
+  reads,
   sessions,
   sessionTags,
 } from './db/schema';
 import { captureFile, labelFromFile, type CaptureFile, type LabelInput } from './labels';
-import { checkPrefill, CORRECTED, NOT_LABELLED } from './prefill';
+import {
+  BLIND_DISAGREED,
+  checkPrefill,
+  CORRECTED,
+  MODEL_WRONG,
+  NOT_LABELLED,
+  READ_FIXED,
+} from './prefill';
+import { checkRead } from './reads';
 import { splitOf, type Split } from './splits';
 import { photosDir, preparePhoto, savePhoto, thumbsDir } from './storage';
 
@@ -154,11 +165,13 @@ export async function ingestCapture(
     if (relabel) {
       const input = labelFromFile(f);
       d.transaction((tx) => {
-        writeLabel(tx, existing, input, 'phone', now);
+        const written = writeLabel(tx, existing, input, 'phone', now);
         tx.update(captures)
           .set({ status: statusOf(input, f.valuesOnly ?? false) })
           .where(eq(captures.id, id))
           .run();
+        const boardKept = f.prefill ? checkPrefill(f.prefill, input).boardKept : true;
+        howLabelled(tx, id, f, input, boardKept, written.measured.review);
       });
       return { id, sessionId: existing.sessionId, split: s!.split, created: false, updated: true };
     }
@@ -236,13 +249,82 @@ export async function ingestCapture(
           .values(points.map((p) => ({ captureId: id, ...p })))
           .run();
       // A label the player had to correct shows where the model goes wrong: queue it for a look.
-      if (!check.accepted) {
+      // (A read the player fixed is queued as that instead, by howLabelled.)
+      if (!check.accepted && !f.read) {
         const review = [CORRECTED, ...written.measured.review].join(', ');
         tx.update(captures).set({ review }).where(eq(captures.id, id)).run();
       }
     }
+    if (!f.unlabelled) {
+      const boardKept = f.prefill ? checkPrefill(f.prefill, input).boardKept : true;
+      howLabelled(tx, id, f, input, boardKept, written.measured.review);
+    }
     return { id, sessionId: session.id, split: s.split, created: true };
   });
+}
+
+/**
+ * How the phone's label was made (capture-lab.md › Model reads): the mode and time spent, and for
+ * a model read, the read against the saved label (lib/reads.ts › checkRead) and any blind check.
+ * A fixed read or a blind check that disagreed goes to To review.
+ */
+function howLabelled(
+  tx: Tx,
+  id: string,
+  f: CaptureFile,
+  input: LabelInput,
+  boardKept: boolean,
+  measuredReview: string[],
+) {
+  tx.update(captures)
+    .set({ labelMode: f.labelMode ?? null, labelSeconds: f.seconds ?? null })
+    .where(eq(captures.id, id))
+    .run();
+  tx.delete(reads).where(eq(reads.captureId, id)).run();
+  tx.delete(readDarts).where(eq(readDarts.captureId, id)).run();
+  tx.delete(blindDarts).where(eq(blindDarts.captureId, id)).run();
+  if (!f.read || f.valuesOnly) return;
+  const darts = f.read.darts.map((r) => ({
+    value: r.value,
+    sure: r.sure,
+    tip: typeof r.x === 'number' && typeof r.y === 'number' ? { x: r.x, y: r.y } : null,
+  }));
+  const check = checkRead(darts, input, boardKept);
+  tx.insert(reads)
+    .values({
+      captureId: id,
+      model: f.read.model,
+      ...check,
+      blindAgreed: f.blind ? f.blind.agreed : null,
+      blindChose: f.blind?.chose ?? null,
+    })
+    .run();
+  if (darts.length)
+    tx.insert(readDarts)
+      .values(
+        darts.map((r, idx) => ({
+          captureId: id,
+          idx,
+          value: r.value,
+          sure: r.sure,
+          x: r.tip?.x ?? null,
+          y: r.tip?.y ?? null,
+        })),
+      )
+      .run();
+  if (f.blind?.values.length)
+    tx.insert(blindDarts)
+      .values(f.blind.values.map((value, idx) => ({ captureId: id, idx, value })))
+      .run();
+  const extra = [
+    ...(check.outcome === 'fixed' ? [READ_FIXED] : []),
+    ...(f.blind && !f.blind.agreed ? [BLIND_DISAGREED] : []),
+  ];
+  if (extra.length)
+    tx.update(captures)
+      .set({ review: [...extra, ...measuredReview].join(', ') })
+      .where(eq(captures.id, id))
+      .run();
 }
 
 /** Saves a new label version from the editor. */
@@ -325,8 +407,9 @@ export async function importFolder(folder: string): Promise<ImportResult> {
 }
 
 /**
- * A corrected-from-model label looked at and found right: drops that reason from the review
- * queue (any measured reasons stay), without a new label version.
+ * A label where the model went wrong (a corrected pre-fill, a fixed read, a blind check that
+ * disagreed), looked at and found right: drops those reasons from the review queue (any measured
+ * reasons stay), without a new label version.
  */
 export function confirmCorrected(captureId: string) {
   const d = db();
@@ -334,7 +417,7 @@ export function confirmCorrected(captureId: string) {
   if (!c) throw new IngestError(`No capture ${captureId}`);
   const rest = (c.review ?? '')
     .split(', ')
-    .filter((r) => r && r !== CORRECTED)
+    .filter((r) => r && !MODEL_WRONG.includes(r))
     .join(', ');
   d.update(captures)
     .set({ review: rest || null })

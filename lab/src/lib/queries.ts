@@ -17,7 +17,7 @@ import {
 
 import { db } from './db/client';
 import { defaultPoints, medianPoints, nearest, type GuessPoints, type PointGuess } from './guess';
-import { CORRECTED } from './prefill';
+import { BLIND_DISAGREED, CORRECTED, MODEL_WRONG, READ_FIXED } from './prefill';
 import {
   captures,
   conditions,
@@ -121,7 +121,9 @@ function overlaysFor(labelIds: number[]) {
 }
 
 /** In the review queue, labels the player corrected from the model come first. */
-const reviewRank = sql<number>`case when ${captures.review} like ${`%${CORRECTED}%`} then 0 else 1 end`;
+// Corrected pre-fills, fixed reads and blind checks that disagreed lead the queue: each is a
+// photo where the model went wrong.
+const reviewRank = sql<number>`case when ${captures.review} like ${`%${CORRECTED}%`} or ${captures.review} like ${`%${READ_FIXED}%`} or ${captures.review} like ${`%${BLIND_DISAGREED}%`} then 0 else 1 end`;
 
 export interface CaptureFilter {
   split?: SplitName;
@@ -492,7 +494,7 @@ export function getCapture(id: string): CaptureDetail | null {
       .orderBy(dir === 'prev' ? desc(captures.takenAt) : asc(captures.takenAt))
       .limit(1)
       .get()?.id ?? null;
-  const myRank = c.review?.includes(CORRECTED) ? 0 : 1;
+  const myRank = MODEL_WRONG.some((r) => c.review?.includes(r)) ? 0 : 1;
   const nextReview =
     d
       .select({ id: captures.id })
