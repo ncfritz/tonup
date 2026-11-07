@@ -138,6 +138,8 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     null,
   );
   const [panning, setPanning] = useState(false);
+  /** A point or dart being dragged: a crosshair, to put it exactly. */
+  const [moving, setMoving] = useState(false);
   // The space the photo has, and the photo's size in it: as wide as it is, unless that would
   // be too tall, then as tall as it is.
   const work = useRef<HTMLDivElement>(null);
@@ -350,6 +352,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
     e.stopPropagation();
     setSelected(target);
     dragging.current = target;
+    setMoving(true);
     svg.current?.setPointerCapture(e.pointerId);
   };
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
@@ -377,11 +380,13 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
       if (p) clickPhoto(p);
     }
     dragging.current = null;
+    setMoving(false);
   };
   const cancelDrag = () => {
     pan.current = null;
     setPanning(false);
     dragging.current = null;
+    setMoving(false);
   };
 
   /** Puts the points not placed yet where the guess says, fitted to any already placed. */
@@ -733,15 +738,17 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                       inset: 0,
                       width: '100%',
                       height: '100%',
-                      // Placing (adding a dart, or a selected point or dart with nowhere yet):
-                      // a crosshair, to put it exactly.
-                      cursor: panning
-                        ? 'grabbing'
-                        : placing
-                          ? 'crosshair'
-                          : zoom > 1
-                            ? 'grab'
-                            : 'default',
+                      // Dragging a point or dart, or placing one (adding a dart, or a selected
+                      // point or dart with nowhere yet): a crosshair, to put it exactly.
+                      cursor: moving
+                        ? 'crosshair'
+                        : panning
+                          ? 'grabbing'
+                          : placing
+                            ? 'crosshair'
+                            : zoom > 1
+                              ? 'grab'
+                              : 'default',
                       touchAction: 'none',
                     }}
                     onPointerDown={onBackgroundDown}
@@ -885,7 +892,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                         <g
                           key={id}
                           onPointerDown={startDrag({ kind: 'point', id })}
-                          style={{ cursor: 'grab' }}
+                          style={{ cursor: moving ? 'crosshair' : 'grab' }}
                         >
                           {flag ? <Halo x={p.x * W} y={p.y * H} r={r} tone={flag} /> : null}
                           <circle
@@ -922,7 +929,7 @@ export function LabelEditor({ capture }: { capture: CaptureDetail }) {
                         <g
                           key={idx}
                           onPointerDown={startDrag({ kind: 'dart', idx })}
-                          style={{ cursor: 'grab' }}
+                          style={{ cursor: moving ? 'crosshair' : 'grab' }}
                         >
                           {flag ? <Halo x={d.tip.x * W} y={d.tip.y * H} r={r} tone={flag} /> : null}
                           <circle
