@@ -53,7 +53,13 @@
     "toLabel": "{count} to label",
     "allDone": "All done",
     "barA11y": "{labelled} labelled, {valuesOnly} values only, {unlabelled} to label",
-    "sessionA11y": "{when}, {count, plural, one {# photo} other {# photos}}"
+    "sessionA11y": "{when}, {count, plural, one {# photo} other {# photos}}",
+    "shown": "Show",
+    "shownAll": "All",
+    "shownUnsynced": "Not synced",
+    "shownUnsyncedN": "Not synced {count}",
+    "allSynced": "Every session is on Lab.",
+    "syncedA11y": "{when}, {count, plural, one {# photo} other {# photos}}, {sync}"
   },
   "session": {
     "title": "Session · visit {n}",
@@ -475,5 +481,15 @@
     "noTips": "No tips on the board: values only, or every dart missed.",
     "noBoard": "The board wasn't marked on this photo, so it can't be drawn square on.",
     "hint": "Pinch to zoom"
+  },
+  "sync": {
+    "synced": "Synced",
+    "notSynced": "Not synced",
+    "labOnly": "On Lab",
+    "unknown": "Lab not reachable"
+  },
+  "labOnly": {
+    "note": "This session is on Lab; its photos aren't on this phone. Open Lab to see them.",
+    "counts": "{labelled} labelled · {valuesOnly} values only · {unlabelled} to label in Lab"
   }
 }

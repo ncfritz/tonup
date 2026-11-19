@@ -4,7 +4,10 @@ import { boardPointOf, CALIBRATION_IDS } from '@/domain/camera';
 import { checkLab, normaliseLabUrl, outcomeOf } from './lab';
 import {
   labelQueue,
+  isUnsynced,
   labStanding,
+  sessionRows,
+  type SessionSummary,
   syncAll,
   waitingToSend,
   type OutboxItem,
@@ -216,6 +219,69 @@ describe('labStanding', () => {
         expect.objectContaining({ id: 's2', visits: 1, sent: 1 }),
       ]),
     );
+  });
+});
+
+describe('sessionRows', () => {
+  const phone = (id: string, startedAt: string, pending: number, sent: number): SessionSummary => ({
+    id,
+    startedAt,
+    tags: [],
+    visits: pending + sent,
+    labelled: pending + sent,
+    valuesOnly: 0,
+    unlabelled: 0,
+    pending,
+    sent,
+  });
+  const onLab = (id: string, startedAt: string) => ({
+    id,
+    startedAt,
+    tags: ['lamp'],
+    split: 'train' as const,
+    visits: 5,
+    labelled: 3,
+    valuesOnly: 1,
+    unlabelled: 1,
+  });
+
+  it('marks each phone session synced or not, and adds the sessions only Lab has', () => {
+    const rows = sessionRows(
+      [
+        phone('done', '2026-11-03', 0, 4),
+        phone('waiting', '2026-11-02', 2, 1),
+        phone('new', '2026-11-04', 0, 0),
+      ],
+      {
+        ids: new Set(['done', 'waiting', 'old']),
+        sessions: [onLab('done', '2026-11-03'), onLab('old', '2026-11-01')],
+      },
+    );
+    expect(rows.map((r) => [r.id, r.sync])).toEqual([
+      ['new', 'notSynced'],
+      ['done', 'synced'],
+      ['waiting', 'notSynced'],
+      ['old', 'labOnly'],
+    ]);
+    const old = rows.find((r) => r.id === 'old')!;
+    // Lab's counts, nothing to label or send on the phone.
+    expect(old).toMatchObject({
+      visits: 5,
+      labelled: 3,
+      valuesOnly: 1,
+      unlabelled: 0,
+      pending: 0,
+      split: 'train',
+    });
+    expect(rows.filter(isUnsynced).map((r) => r.id)).toEqual(['new', 'waiting']);
+  });
+
+  it('without Lab, only what’s waiting is known to be unsynced', () => {
+    const rows = sessionRows(
+      [phone('a', '2026-11-03', 0, 4), phone('b', '2026-11-02', 1, 0)],
+      null,
+    );
+    expect(rows.map((r) => r.sync)).toEqual(['unknown', 'notSynced']);
   });
 });
 

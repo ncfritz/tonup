@@ -27,6 +27,8 @@ export interface CaptureState {
   readTally: ReadTally;
   /** How the values step takes each dart's score: tapping a board, or the keypad. */
   valuesInput: 'board' | 'keypad';
+  /** Home's past sessions: all of them, or only those not synced with Lab. */
+  sessionsShown: 'all' | 'unsynced';
 }
 
 export interface ReadTally {
@@ -45,6 +47,7 @@ const DEFAULTS: CaptureState = {
   theme: 'training',
   appearance: 'dark',
   valuesInput: 'keypad',
+  sessionsShown: 'all',
   readsSinceBlind: 0,
   readTally: NO_READS,
 };
@@ -68,7 +71,7 @@ export const useCapture = create<CaptureState & Actions>((set, get) => {
   const update = (change: Partial<CaptureState>) => {
     set(change);
     const { labUrl, prefill, session, visits, theme, appearance, valuesInput } = get();
-    const { readsSinceBlind, readTally } = get();
+    const { readsSinceBlind, readTally, sessionsShown } = get();
     persist({
       labUrl,
       prefill,
@@ -77,6 +80,7 @@ export const useCapture = create<CaptureState & Actions>((set, get) => {
       theme,
       appearance,
       valuesInput,
+      sessionsShown,
       readsSinceBlind,
       readTally,
     });
@@ -123,6 +127,9 @@ export function hydrateCapture() {
       }
       if (saved.valuesInput && !['board', 'keypad'].includes(saved.valuesInput)) {
         delete saved.valuesInput;
+      }
+      if (saved.sessionsShown && !['all', 'unsynced'].includes(saved.sessionsShown)) {
+        delete saved.sessionsShown;
       }
       useCapture.setState({ ...DEFAULTS, ...saved });
     }

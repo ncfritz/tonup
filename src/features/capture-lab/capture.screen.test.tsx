@@ -68,12 +68,15 @@ jest.mock('./lab', () => ({
 }));
 // The sessions Lab has (Lab's Sessions page): null leaves the list unknown.
 let mockLabIds: string[] | null = null;
+let mockLabSessions: unknown[] = [];
 // What Lab says of the photos it was sent to label.
 let mockLabStates: Record<string, string> = {};
 jest.mock('./labData', () => ({
   ...jest.requireActual('./labData'),
   fetchLabSessions: async () =>
-    mockLabIds ? { ok: true, data: { ids: mockLabIds } } : { ok: false, error: 'down' },
+    mockLabIds
+      ? { ok: true, data: { ids: mockLabIds, sessions: mockLabSessions } }
+      : { ok: false, error: 'down' },
   fetchCaptureStates: async (_url: string, ids: string[]) => ({
     ok: true,
     data: { states: Object.fromEntries(ids.map((id) => [id, mockLabStates[id] ?? 'unlabelled'])) },
@@ -122,6 +125,7 @@ beforeEach(() => {
   useLabelRun.getState().setRun(null);
   mockUploads.length = 0;
   mockLabIds = null;
+  mockLabSessions = [];
   mockLabStates = {};
   router.back.mockClear();
   router.push.mockClear();
@@ -130,6 +134,7 @@ beforeEach(() => {
     prefill: true,
     visits: 0,
     valuesInput: 'keypad',
+    sessionsShown: 'all',
     readsSinceBlind: 0,
     readTally: { confirmed: 0, fixed: 0, blind: 0, agreed: 0 },
     session: { id: 'sess-1', startedAt: '2026-11-04T05:00:00.000Z', tags: ['Board light on'] },
@@ -312,6 +317,39 @@ it('says which sessions on the phone Lab hasn’t got, and why', async () => {
   );
   // Its Label later photo went to Lab to be labelled there: nothing to say.
   expect(screen.queryByTestId('standing-sess-new')).toBeNull();
+});
+
+it('lists the sessions only Lab has, says which are synced, and can show just the rest', async () => {
+  mockLabIds = ['sess-old', 'sess-lab'];
+  mockLabSessions = [
+    {
+      id: 'sess-lab',
+      startedAt: '2026-10-30T05:20:00.000Z',
+      tags: ['Lamp on'],
+      split: 'train',
+      visits: 12,
+      labelled: 10,
+      valuesOnly: 2,
+      unlabelled: 0,
+    },
+  ];
+  mockBox.set('b', { ...visitIn('b', 'sess-old', false), done: true });
+  mockDrafts.set('w', draftIn('w', 'sess-wait', '2026-11-01T05:20:00.000Z'));
+  await act(async () => {
+    await render(<CaptureHome />);
+  });
+  expect(screen.getByTestId('sync-sess-old')).toHaveTextContent('Synced');
+  expect(screen.getByTestId('sync-sess-lab')).toHaveTextContent('On Lab');
+  expect(screen.getByTestId('capture-session-sess-lab')).toHaveTextContent(/12 photos/);
+  expect(screen.getByTestId('sync-sess-wait')).toHaveTextContent('Not synced');
+
+  await act(async () => {
+    await fireEvent.press(screen.getByTestId('capture-shown-unsynced'));
+  });
+  expect(useCapture.getState().sessionsShown).toBe('unsynced');
+  expect(screen.getByTestId('capture-session-sess-wait')).toBeOnTheScreen();
+  expect(screen.queryByTestId('capture-session-sess-old')).toBeNull();
+  expect(screen.queryByTestId('capture-session-sess-lab')).toBeNull();
 });
 
 it('syncs with Lab when nothing is waiting, and counts photos labelled in Lab', async () => {

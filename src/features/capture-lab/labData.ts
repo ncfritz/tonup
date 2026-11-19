@@ -2,6 +2,7 @@
 // used by Capture), and the few things they ask it to do. Shapes mirror lab/src/lib/phone.ts
 // and lab/src/lib/runs.ts; only the fields the tabs show.
 import { normaliseLabUrl } from './lab';
+import type { LabSession } from './outbox';
 import type { SessionPlan } from './visit';
 
 export type Reply<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -256,9 +257,10 @@ export function verdictOf(results: VerifyResult[]) {
 export const fetchVerification = (url: string, id: number, f?: typeof fetch) =>
   call<Verification>(url, `/api/runs/${id}/verification`, undefined, f);
 
-/** The sessions Lab has, by ID (to say which of the phone's aren't there). */
+/** The sessions Lab has: their IDs (to say which of the phone's aren't there) and summaries. */
 export const fetchLabSessions = (url: string, f?: typeof fetch) =>
-  call<{ ids: string[] }>(url, '/api/sessions', undefined, f);
+  // `sessions` (a summary of each) is newer than `ids`; an older Lab sends only the IDs.
+  call<{ ids: string[]; sessions?: LabSession[] }>(url, '/api/sessions', undefined, f);
 
 /** Where Lab's captures stand, by ID (labelled, values-only, unlabelled, rejected). */
 export const fetchCaptureStates = (url: string, ids: string[], f?: typeof fetch) =>

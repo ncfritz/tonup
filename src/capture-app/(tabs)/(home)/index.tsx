@@ -8,6 +8,8 @@ import { StyleSheet } from 'react-native-unistyles';
 import { recheckLab, useLabHealth } from '@/features/capture-lab/labHealth';
 import {
   labelQueue,
+  isUnsynced,
+  sessionRows,
   sessionsOn,
   waitingToSend,
   type SessionSummary,
@@ -23,7 +25,8 @@ import {
   StandingLine,
   StatusBar,
   StatusLine,
-  useLabSessionIds,
+  SyncBadge,
+  useLabSessions,
 } from '@/features/capture-lab/SessionBits';
 import { fetchSessionPlan } from '@/features/capture-lab/labData';
 import { newSessionId, useCapture } from '@/features/capture-lab/store';
@@ -56,7 +59,8 @@ export default function CaptureHome() {
   }, []);
 
   const health = useLabHealth((s) => (s.url === labUrl ? s.health : null));
-  const { ids: labIds, reload: reloadLabIds } = useLabSessionIds();
+  const { ids: labIds, lab, reload: reloadLabIds } = useLabSessions();
+  const shown = useCapture((s) => s.sessionsShown);
   const afterSync = useCallback(
     (r: LabSync) => {
       refresh();
@@ -85,9 +89,14 @@ export default function CaptureHome() {
   const current = session
     ? (sessions.find((s) => s.id === session.id) ?? { ...EMPTY, id: session.id })
     : null;
-  const past = sessions.filter((s) => s.id !== session?.id);
-  const pastToLabel = past.reduce((n, s) => n + s.unlabelled, 0);
-  const totals = sessions.reduce(
+  // The phone's sessions and those only Lab has (after a reinstall, say), each with whether
+  // it's synced; "Not synced" narrows the list to those with something not on Lab yet.
+  const rows = sessionRows(sessions, lab);
+  const pastAll = rows.filter((s) => s.id !== session?.id);
+  const unsynced = pastAll.filter(isUnsynced);
+  const past = shown === 'unsynced' ? unsynced : pastAll;
+  const pastToLabel = pastAll.reduce((n, s) => n + s.unlabelled, 0);
+  const totals = rows.reduce(
     (a, s) => ({
       visits: a.visits + s.visits,
       labelled: a.labelled + s.labelled,
@@ -266,7 +275,7 @@ export default function CaptureHome() {
         </View>
       )}
 
-      {sessions.length ? (
+      {rows.length ? (
         <View style={styles.strip} testID="capture-totals">
           <Count n={totals.visits} label={t('home.totalPhotos')} />
           <Count
@@ -279,7 +288,7 @@ export default function CaptureHome() {
             label={t('home.totalLabelled')}
           />
           <Count n={totals.unlabelled} label={t('home.totalToLabel')} pending />
-          <Count n={sessions.length} label={t('home.totalSessions')} />
+          <Count n={rows.length} label={t('home.totalSessions')} />
         </View>
       ) : null}
 
@@ -302,17 +311,49 @@ export default function CaptureHome() {
           </Pressable>
         ) : null}
       </View>
+      {pastAll.length ? (
+        <View
+          accessibilityRole="radiogroup"
+          accessibilityLabel={t('home.shown')}
+          style={styles.shown}
+        >
+          {(['all', 'unsynced'] as const).map((k) => {
+            const on = shown === k;
+            return (
+              <Pressable
+                key={k}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+                style={[styles.shownOption, on && styles.shownOn]}
+                onPress={() => useCapture.getState().set({ sessionsShown: k })}
+                testID={`capture-shown-${k}`}
+              >
+                <Text variant="caption" tone={on ? 'text' : 'muted'}>
+                  {k === 'all'
+                    ? t('home.shownAll')
+                    : unsynced.length
+                      ? t('home.shownUnsyncedN', { count: unsynced.length })
+                      : t('home.shownUnsynced')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
       {past.length === 0 ? (
-        <Text tone="muted">{t('home.noSessions')}</Text>
+        <Text tone="muted">
+          {shown === 'unsynced' && pastAll.length ? t('home.allSynced') : t('home.noSessions')}
+        </Text>
       ) : (
         <View style={styles.list}>
           {past.map((s, i) => (
             <Pressable
               key={s.id}
               accessibilityRole="button"
-              accessibilityLabel={t('home.sessionA11y', {
+              accessibilityLabel={t('home.syncedA11y', {
                 when: sessionWhen(s.startedAt),
                 count: s.visits,
+                sync: t(`sync.${s.sync}`),
               })}
               style={[styles.sessionRow, i > 0 && styles.divider]}
               onPress={() => router.push(`/sessions/${s.id}`)}
@@ -324,12 +365,15 @@ export default function CaptureHome() {
                 </Text>
                 <SplitChip split={s.split} />
               </View>
-              <Text variant="caption" tone="muted">
-                {[t('home.photos', { count: s.visits }), ...s.tags].join(' · ')}
-              </Text>
+              <View style={styles.row}>
+                <Text variant="caption" tone="muted" style={styles.flex}>
+                  {[t('home.photos', { count: s.visits }), ...s.tags].join(' · ')}
+                </Text>
+                <SyncBadge sync={s.sync} testID={`sync-${s.id}`} />
+              </View>
               <StatusBar counts={s} />
               <StatusLine counts={s} />
-              <StandingLine s={s} labIds={labIds} />
+              {s.sync === 'labOnly' ? null : <StandingLine s={s} labIds={labIds} />}
             </Pressable>
           ))}
         </View>
@@ -418,6 +462,21 @@ const styles = StyleSheet.create((theme) => ({
   // The session being shot stands out by its fill.
   cardOn: { backgroundColor: theme.colors.accentSoft },
   row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },
+  shown: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    gap: theme.spacing.xxs,
+    padding: theme.spacing.xxs,
+    borderRadius: theme.radii.m,
+    backgroundColor: theme.colors.surface,
+  },
+  shownOption: {
+    minHeight: 36,
+    paddingHorizontal: theme.spacing.m,
+    borderRadius: theme.radii.s,
+    justifyContent: 'center',
+  },
+  shownOn: { backgroundColor: theme.colors.surface2 },
   flex: { flex: 1, gap: theme.spacing.xxs },
   flexWide: { flex: 1.4 },
   counts: { flexDirection: 'row', gap: theme.spacing.s },

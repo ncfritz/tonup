@@ -20,7 +20,8 @@ import {
   SplitChip,
   StandingLine,
   StatusBar,
-  useLabSessionIds,
+  SyncBadge,
+  useLabSessions,
 } from '@/features/capture-lab/SessionBits';
 import { labStanding } from '@/features/capture-lab/outbox';
 import { labPhotoUrl } from '@/features/capture-lab/lab';
@@ -40,7 +41,10 @@ export default function SessionPhotos() {
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [photos, setPhotos] = useState<SessionPhoto[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
-  const { ids: labIds, reload: reloadLabIds } = useLabSessionIds();
+  const { ids: labIds, lab, reload: reloadLabIds } = useLabSessions();
+  // A session only Lab has (its photos aren't on this phone): what Lab says about it.
+  const onLab = summary ? null : (lab?.sessions.find((s) => s.id === id) ?? null);
+  const head = summary ?? onLab;
   const labUrl = useCapture((s) => s.labUrl);
   const labOk = useLabState() === 'ok';
 
@@ -99,17 +103,17 @@ export default function SessionPhotos() {
     <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.pad}>
         <Header
-          title={summary ? sessionWhen(summary.startedAt) : ''}
+          title={head ? sessionWhen(head.startedAt) : ''}
           backLabel={t('photos.back')}
           onBack={() => router.back()}
           right={<LabPill />}
         />
-        {summary ? (
+        {head ? (
           <View style={styles.sub}>
             <Text variant="caption" tone="muted" style={styles.flex}>
-              {[t('home.photos', { count: summary.visits }), ...summary.tags].join(' · ')}
+              {[t('home.photos', { count: head.visits }), ...head.tags].join(' · ')}
             </Text>
-            <SplitChip split={summary.split} />
+            <SplitChip split={head.split} />
           </View>
         ) : null}
       </View>
@@ -170,7 +174,20 @@ export default function SessionPhotos() {
             ) : null}
           </>
         ) : null}
-        {shown.length === 0 ? (
+        {onLab ? (
+          <View style={styles.labOnly} testID="photos-lab-only">
+            <SyncBadge sync="labOnly" />
+            <StatusBar counts={onLab} />
+            <Text variant="caption" tone="muted">
+              {t('labOnly.counts', {
+                labelled: onLab.labelled,
+                valuesOnly: onLab.valuesOnly,
+                unlabelled: onLab.unlabelled,
+              })}
+            </Text>
+            <Text>{t('labOnly.note')}</Text>
+          </View>
+        ) : shown.length === 0 ? (
           <Text tone="muted">{t('photos.none')}</Text>
         ) : (
           <View style={styles.grid}>
@@ -295,6 +312,12 @@ function Badge({ photo }: { photo: SessionPhoto }) {
 }
 
 const styles = StyleSheet.create((theme) => ({
+  labOnly: {
+    gap: theme.spacing.s,
+    padding: theme.spacing.l,
+    borderRadius: theme.radii.l,
+    backgroundColor: theme.colors.surface,
+  },
   safe: { flex: 1, backgroundColor: theme.colors.bg },
   pad: { paddingHorizontal: theme.spacing.l, gap: theme.spacing.xs },
   sub: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.s },

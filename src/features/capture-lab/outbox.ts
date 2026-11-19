@@ -202,6 +202,71 @@ export function labStanding(
   return s.sent > 0 ? 'deleted' : 'notYet';
 }
 
+/** A session as Lab has it (`GET /api/sessions`), for sessions whose photos aren't on the phone. */
+export interface LabSession {
+  id: string;
+  startedAt: string;
+  tags: string[];
+  split: NonNullable<SessionSummary['split']>;
+  visits: number;
+  labelled: number;
+  valuesOnly: number;
+  unlabelled: number;
+}
+
+/**
+ * Whether a session is synced: everything of it on the phone is on Lab (`synced`); something is
+ * still to send, or Lab hasn't got it (`notSynced`); on Lab and not on this phone at all
+ * (`labOnly`, synced too); or not known while Lab can't be reached (`unknown`).
+ */
+export type SyncState = 'synced' | 'notSynced' | 'labOnly' | 'unknown';
+
+export interface SessionRow extends SessionSummary {
+  sync: SyncState;
+}
+
+/**
+ * The phone's sessions and the ones only Lab has, newest first, each with whether it's synced.
+ * With Lab out of reach, just the phone's, their sync state unknown (unless something is waiting).
+ */
+export function sessionRows(
+  phone: readonly SessionSummary[],
+  lab: { ids: ReadonlySet<string>; sessions: readonly LabSession[] } | null,
+): SessionRow[] {
+  const rows: SessionRow[] = phone.map((s) => ({
+    ...s,
+    sync: !lab
+      ? s.pending > 0
+        ? 'notSynced'
+        : 'unknown'
+      : lab.ids.has(s.id) && s.pending === 0
+        ? 'synced'
+        : 'notSynced',
+  }));
+  const here = new Set(phone.map((s) => s.id));
+  for (const l of lab?.sessions ?? []) {
+    if (here.has(l.id)) continue;
+    rows.push({
+      id: l.id,
+      startedAt: l.startedAt,
+      tags: l.tags,
+      visits: l.visits,
+      labelled: l.labelled,
+      valuesOnly: l.valuesOnly,
+      // Waiting to be labelled in Lab, not on the phone.
+      unlabelled: 0,
+      pending: 0,
+      sent: l.visits,
+      split: l.split,
+      sync: 'labOnly',
+    });
+  }
+  return rows.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+}
+
+/** Home's "Not synced" list: sessions with something not on Lab yet. */
+export const isUnsynced = (r: Pick<SessionRow, 'sync'>) => r.sync === 'notSynced';
+
 /** Sessions on this phone, newest first, from the outbox, sent visits and drafts. */
 export function sessionsOn(store: OutboxStore, drafts?: DraftStore): SessionSummary[] {
   const byId = new Map<string, SessionSummary>();

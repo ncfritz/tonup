@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 
 import { useLab } from './LabBits';
 import { fetchLabSessions } from './labData';
-import { labStanding, type SessionSummary } from './outbox';
+import { labStanding, type LabSession, type SessionSummary, type SyncState } from './outbox';
 
 /** Quick tags, one from each group (docs/plan/capture-lab.md › Screens › Session). */
 export const TAG_GROUPS = [
@@ -149,10 +149,51 @@ export function StatusLine({ counts }: { counts: Counts }) {
 }
 
 /** The session IDs Lab has, asked while the screen is in view; null until it answers. */
-export function useLabSessionIds() {
+/** Lab's sessions: their IDs, and a summary of each (null until Lab answers, or if it can't). */
+export function useLabSessions() {
   const { reply, reload } = useLab(fetchLabSessions);
-  const ids = useMemo(() => (reply?.ok ? new Set(reply.data.ids) : null), [reply]);
+  return useMemo(
+    () => ({
+      ids: reply?.ok ? new Set(reply.data.ids) : null,
+      lab: reply?.ok
+        ? { ids: new Set(reply.data.ids), sessions: reply.data.sessions ?? ([] as LabSession[]) }
+        : null,
+      reload,
+    }),
+    [reply, reload],
+  );
+}
+
+export function useLabSessionIds() {
+  const { ids, reload } = useLabSessions();
   return { ids, reload };
+}
+
+/**
+ * Whether a session is synced with Lab: a green check when all of it is there (or it's only on
+ * Lab), pending when something isn't, muted while Lab can't be reached.
+ */
+export function SyncBadge({ sync, testID }: { sync: SyncState; testID?: string }) {
+  const { t } = useTranslation('capture');
+  const { theme } = useUnistyles();
+  const synced = sync === 'synced' || sync === 'labOnly';
+  return (
+    <View style={styles.sync} testID={testID}>
+      {synced ? (
+        <Icon name="check" size={14} color={theme.colors.ok} />
+      ) : (
+        <View
+          style={[
+            styles.syncDot,
+            { backgroundColor: sync === 'notSynced' ? theme.colors.pending : theme.colors.muted },
+          ]}
+        />
+      )}
+      <Text variant="caption" tone={sync === 'notSynced' ? 'pending' : 'muted'}>
+        {t(`sync.${sync}`)}
+      </Text>
+    </View>
+  );
 }
 
 /**
@@ -233,6 +274,8 @@ const styles = StyleSheet.create((theme) => ({
   valuesOnly: { backgroundColor: theme.colors.info },
   unlabelled: { backgroundColor: theme.colors.pending },
   line: { flexDirection: 'row', flexWrap: 'wrap', columnGap: theme.spacing.m },
+  sync: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xxs },
+  syncDot: { width: 8, height: 8, borderRadius: 4 },
   chip: {
     borderRadius: 6,
     paddingHorizontal: theme.spacing.s,
