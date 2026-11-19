@@ -17,3 +17,4 @@ All user data is stored on the device. The app has no backend, no accounts, and 
 - Camera scoring runs fully on the device (Core ML), and training data leaves the device only when the player exports it.
 - Linking a display (later) is device-to-device on the local network (ADR 0008), never through a server.
 - Remote matches, iCloud sync or a tonup.app API would each need their own decision.
+- The internal tools have one exception: Ton Up Lab sends run progress to TU Capture's Live Activity through Apple's push service (ADR 0013). Ton Up itself is unaffected.

@@ -100,6 +100,8 @@ function tonUp(config: ConfigContext['config']): ExpoConfig {
       // Xcode runs buy Pro against storekit/TonUp.storekit.
       './plugins/with-storekit-config',
       ['./plugins/with-app-variant', { variant: 'tonup' }],
+      // TU Capture's Live Activity stays out of Ton Up (docs/plan/capture-lab.md › Live Activity).
+      ['./plugins/with-autolinking-exclude', { exclude: ['expo-widgets', '@expo/ui'] }],
       ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
       splash('./assets/splash.png'),
     ],
@@ -138,6 +140,10 @@ function capture(config: ConfigContext['config']): ExpoConfig {
       'expo-font',
       camera('TU Capture photographs the board so its darts can be labelled for training.'),
       ['./plugins/with-app-variant', { variant: 'capture' }],
+      // A Lab run on the Lock Screen and in the Dynamic Island, started, updated and ended by
+      // Lab through APNs (docs/plan/capture-lab.md › Live Activity; ADR 0013).
+      ['./plugins/with-team-everywhere', { teamId: APPLE_TEAM_ID }],
+      ['expo-widgets', { enablePushNotifications: true, frequentUpdates: true }],
       ['expo-build-properties', { ios: { deploymentTarget: '18.0' } }],
       // Its own launch art and icon: the lab board through a viewfinder (docs/design/brand.md).
       splash('./assets/capture/splash.png'),

@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, UnistylesRuntime, useUnistyles } from 'react-native-unistyles';
 
 import { LabHealthWatch } from '@/features/capture-lab/LabPill';
+import { LiveActivityWatch } from '@/features/capture-lab/liveActivity';
 import { hydrateCapture, useCapture } from '@/features/capture-lab/store';
 import i18next, { initI18n } from '@/i18n';
 import capture from '@/i18n/locales/en/capture.json';
@@ -49,6 +50,7 @@ export default function CaptureLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
       <LabHealthWatch />
+      <LiveActivityWatch />
       <ThemeProvider value={navTheme}>
         <Stack
           screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.colors.bg } }}

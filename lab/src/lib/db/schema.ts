@@ -348,3 +348,29 @@ export const blindDarts = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.captureId, t.idx] })],
 );
+
+/**
+ * The phone's Live Activity tokens (capture-lab.md › Live Activity). A `start` token lets Lab
+ * start a run's Live Activity on the phone; an `activity` token updates and ends one that's
+ * showing. The phone sends its theme's colours with each, so the Live Activity matches the app.
+ */
+export const liveActivityTokens = sqliteTable(
+  'live_activity_tokens',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    kind: text('kind', { enum: ['start', 'activity'] }).notNull(),
+    token: text('token').notNull(),
+    /** ActivityKit's id for an `activity` token. */
+    activityId: text('activity_id'),
+    /** The run an `activity` token belongs to. */
+    runId: integer('run_id'),
+    /** The phone's theme colours as JSON (accent, text, muted, surface, danger, ok). */
+    colors: text('colors'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    /** When Lab sent its end event; ended tokens get nothing more. */
+    endedAt: integer('ended_at', { mode: 'timestamp_ms' }),
+    /** What APNs said last time, when it wasn't a success. */
+    lastError: text('last_error'),
+  },
+  (t) => [uniqueIndex('live_activity_tokens_token').on(t.token)],
+);

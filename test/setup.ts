@@ -78,3 +78,11 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: () => ({}),
   };
 });
+
+// TU Capture's Live Activity (expo-widgets) is native only; Lab does the pushing.
+jest.mock('expo-widgets', () => ({
+  createLiveActivity: () => ({ start: jest.fn(), getInstances: () => [] }),
+  addPushToStartTokenListener: () => ({ remove: () => {} }),
+}));
+jest.mock('@expo/ui/swift-ui', () => ({}));
+jest.mock('@expo/ui/swift-ui/modifiers', () => ({}));

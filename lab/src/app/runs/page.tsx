@@ -1,5 +1,6 @@
 import { RunsView } from '~/components/RunsView';
 import { deepdartsPath } from '~/lib/deepdarts';
+import { liveActivityStatus } from '~/lib/liveActivity';
 import { overviewCounts } from '~/lib/queries';
 import { DEFAULTS, listModels, listRuns } from '~/lib/runs';
 
@@ -13,6 +14,7 @@ export default function RunsPage() {
       defaults={DEFAULTS}
       hasDeepdarts={!!deepdartsPath()}
       counts={overviewCounts().bySplit}
+      liveActivity={liveActivityStatus()}
     />
   );
 }

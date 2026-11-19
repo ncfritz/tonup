@@ -34,7 +34,9 @@ export function RunsView({
   defaults,
   hasDeepdarts,
   counts,
+  liveActivity,
 }: {
+  liveActivity: { configured: boolean; phone: boolean; lastError: string | null };
   runs: RunSummary[];
   models: { id: number; name: string; status: string }[];
   defaults: Defaults;
@@ -98,6 +100,15 @@ export function RunsView({
         }
       />
       <PageBody>
+        <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
+          {!liveActivity.configured
+            ? 'Runs show on the phone’s Lock Screen once push is set up: lab/README.md › Live Activity.'
+            : !liveActivity.phone
+              ? 'Push is set up. Open TU Capture with Live Activities allowed and runs will show on its Lock Screen.'
+              : liveActivity.lastError
+                ? `Runs show on the phone’s Lock Screen; the last push failed (${liveActivity.lastError}).`
+                : 'Runs show on the phone’s Lock Screen and Dynamic Island while they go.'}
+        </Typography.Paragraph>
         <Table
           className={pageStyles.flush}
           size="small"

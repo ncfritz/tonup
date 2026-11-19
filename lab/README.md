@@ -38,6 +38,24 @@ Runs › New run snapshots the labels, trains with `ml/` (`../ml/.venv/bin/pytho
 
 Capture pulls the active model from `GET /api/models/active` (Settings › Get vN from Lab). Labels pre-filled by a model carry what it placed; Lab measures what the player kept, queues corrected labels first in To review (Looks right clears one), and charts acceptance per model on Overview.
 
+## Live Activity
+
+Runs can show on TU Capture's Lock Screen and Dynamic Island while they go (docs/plan/capture-lab.md › Live Activity; ADR 0013). Lab sends the updates through Apple's push service, so it needs a key:
+
+1. In the Apple Developer account, Certificates, Identifiers & Profiles › Keys, create a key with **Apple Push Notifications service (APNs)** and download the `.p8` (it can only be downloaded once). Keep it outside the repo, e.g. `~/TonUpLab/AuthKey_ABC123XYZ.p8`.
+2. In `lab/.env.local`:
+
+   ```
+   TONUP_APNS_KEY=/Users/you/TonUpLab/AuthKey_ABC123XYZ.p8
+   TONUP_APNS_KEY_ID=ABC123XYZ
+   TONUP_APNS_TEAM_ID=39BL2H9S6P
+   # TONUP_APNS_ENV=production   only for a TestFlight build; Xcode builds use the sandbox
+   ```
+
+3. Restart Lab, then open TU Capture (with Lab's address set) so it sends its token. The Runs page says when a phone has signed up. The next run starts a Live Activity on the phone.
+
+Without the key Lab sends nothing and runs only show in Capture's Runs tab.
+
 ## Check
 
 ```sh

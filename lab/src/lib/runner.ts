@@ -12,6 +12,7 @@ import { asc, eq, inArray } from 'drizzle-orm';
 import { db } from './db/client';
 import { models, runs } from './db/schema';
 import { deepdartsPath } from './deepdarts';
+import * as live from './liveActivity';
 import { dataDir } from './env';
 import { nextModelName, runDir, type TrainParams } from './runs';
 import { createSnapshot } from './snapshots';
@@ -79,6 +80,8 @@ export function cancelRun(id: number): boolean {
     .set({ status: 'cancelled', endedAt: new Date(), pid: null })
     .where(eq(runs.id, id))
     .run();
+  // A queued run never started; a running one ends in execute().
+  if (row.status === 'queued') void quietly(live.runEnded(id));
   const cur = runner().current;
   if (cur?.runId === id && cur.child?.pid) {
     try {
@@ -97,7 +100,13 @@ function cancelled(id: number) {
 
 function setRun(id: number, change: Partial<typeof runs.$inferInsert>) {
   db().update(runs).set(change).where(eq(runs.id, id)).run();
+  // A new stage is worth telling the phone about now (capture-lab.md › Live Activity).
+  if (change.stage && change.status === undefined) void quietly(live.runProgress(id, true));
 }
+
+/** The Live Activity never holds up or breaks a run. */
+const quietly = (p: Promise<unknown>) =>
+  p.catch((e: unknown) => console.warn('Live Activity:', e instanceof Error ? e.message : e));
 
 /** Runs `python -m <module> args` in ml/, appending its output to the run's log. */
 function python(runId: number, log: fs.WriteStream, module: string, args: string[]): Promise<void> {
@@ -142,6 +151,10 @@ async function execute(id: number) {
   fs.mkdirSync(dir, { recursive: true });
   const log = fs.createWriteStream(path.join(dir, 'log.txt'), { flags: 'a' });
   setRun(id, { status: 'running', startedAt: new Date(), stage: 'snapshot', error: null });
+  await quietly(live.runStarted(id));
+  // Between stage changes, keep the phone's Live Activity moving (at most once a minute).
+  const heartbeat = setInterval(() => void quietly(live.runProgress(id)), 30_000);
+  heartbeat.unref();
   try {
     if (row.kind === 'verify') await verify(id, row.params, dir, log);
     else await train(id, row.params, dir, log);
@@ -155,7 +168,9 @@ async function execute(id: number) {
       setRun(id, { status: 'failed', stage: null, error: msg, endedAt: new Date(), pid: null });
     }
   } finally {
+    clearInterval(heartbeat);
     log.end();
+    await quietly(live.runEnded(id));
   }
 }
 

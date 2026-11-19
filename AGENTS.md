@@ -10,7 +10,7 @@ Expo changes between SDKs: check the versioned docs and the installed package ty
 
 ## Rules that matter here
 
-- **No cloud services and no data leaving the device** (ADR 0001). No accounts, analytics or crash-reporting services; builds are local.
+- **No cloud services and no data leaving the device** (ADR 0001). No accounts, analytics or crash-reporting services; builds are local. The one exception is in the internal tools: Lab pushes run progress to TU Capture's Live Activity through APNs (ADR 0013); never add push or network code to Ton Up.
 - Every dart is recorded once as an event; scores, stats, history and replay are derived from that log (ADR 0006). Game rules are pure functions over the log, with tests beside the code.
 - Board geometry and scoring are shared by every input method (tap-on-board, keypad, and later the camera), and the board type is part of the data model so soft tip can follow (ADR 0003, 0005).
 - Use theme tokens and i18n keys; no literal colors or user-facing strings (docs/design/themes.md).
