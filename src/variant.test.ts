@@ -33,7 +33,7 @@ describe('app variants', () => {
   it('Ton Up keeps its bundle ID, routes, Pro and Files sharing', () => {
     const c = configFor(undefined);
     expect(c.name).toBe('Ton Up');
-    expect(c.ios?.bundleIdentifier).toBe('app.tonup.ios');
+    expect(c.ios?.bundleIdentifier).toBe('com.perchedchicken.tonup');
     expect(routerRoot(c)).toBe('src/app');
     expect(pluginNames(c)).toEqual(expect.arrayContaining(['expo-iap', 'expo-sqlite']));
     expect(c.ios?.infoPlist?.UIFileSharingEnabled).toBe(true);
@@ -44,7 +44,7 @@ describe('app variants', () => {
     const c = configFor('capture');
     expect(c.name).toBe('TU Capture');
     expect(c.scheme).toBe('tonupcapture');
-    expect(c.ios?.bundleIdentifier).toBe('app.tonup.ios.capture');
+    expect(c.ios?.bundleIdentifier).toBe('com.perchedchicken.tonup.capture');
     expect(routerRoot(c)).toBe('src/capture-app');
     expect(pluginNames(c)).not.toContain('expo-iap');
     expect(pluginNames(c)).not.toContain('./plugins/with-storekit-config');

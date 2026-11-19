@@ -11,7 +11,7 @@ Draft for App Store Connect (ADR 0004, 0009). Pricing: a paid app at $9.99, and 
 | Primary category   | Sports                                                       |
 | Secondary category | Utilities                                                    |
 | Age rating         | 4+ (no objectionable content)                                |
-| Bundle ID          | `app.tonup.ios`                                              |
+| Bundle ID          | `com.perchedchicken.tonup`                                   |
 | Devices            | iPhone, iOS 18 or later                                      |
 | Support URL        | https://tonup.app/support (a page with the support address)  |
 | Marketing URL      | https://tonup.app                                            |

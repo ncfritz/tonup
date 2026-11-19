@@ -227,7 +227,7 @@ describe('APNs', () => {
       TONUP_APNS_KEY_ID: 'K',
       TONUP_APNS_TEAM_ID: 'T',
     });
-    expect(c).toMatchObject({ bundleId: 'app.tonup.ios.capture', sandbox: true });
+    expect(c).toMatchObject({ bundleId: 'com.perchedchicken.tonup.capture', sandbox: true });
     expect(
       apnsConfig({
         TONUP_APNS_KEY: 'k.p8',

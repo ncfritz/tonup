@@ -14,4 +14,4 @@ Notes on the runners-up: "Oche" is a darts-bar chain with outlets in several cou
 ## Follow-ups
 
 - [ ] Search the App Store and a trademark database for "Ton Up" before submitting.
-- [ ] Bundle ID: `app.tonup.ios` (reverse of the domain).
+- [x] Bundle ID: `com.perchedchicken.tonup`, under the publisher Perched Chicken (was `app.tonup.ios`, the reverse of the domain; changed 2026-11-19).

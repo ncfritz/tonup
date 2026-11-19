@@ -12,7 +12,7 @@ The M15 done-when: a TestFlight build with no known blockers. Builds are local (
 
 ## App Store Connect
 
-1. Create the app record for `app.tonup.ios` (if it isn't there), with the listing from [app-store.md](app-store.md).
+1. Create the app record for `com.perchedchicken.tonup` (if it isn't there), with the listing from [app-store.md](app-store.md).
 2. Create the in-app purchase `app.tonup.pro` (non-consumable, $19.99, Family Sharing on) and submit it with the first build.
 3. App Privacy: Data Not Collected ([privacy.md](privacy.md)).
 4. Agreements, tax and banking must be active for paid apps and in-app purchases.

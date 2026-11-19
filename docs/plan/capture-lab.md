@@ -18,7 +18,7 @@ iPhone: Ton Up Capture                    M1 Pro laptop: Ton Up Lab (lab/, Next.
 
 ### Build
 
-- `app.config.ts` reads `APP_VARIANT`. For `capture` it changes the name ("TU Capture"), icon, bundle ID (`app.tonup.ios.capture`), scheme (`tonupcapture`) and expo-router's routes directory (`src/capture-app`), drops the StoreKit and IAP plugins, and adds:
+- `app.config.ts` reads `APP_VARIANT`. For `capture` it changes the name ("TU Capture"), icon, bundle ID (`com.perchedchicken.tonup.capture`), scheme (`tonupcapture`) and expo-router's routes directory (`src/capture-app`), drops the StoreKit and IAP plugins, and adds:
   - `NSLocalNetworkUsageDescription` ("Sends photos and labels to Ton Up Lab on your Mac.")
   - `NSAppTransportSecurity.NSAllowsLocalNetworking` (plain HTTP to `.local` names and local addresses only)
 - Scripts: `capture:sync` (`APP_VARIANT=capture expo prebuild --platform ios --clean`) and `capture:ios`. Switching back to Ton Up is `ios:sync`. Every `ios`/`capture` run script first checks that `ios/` was generated for its variant and, if not, regenerates it (`scripts/stale-workspaces.mjs`), so `ios:release` after `capture:sync` builds Ton Up, not TU Capture. The check reads `APP_VARIANT` too, so the capture scripts set it for the check as well as for expo; it prints which app it is building.

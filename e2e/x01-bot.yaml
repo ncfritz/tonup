@@ -1,5 +1,5 @@
 # Maestro flow: Quick start against the bot; the bot throws its visit after yours, then undo.
-appId: app.tonup.ios
+appId: com.perchedchicken.tonup
 ---
 - launchApp:
     clearState: true

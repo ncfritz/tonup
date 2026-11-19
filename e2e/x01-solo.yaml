@@ -1,5 +1,5 @@
 # Maestro flow: a solo leg of 501 on the keypad, checked out in nine darts, to the summary.
-appId: app.tonup.ios
+appId: com.perchedchicken.tonup
 ---
 - launchApp:
     clearState: true

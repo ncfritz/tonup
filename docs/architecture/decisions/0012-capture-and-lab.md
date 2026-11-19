@@ -12,7 +12,7 @@ This tooling is for Neil's own board and photos. It has to stay separate from th
 
 ## Decision
 
-1. **Ton Up Capture:** an internal iPhone app built from this repo as a second variant of the Expo project (`APP_VARIANT=capture`): its own name, icon, bundle ID (`app.tonup.ios.capture`) and routes directory (`src/capture-app`), sharing the domain code, UI, theme and `dart-vision` module. It is installed from Xcode and never submitted to the App Store.
+1. **Ton Up Capture:** an internal iPhone app built from this repo as a second variant of the Expo project (`APP_VARIANT=capture`): its own name, icon, bundle ID (`com.perchedchicken.tonup.capture`) and routes directory (`src/capture-app`), sharing the domain code, UI, theme and `dart-vision` module. It is installed from Xcode and never submitted to the App Store.
 2. **Labelling is values, then tips:** the player enters what the darts scored, marks the board, then taps each tip; every tap is scored through the shared geometry and must match its entered value (or be flagged). Values alone are kept only as verification data, since a keypoint model can't learn from them.
 3. **Ton Up Lab:** a single-user web app in `lab/` (Next.js with Ant Design, SQLite through Drizzle), run on the laptop. It stores captures, assigns splits, snapshots datasets, runs training and verification as child processes of the `ml/` Python environment, and keeps a model registry. No Postgres, nginx, Docker, certificates or other Olympus services.
 4. **Plain HTTP on the local network, no auth:** Capture uploads to Lab at `http://<laptop>.local:3100`. Lab listens on localhost unless started with the LAN script, so it isn't open on networks away from home.

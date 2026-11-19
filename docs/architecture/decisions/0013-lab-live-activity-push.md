@@ -20,6 +20,6 @@ A Live Activity can be updated by the app itself, but iOS suspends Capture soon 
 ## Consequences
 
 - An exception to ADR 0001 for the internal tools: Apple sees run progress for one internal app. Acceptable because the content is about model training, not anyone's games or photos.
-- Capture needs the Push Notifications capability and an app group (`group.app.tonup.ios.capture`) for its widget extension; Xcode's automatic signing adds them.
+- Capture needs the Push Notifications capability and an app group (`group.com.perchedchicken.tonup.capture`) for its widget extension; Xcode's automatic signing adds them.
 - Builds installed from Xcode use the APNs sandbox (the default); a TestFlight build would need `TONUP_APNS_ENV=production`.
 - When Lab is off or loses the network mid-run, the Live Activity goes stale after ten minutes (each push sets a stale date) and iOS removes it after its usual eight hours.

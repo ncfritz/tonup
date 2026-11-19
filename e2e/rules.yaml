@@ -1,5 +1,5 @@
 # Maestro flow: search the rules, open a game's page and play it from there.
-appId: app.tonup.ios
+appId: com.perchedchicken.tonup
 ---
 - launchApp:
     clearState: true

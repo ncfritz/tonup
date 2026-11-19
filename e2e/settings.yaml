@@ -1,5 +1,5 @@
 # Maestro flow: Appearance, a locked Pro theme, and Report a problem's preview.
-appId: app.tonup.ios
+appId: com.perchedchicken.tonup
 ---
 - launchApp:
     clearState: true

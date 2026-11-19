@@ -27,7 +27,7 @@ export function apnsConfig(
     keyFile,
     keyId,
     teamId,
-    bundleId: env.TONUP_APNS_BUNDLE ?? 'app.tonup.ios.capture',
+    bundleId: env.TONUP_APNS_BUNDLE ?? 'com.perchedchicken.tonup.capture',
     sandbox: env.TONUP_APNS_ENV !== 'production',
   };
 }

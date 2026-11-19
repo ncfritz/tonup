@@ -1,5 +1,5 @@
 # Maestro flow: Bob's 27 with the Hit and Miss buttons, then back to Practice.
-appId: app.tonup.ios
+appId: com.perchedchicken.tonup
 ---
 - launchApp:
     clearState: true

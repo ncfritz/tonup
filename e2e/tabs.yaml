@@ -1,5 +1,5 @@
 # Maestro flow: the app opens on Play and every tab switches to its screen.
-appId: app.tonup.ios
+appId: com.perchedchicken.tonup
 ---
 - launchApp:
     clearState: true

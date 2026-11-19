@@ -21,7 +21,7 @@ Use Tippytoe's stack and tooling, with the same versions where both apps use a p
 - **i18n:** i18next with ICU and typed keys; English only at launch.
 - **Platform:** expo-haptics, expo-keep-awake, expo-speech (caller), expo-iap (StoreKit 2, from M10), expo-sharing and expo-document-picker (export and import, from M9).
 - **Quality:** Jest (jest-expo) and React Native Testing Library, Maestro flows, ESLint 9 (eslint-config-expo) with Prettier, simple-git-hooks and lint-staged; `pnpm check` runs typecheck, lint, tests and the contrast check.
-- **Builds:** local `expo prebuild` and Xcode (`pnpm ios`), iOS 18.0, iPhone only for v1, bundle ID `app.tonup.ios`.
+- **Builds:** local `expo prebuild` and Xcode (`pnpm ios`), iOS 18.0, iPhone only for v1, bundle ID `com.perchedchicken.tonup`.
 
 Packages are added in the milestone that first needs them, not all at once.
 

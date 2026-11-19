@@ -9,7 +9,7 @@ export const appVariant = (env = process.env.APP_VARIANT): AppVariant =>
   env === 'capture' ? 'capture' : 'tonup';
 
 // Bundle ID and Pro product ID: ADR 0009, docs/plan/v1-implementation.md §1.
-const BUNDLE_ID = 'app.tonup.ios';
+const BUNDLE_ID = 'com.perchedchicken.tonup';
 // Signing team for local builds (Neil's individual account, as Tippytoe); written into the
 // Xcode project by prebuild so `expo prebuild --clean` doesn't need the team picked again.
 const APPLE_TEAM_ID = '39BL2H9S6P';
