@@ -201,7 +201,8 @@
     "badgeInLab": "✓ Lab",
     "tileInLab": "Visit {n}, labelled in Lab",
     "orInLab": "Lab has the photos still to label: label them here, or in Lab's review queue.",
-    "badgeValuesOnly": "V {total}"
+    "badgeValuesOnly": "V {total}",
+    "sketchA11y": "The board square on, with where each dart landed: no photo on this phone"
   },
   "verify": {
     "snapshotting": "Snapshotting the verify set…",
@@ -459,5 +460,20 @@
     "tallyConfirmed": "confirmed",
     "tallyFixed": "fixed",
     "tallyBlind": "blind agreed"
+  },
+  "viewer": {
+    "count": "Photo {n} of {count}",
+    "close": "Close",
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "view": "View",
+    "photo": "Photo",
+    "asShot": "As shot",
+    "board": "Board",
+    "marks": "Show the rings and tips",
+    "boardA11y": "The visit square on: the board, with where each dart landed",
+    "noTips": "No tips on the board: values only, or every dart missed.",
+    "noBoard": "The board wasn't marked on this photo, so it can't be drawn square on.",
+    "hint": "Pinch to zoom"
   }
 }

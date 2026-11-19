@@ -1,6 +1,7 @@
 // Capture's outbox (docs/plan/capture-lab.md › Outbox and upload): a saved visit is a photo
 // and its label file waiting to go to Lab. Sync sends them in order and moves each one to
 // "sent" when Lab has it; nothing is lost if Lab is off or out of reach.
+import { sketchTips, type SketchTip } from './sketch';
 import { visitTotal, type LabelFile, type SessionInfo } from './visit';
 
 export interface OutboxItem {
@@ -253,6 +254,11 @@ export interface SessionPhoto {
   uri: string | null;
   /** A draft Lab has (labelled there, or to label there). */
   inLab?: boolean;
+  /**
+   * Its darts on the board square on, from the label (sketch.ts): drawn when the photo's gone.
+   * Null for a photo with no label on the phone, or whose board points don't fit a board.
+   */
+  tips: SketchTip[] | null;
 }
 
 /** One session's photos, in the order they were taken. */
@@ -270,6 +276,7 @@ export function sessionPhotos(
       status: item.label.valuesOnly ? 'values-only' : 'labelled',
       total: visitTotal(item.label.darts.map((d) => d.value)),
       uri,
+      tips: sketchTips(item.label),
     });
   };
   for (const i of store.sent()) add(i, store.sentPhotoUri(i.id));
@@ -283,6 +290,7 @@ export function sessionPhotos(
       total: null,
       uri: drafts.photoUri(d.id),
       inLab: !!d.sentToLab,
+      tips: null,
     });
   }
   return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));

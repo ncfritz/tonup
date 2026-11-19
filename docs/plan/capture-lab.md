@@ -60,7 +60,8 @@ A values-only visit can still get its tips: opened from its session's photos, it
 
 ### Outbox and upload
 
-- No database: a saved capture is `Documents/outbox/<id>.jpg` and `<id>.json`. Upload moves them to `Documents/sent/` (kept until cleared from Settings). A cleared photo still shows: Lab's copy (`/api/captures/:id/photo` and `/thumb`) when Lab is up and has it, else its board, points and tips drawn from the label on a blank, with a line saying which.
+- No database: a saved capture is `Documents/outbox/<id>.jpg` and `<id>.json`. Upload moves them to `Documents/sent/` (kept until cleared from Settings). A cleared photo still shows: Lab's copy (`/api/captures/:id/photo` and `/thumb`) when Lab is up and has it, else drawn from the label (`sketch.ts`): a session's tile shows the board square on with each dart's tip numbered, marked with a struck-through camera.
+- **Photos and the full-size view:** tapping a saved visit opens it full size (`photo/[id]`): Photo / Board (the visit square on, the tips through the label's board fit), pinch to zoom, arrows to the session's other saved visits ("Photo n of N"), a switch to hide the rings and tips, and the values and total. A visit whose photo is gone and Lab can't send opens on Board, the other view reading "As shot" (its board, points and tips where they sat in the frame, on a blank), with a line saying why.
 - Sync runs on save, on opening Home, and from the button; failures stay in the outbox. Uploads are idempotent by capture ID.
 - The label JSON is the existing capture format (`src/domain/camera/labels.ts`) with Capture's additions. Lab parses it in `lab/src/lib/labels.ts`:
 

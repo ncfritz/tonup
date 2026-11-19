@@ -190,6 +190,7 @@ export function PhotoMarkup({
               return (
                 <SvgText
                   key={`n${i}`}
+                  testID={`snap-photo-tip-${d.n}`}
                   x={q.x}
                   y={q.y + 4.5 * k}
                   fontSize={13 * k}

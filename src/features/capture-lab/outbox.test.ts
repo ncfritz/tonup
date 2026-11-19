@@ -1,3 +1,6 @@
+import { polar } from '@/domain/board';
+import { boardPointOf, CALIBRATION_IDS } from '@/domain/camera';
+
 import { checkLab, normaliseLabUrl, outcomeOf } from './lab';
 import {
   labelQueue,
@@ -266,6 +269,7 @@ describe('labelling later', () => {
         status: 'labelled',
         total: 65,
         uri: 'file:///sent/a.jpg',
+        tips: null,
       },
       {
         id: 'd1',
@@ -273,6 +277,7 @@ describe('labelling later', () => {
         status: 'unlabelled',
         total: null,
         uri: 'file:///drafts/d1.jpg',
+        tips: null,
         inLab: false,
       },
       {
@@ -281,6 +286,7 @@ describe('labelling later', () => {
         status: 'unlabelled',
         total: null,
         uri: 'file:///drafts/d2.jpg',
+        tips: null,
         inLab: false,
       },
       {
@@ -289,8 +295,16 @@ describe('labelling later', () => {
         status: 'values-only',
         total: 0,
         uri: 'file:///outbox/b.jpg',
+        tips: null,
       },
-      { id: 'cleared', createdAt: '2026-11-01T20:06:00Z', status: 'labelled', total: 0, uri: null },
+      {
+        id: 'cleared',
+        createdAt: '2026-11-01T20:06:00Z',
+        status: 'labelled',
+        total: 0,
+        uri: null,
+        tips: null,
+      },
     ]);
   });
 
@@ -357,4 +371,35 @@ it('makes readable session IDs that Lab accepts', () => {
   const id = newSessionId(new Date(2026, 10, 3, 21, 2), 'A1-B2C3');
   expect(id).toBe('sess-20261103-2102-a1b2');
   expect(id).toMatch(/^[A-Za-z0-9_-]{1,64}$/);
+});
+
+describe('a session’s photos without the photo', () => {
+  it('carries each visit’s tips square on, to draw when the photo’s gone', () => {
+    const store = memoryStore();
+    const drafts = memoryDrafts();
+    // A board square on, filling a 4 × 3 photo's height; one dart in the treble 20.
+    const k = 0.5 / 170;
+    const toImage = (p: { x: number; y: number }) => ({
+      x: 0.5 + p.x * k * 0.75,
+      y: 0.5 - p.y * k,
+    });
+    const calibration = CALIBRATION_IDS.map((id) => toImage(boardPointOf(id)));
+    store.put(
+      {
+        ...labelOf('cleared', 's1', '2026-11-01T20:00:00Z'),
+        calibration,
+        darts: [{ ...toImage(polar(103, 0)), value: 'T20' }],
+      },
+      '',
+    );
+    store.markSent('cleared', 'train');
+    store.put(labelOf('unmarked', 's1', '2026-11-01T20:01:00Z'), '');
+    const [cleared, unmarked] = sessionPhotos(store, drafts, 's1');
+    expect(cleared!.uri).toBeNull();
+    expect(cleared!.tips).toHaveLength(1);
+    expect(cleared!.tips![0]!.n).toBe(1);
+    expect(cleared!.tips![0]!.point.y).toBeCloseTo(103, 3);
+    // No board points on the label: nothing to draw it on.
+    expect(unmarked!.tips).toBeNull();
+  });
 });

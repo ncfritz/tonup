@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 import {
   labelQueue,
@@ -27,7 +27,7 @@ import { labPhotoUrl } from '@/features/capture-lab/lab';
 import { LabPill, useLabState } from '@/features/capture-lab/LabPill';
 import { useCapture } from '@/features/capture-lab/store';
 import { useSyncWithLab } from '@/features/capture-lab/syncLab';
-import { Button, Header, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
+import { Board, Button, Header, Icon, Pressable, TAB_BAR_SPACE, Text } from '@/ui';
 
 type Filter = 'all' | PhotoStatus;
 const COLUMNS = 5;
@@ -202,7 +202,7 @@ export default function SessionPhotos() {
                   }
                   testID={`photo-${p.id}`}
                 >
-                  <Thumb photo={p} fromLab={labOk && labIds?.has(id) ? labUrl : null} />
+                  <Thumb photo={p} size={tile} fromLab={labOk && labIds?.has(id) ? labUrl : null} />
                   <Badge photo={p} />
                 </Pressable>
               );
@@ -228,10 +228,20 @@ export default function SessionPhotos() {
 
 /**
  * A photo's tile: the phone's copy; once cleared, Lab's thumbnail (when Lab's up and has the
- * session); else "Cleared".
+ * session); else the visit drawn from its label (the board square on and where each dart
+ * landed, marked as having no photo); else "Cleared".
  */
-function Thumb({ photo, fromLab }: { photo: SessionPhoto; fromLab: string | null }) {
+function Thumb({
+  photo,
+  size,
+  fromLab,
+}: {
+  photo: SessionPhoto;
+  size: number;
+  fromLab: string | null;
+}) {
   const { t } = useTranslation('capture');
+  const { theme } = useUnistyles();
   const [failed, setFailed] = useState(false);
   const uri = photo.uri ?? (fromLab && !failed ? labPhotoUrl(fromLab, photo.id, 'thumb') : null);
   return uri ? (
@@ -241,6 +251,18 @@ function Thumb({ photo, fromLab }: { photo: SessionPhoto; fromLab: string | null
       resizeMode="cover"
       onError={() => setFailed(true)}
     />
+  ) : photo.tips ? (
+    <View style={styles.cleared} testID={`sketch-${photo.id}`}>
+      <Board
+        size={size}
+        markers={photo.tips.map((d) => ({ point: d.point, text: String(d.n) }))}
+        markerRadius={Math.max(6, size / 14)}
+        accessibilityLabel={t('photos.sketchA11y')}
+      />
+      <View style={styles.noPhoto}>
+        <Icon name="noPhoto" color={theme.colors.muted} size={13} strokeWidth={2.2} />
+      </View>
+    </View>
   ) : (
     <View style={styles.cleared}>
       <Text variant="caption" tone="muted">
@@ -301,6 +323,17 @@ const styles = StyleSheet.create((theme) => ({
   tile: { borderRadius: theme.radii.s, overflow: 'hidden', backgroundColor: theme.colors.surface },
   fill: { width: '100%', height: '100%' },
   cleared: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  noPhoto: {
+    position: 'absolute',
+    right: 4,
+    top: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.bg,
+  },
   badge: {
     position: 'absolute',
     left: 3,

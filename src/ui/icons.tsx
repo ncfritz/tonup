@@ -20,6 +20,9 @@ const paths = {
   // From the camera mockups: a body with a lens.
   camera: ['M3 8h3l2-3h8l2 3h3v11H3z', [[12, 13, 4]]],
   close: ['M6 6l12 12M18 6L6 18', []],
+  // A photo not on the phone any more: the camera, struck through.
+  noPhoto: ['M3 8h3l2-3h8l2 3h3v11H3zM3 3l18 18', [[12, 13, 4]]],
+  back: ['M15 5l-7 7 7 7', []],
   search: ['M20 20l-4-4', [[11, 11, 7]]],
   // Capture's Lab tabs: accuracy bars, a model (a cube), a training run (a pulse).
   overview: ['M4 20V12M10 20V6M16 20v-9M21 20H3', []],
